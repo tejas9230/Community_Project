@@ -11,7 +11,7 @@ RUN apt-get update && apt-get install -y \
     libsm6 \
     libxrender1 \
     libxext6 \
-    libgl1-mesa-glx \
+    libgl1 \
     gcc \
     && rm -rf /var/lib/apt/lists/*
 
@@ -27,13 +27,13 @@ COPY . .
 # Create uploads directory
 RUN mkdir -p static/uploads
 
-# Expose port 7860 (HF Spaces default)
-EXPOSE 7860
+# Expose port
+EXPOSE 10000
 
 # Set environment variables
-ENV PORT=7860
+ENV PORT=10000
 ENV PYTHONUNBUFFERED=1
 ENV TRANSFORMERS_OFFLINE=0
 
 # Run with gunicorn (production WSGI server)
-CMD ["gunicorn", "--bind", "0.0.0.0:7860", "--workers", "1", "--timeout", "120", "app:app"]
+CMD gunicorn --bind 0.0.0.0:$PORT --workers 1 --timeout 120 app:app
