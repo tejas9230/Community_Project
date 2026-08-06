@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>Help Center</title>
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='help.css') }}">
+
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+
+</head>
+
+<body>
+
+<div class="background-animation">
+
+    <span></span>
+    <span></span>
+    <span></span>
+    <span></span>
+
+</div>
+
+<div class="help-container">
+
+    <!-- Header -->
+
+    <div class="page-header">
+
+        <div class="header-icon">
+
+            <i class="fa-solid fa-circle-question"></i>
+
+        </div>
+
+        <div>
+
+            <h1>Help Center</h1>
+
+            <p>
+
+                Everything you need to know about submitting and tracking complaints.
+
+            </p>
+
+        </div>
+
+    </div>
+
+    <!-- How to Submit -->
+
+    <div class="help-card">
+
+        <h2>
+
+            <i class="fa-solid fa-bullhorn"></i>
+
+            How to Submit a Complaint
+
+        </h2>
+
+        <ol>
+
+            <li>Select the complaint category.</li>
+
+            <li>Allow GPS or choose the location on the map.</li>
+
+            <li>Describe the issue clearly.</li>
+
+            <li>Upload an image (recommended).</li>
+
+            <li>Click <b>Submit Complaint</b>.</li>
+
+        </ol>
+
+    </div>
+    <!-- Complaint Status -->
+
+    <div class="help-card">
+
+        <h2>
+
+            <i class="fa-solid fa-list-check"></i>
+
+            Complaint Status Guide
+
+        </h2>
+
+        <div class="status-grid">
+
+            <div class="status-box pending">
+
+                <h3>🟡 Pending</h3>
+
+                <p>
+
+                    Your complaint has been received and is waiting for review.
+
+                </p>
+
+            </div>
+
+            <div class="status-box progress">
+
+                <h3>🔵 In Progress</h3>
+
+                <p>
+
+                    Authorities are currently working on resolving the complaint.
+
+                </p>
+
+            </div>
+
+            <div class="status-box resolved">
+
+                <h3>🟢 Resolved</h3>
+
+                <p>
+
+                    The complaint has been successfully resolved.
+
+                </p>
+
+            </div>
+
+            <div class="status-box rejected">
+
+                <h3>🔴 Rejected</h3>
+
+                <p>
+
+                    The complaint could not be processed. Check the rejection reason in "My Complaints".
+
+                </p>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- Tips -->
+
+    <div class="help-card">
+
+        <h2>
+
+            <i class="fa-solid fa-lightbulb"></i>
+
+            Tips for Faster Resolution
+
+        </h2>
+
+        <ul>
+
+            <li>📍 Enable GPS while submitting the complaint.</li>
+
+            <li>📷 Upload a clear image of the issue.</li>
+
+            <li>📝 Provide a detailed description.</li>
+
+            <li>🗺 Select the correct location on the map.</li>
+
+            <li>🚫 Avoid submitting duplicate complaints.</li>
+
+        </ul>
+
+    </div>
+
+    <!-- FAQs -->
+
+    <div class="help-card">
+
+        <h2>
+
+            <i class="fa-solid fa-comments"></i>
+
+            Frequently Asked Questions
+
+        </h2>
+
+        <div class="faq">
+
+            <h3>How do I submit a complaint?</h3>
+
+            <p>
+                Go to <b>Submit Complaint</b>, choose a category, select your location, describe the issue, optionally upload an image, and submit.
+            </p>
+
+        </div>
+
+        <div class="faq">
+
+            <h3>Why is GPS required?</h3>
+
+            <p>
+                GPS helps verify that the complaint belongs to your community area.
+            </p>
+
+        </div>
+
+        <div class="faq">
+
+            <h3>Can I edit my complaint?</h3>
+
+            <p>
+                No. If you need to add more information, submit a new complaint.
+            </p>
+
+        </div>
+
+        <div class="faq">
+
+            <h3>Why was my complaint rejected?</h3>
+
+            <p>
+                It may be outside the community area, contain insufficient information, or violate complaint guidelines.
+            </p>
+
+        </div>
+
+    </div>
+
+    <!-- Contacts -->
+
+    <div class="help-card">
+
+        <h2>
+
+            <i class="fa-solid fa-phone"></i>
+
+            Emergency Contacts
+
+        </h2>
+
+        <table class="contact-table">
+
+            <tr>
+
+                <th>Service</th>
+
+                <th>Number</th>
+
+            </tr>
+
+            <tr>
+
+                <td>Police</td>
+
+                <td>100</td>
+
+            </tr>
+
+            <tr>
+
+                <td>Fire</td>
+
+                <td>101</td>
+
+            </tr>
+
+            <tr>
+
+                <td>Ambulance</td>
+
+                <td>108</td>
+
+            </tr>
+
+            <tr>
+
+                <td>Municipal Office</td>
+
+                <td>Local Community Office</td>
+
+            </tr>
+
+        </table>
+
+    </div>
+
+    <!-- Back -->
+
+    <div class="back-section">
+
+        <a href="/user_dashboard" class="back-btn">
+
+            <i class="fa-solid fa-arrow-left"></i>
+
+            Back to Dashboard
+
+        </a>
+
+    </div>
+
+</div>
+
+</body>
+
+</html>   

@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>Submit Complaint</title>
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='submit_complaint.css') }}">
+
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+
+    <link rel="stylesheet"
+          href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+
+</head>
+
+<body>
+
+<div class="background-animation">
+
+    <span></span>
+    <span></span>
+    <span></span>
+    <span></span>
+
+</div>
+
+<div class="complaint-container">
+
+    <!-- ================= Header ================= -->
+
+    <div class="page-header">
+
+        <div class="header-icon">
+
+            <i class="fa-solid fa-bullhorn"></i>
+
+        </div>
+
+        <div>
+
+            <h1>Submit Complaint</h1>
+
+            <p>
+
+                Report issues to help keep your community clean,
+                safe and well maintained.
+
+            </p>
+
+        </div>
+
+    </div>
+
+    <form method="POST"
+          enctype="multipart/form-data">
+
+        <!-- ================= Location ================= -->
+
+        <div class="form-card">
+
+            <h2>
+
+                <i class="fa-solid fa-location-dot"></i>
+
+                Complaint Location
+
+            </h2>
+
+            <label>
+
+                Address
+
+            </label>
+
+            <input
+                type="text"
+                id="address"
+                name="address"
+                placeholder="Location will appear here"
+                readonly
+                required>
+
+            <input
+                type="hidden"
+                id="latitude"
+                name="latitude">
+
+            <input
+                type="hidden"
+                id="longitude"
+                name="longitude">
+
+            <button
+                type="button"
+                class="location-btn"
+                onclick="getLocation()">
+
+                <i class="fa-solid fa-location-crosshairs"></i>
+
+                Get My Current Location
+
+            </button>
+
+        </div>
+
+        <!-- ================= Map ================= -->
+
+        <div class="form-card">
+
+            <h2>
+
+                <i class="fa-solid fa-map"></i>
+
+                Choose Location on Map
+
+            </h2>
+
+            <p class="section-info">
+
+                Click anywhere on the map to select the exact complaint location.
+
+            </p>
+
+            <div id="map"></div>
+
+        </div>
+
+        
+        <!-- ================= Description ================= -->
+
+        <div class="form-card">
+
+            <h2>
+
+                <i class="fa-solid fa-file-lines"></i>
+
+                Problem Description
+
+            </h2>
+
+            <textarea
+
+                id="description"
+
+                name="description"
+
+                rows="6"
+
+                placeholder="Describe the issue in detail..."
+
+                required>
+
+            </textarea>
+
+        </div>
+
+        <!-- ================= Image Upload ================= -->
+
+        <div class="form-card">
+
+            <h2>
+
+                <i class="fa-solid fa-camera"></i>
+
+                Evidence Image
+
+            </h2>
+
+            <p class="section-info">
+
+                Upload a clear photo of the issue. <strong style="color:#f87171;">Required.</strong>
+
+            </p>
+
+            <label class="upload-box" id="uploadBox">
+
+                <input
+
+                    type="file"
+
+                    id="image"
+
+                    name="image"
+
+                    accept="image/*"
+
+                    required
+
+                    onchange="showFileName()">
+
+                <i class="fa-solid fa-camera" id="uploadIcon"></i>
+
+                <span id="file-name">
+                    📷 Click to take or choose a photo
+                </span>
+
+                <span id="file-hint" style="font-size:12px;color:#94a3b8;margin-top:4px;">
+                    JPG, PNG, WEBP accepted
+                </span>
+
+            </label>
+
+        </div>
+
+        <!-- ================= Submit ================= -->
+
+        <div class="submit-section">
+
+            <button
+
+                type="submit"
+
+                class="submit-btn">
+
+                <i class="fa-solid fa-paper-plane"></i>
+
+                Submit Complaint
+
+            </button>
+
+        </div>
+
+    </form>
+
+    <div class="submit-section">
+
+        <a href="/user_dashboard" class="back-btn">
+
+            <i class="fa-solid fa-arrow-left"></i>
+
+            Back to Dashboard
+
+        </a>
+
+    </div>
+
+    
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+<script>
+
+// --------------------------------------------------
+// Get Current Location
+// --------------------------------------------------
+
+function getLocation() {
+
+    if (navigator.geolocation) {
+
+        navigator.geolocation.getCurrentPosition(
+
+            function(position) {
+
+                let lat = position.coords.latitude;
+                let lon = position.coords.longitude;
+
+                map.setView([lat, lon], 16);
+
+                if (marker) {
+                    map.removeLayer(marker);
+                }
+
+                marker = L.marker([lat, lon])
+                    .addTo(map)
+                    .bindPopup("You are here")
+                    .openPopup();
+
+                document.getElementById("latitude").value = lat;
+                document.getElementById("longitude").value = lon;
+
+                fetch(
+                    `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`
+                )
+                .then(response => response.json())
+                .then(data => {
+
+                    document.getElementById("address").value =
+                        data.display_name;
+
+                });
+
+            },
+
+            function(error) {
+
+                alert("Location access denied.");
+
+            }
+
+        );
+
+    }
+
+    else {
+
+        alert("Geolocation is not supported by this browser.");
+
+    }
+
+}
+
+// --------------------------------------------------
+// Leaflet Map
+// --------------------------------------------------
+
+var map = L.map('map').setView(
+    [17.6868, 83.2185],
+    13
+);
+
+L.tileLayer(
+    'https://tile.openstreetmap.org/{z}/{x}/{y}.png'
+).addTo(map);
+
+var marker;
+
+map.on('click', function(e){
+
+    if(marker){
+        map.removeLayer(marker);
+    }
+
+    marker = L.marker(e.latlng).addTo(map);
+
+    document.getElementById("latitude").value =
+        e.latlng.lat;
+
+    document.getElementById("longitude").value =
+        e.latlng.lng;
+
+    fetch(
+        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${e.latlng.lat}&lon=${e.latlng.lng}`
+    )
+    .then(response => response.json())
+    .then(data => {
+
+        document.getElementById("address").value =
+            data.display_name;
+
+    });
+
+});
+
+// --------------------------------------------------
+// Show Selected File Name
+// --------------------------------------------------
+
+function showFileName(){
+
+    const file = document.getElementById("image").files[0];
+    const box  = document.getElementById("uploadBox");
+
+    if(file){
+        document.getElementById("file-name").innerHTML = "✅ " + file.name;
+        document.getElementById("uploadIcon").className = "fa-solid fa-circle-check";
+        document.getElementById("uploadIcon").style.color = "#4ade80";
+        box.style.borderColor = "#4ade80";
+    }
+
+}
+
+</script>
+
+</body>
+
+</html>    

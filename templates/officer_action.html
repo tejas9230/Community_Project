@@ -1,0 +1,385 @@
+{% extends "base.html" %}
+
+{% block title %}Officer Action{% endblock %}
+
+{% block content %}
+
+<div class="container py-4">
+
+    <div class="row">
+
+        <!-- Complaint Details -->
+        <div class="col-lg-8">
+
+            <div class="card shadow-sm border-0 mb-4">
+
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">Complaint Details</h4>
+                </div>
+
+                <div class="card-body">
+
+                    <div class="row mb-3">
+
+                        <div class="col-md-6">
+                            <strong>Complaint ID</strong><br>
+                            #{{ complaint.id }}
+                        </div>
+
+                        <div class="col-md-6">
+                            <strong>Citizen</strong><br>
+                            {{ complaint.username }}
+                        </div>
+
+                    </div>
+
+                    <div class="row mb-3">
+
+                        <div class="col-md-6">
+                            <strong>Category</strong><br>
+                            {{ complaint.category }}
+                        </div>
+
+                        <div class="col-md-6">
+                            <strong>Priority</strong><br>
+
+                            <span class="badge
+                            {% if complaint.priority=='Critical' %}
+                                bg-danger
+                            {% elif complaint.priority=='High' %}
+                                bg-warning text-dark
+                            {% elif complaint.priority=='Medium' %}
+                                bg-info
+                            {% else %}
+                                bg-secondary
+                            {% endif %}
+                            ">
+                                {{ complaint.priority }}
+                            </span>
+
+                        </div>
+
+                    </div>
+
+                    <div class="row mb-3">
+
+                        <div class="col-md-6">
+                            <strong>Status</strong><br>
+
+                            <span class="badge
+                            {% if complaint.status=='Resolved' %}
+                                bg-success
+                            {% elif complaint.status=='Rejected' %}
+                                bg-danger
+                            {% elif complaint.status=='In Progress' %}
+                                bg-primary
+                            {% else %}
+                                bg-warning text-dark
+                            {% endif %}
+                            ">
+                                {{ complaint.status }}
+                            </span>
+
+                        </div>
+
+                        <div class="col-md-6">
+                            <strong>Created At</strong><br>
+                            {{ complaint.created_at or "Not Available" }}
+                        </div>
+
+                    </div>
+
+                    <hr>
+
+                    <h5>Description</h5>
+
+                    <p>{{ complaint.description }}</p>
+
+                    <hr>
+
+                    <h5>Location</h5>
+
+                    <p>{{ complaint.address }}</p>
+
+                </div>
+
+            </div>
+
+            <!-- Timeline -->
+
+            <div class="card shadow-sm border-0">
+
+                <div class="card-header bg-dark text-white">
+                    <h5 class="mb-0">Complaint Timeline</h5>
+                </div>
+
+                <div class="card-body">
+
+                    {# CV Score Result Card — shown if a score exists #}
+                    {% if complaint.resolution_score and complaint.resolution_score > 0 %}
+                    <div class="alert
+                        {% if complaint.verification_status == 'Verified' %} alert-success
+                        {% elif complaint.verification_status == 'Needs Review' %} alert-warning
+                        {% else %} alert-danger {% endif %} mb-3">
+                        <strong>
+                            🤖 AI Resolution Score: {{ complaint.resolution_score }}%
+                            &mdash; {{ complaint.verification_status }}
+                        </strong>
+                    </div>
+                    {% endif %}
+
+                    {# Remove debug block below #}
+
+
+                    {% if history|length > 0 %}
+
+                        {% for item in history %}
+
+                        <div class="border-start border-4 border-primary ps-3 mb-4">
+
+                            <span class="badge
+                            {% if item.new_status=='Resolved' %}
+                                bg-success
+                            {% elif item.new_status=='Rejected' %}
+                                bg-danger
+                            {% elif item.new_status=='In Progress' %}
+                                bg-primary
+                            {% else %}
+                                bg-warning text-dark
+                            {% endif %}
+                            ">
+                                {{ item.new_status }}
+                            </span>
+
+                            <br><br>
+
+                            <strong>Officer:</strong>
+                            {{ item.officer_username }}
+
+                            <br>
+
+                            <strong>Status:</strong>
+
+                            {{ item.old_status if item.old_status else "Submitted" }}
+
+                            →
+
+                            {{ item.new_status }}
+
+                            <br>
+
+                            <strong>Remarks:</strong>
+
+                            {{ item.remarks }}
+
+                            <br>
+
+                            <small class="text-muted">
+
+                                {{ item.action_time }}
+
+                            </small>
+
+                        </div>
+
+                        {% endfor %}
+
+                    {% else %}
+
+                        <div class="alert alert-warning">
+
+                            No history records found.
+
+                        </div>
+
+                    {% endif %}
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- Right Side -->
+
+        <div class="col-lg-4">
+
+            <div class="card shadow-sm border-0 mb-4">
+
+                <div class="card-header">
+                    Complaint Image
+                </div>
+
+                <div class="card-body text-center">
+
+                    {% if complaint.image_path %}
+
+                    <img
+                        src="{{ url_for('static', filename='uploads/' + complaint.image_path.split('/')[-1]) }}"
+                        class="img-fluid rounded">
+
+                    {% else %}
+
+                    <div class="text-muted">
+                        No Image Uploaded
+                    </div>
+
+                    {% endif %}
+
+                </div>
+
+            </div>
+<!-- AI Similar Complaints -->
+
+<div class="card shadow-sm border-0 mb-4">
+
+    <div class="card-header bg-info text-white">
+
+        🤖 AI Similar Complaints
+
+    </div>
+
+    <div class="card-body">
+
+        {% if similar_complaints %}
+
+            {% for item in similar_complaints %}
+
+                <div class="border rounded p-2 mb-3">
+
+                    <strong>Similarity:</strong>
+
+                    {{ item.similarity }}%
+
+                    <br><br>
+
+                    {{ item.complaint }}
+
+                </div>
+
+            {% endfor %}
+
+        {% else %}
+
+            <div class="text-muted">
+
+                No similar complaints found.
+
+            </div>
+
+        {% endif %}
+
+    </div>
+
+</div>
+            <div class="card shadow-sm border-0">
+
+                <div class="card-header bg-success text-white">
+                    Officer Action
+                </div>
+
+                <div class="card-body">
+
+                    <form method="POST" enctype="multipart/form-data">
+
+                        <div class="mb-3">
+
+                            <label class="form-label">Update Status</label>
+
+                            <select class="form-select" name="status">
+
+                                <option value="Pending" {% if complaint.status=="Pending" %}selected{% endif %}>Pending</option>
+
+                                <option value="In Progress" {% if complaint.status=="In Progress" %}selected{% endif %}>In Progress</option>
+
+                                <option value="Resolved" {% if complaint.status=="Resolved" %}selected{% endif %}>Resolved</option>
+
+                                <option value="Rejected" {% if complaint.status=="Rejected" %}selected{% endif %}>Rejected</option>
+
+                            </select>
+
+                        </div>
+
+                        <div class="mb-3">
+
+                            <label class="form-label">Officer Remarks</label>
+
+                            <textarea
+                                class="form-control"
+                                rows="5"
+                                name="officer_remark">{{ complaint.officer_remark }}</textarea>
+
+                        </div>
+
+                        <div class="mb-3">
+
+                            <label class="form-label">Resolution Image
+                                <span id="imgRequiredBadge" class="badge bg-danger ms-2" style="display:none;">Required</span>
+                            </label>
+
+                            <input
+                                type="file"
+                                class="form-control"
+                                id="resolutionImageInput"
+                                name="resolution_image"
+                                accept="image/*">
+
+                            <small id="imgHint" class="text-muted" style="display:none;">
+                                📷 Upload an "After" photo showing the issue is fixed. This is required to mark as Resolved.
+                            </small>
+
+                        </div>
+
+                        <div class="d-grid">
+
+                            <button class="btn btn-success">
+
+                                Update Complaint
+
+                            </button>
+
+                        </div>
+
+                        <a href="{{ url_for('department_dashboard') }}"
+                           class="btn btn-outline-secondary mt-3 w-100">
+
+                            Back
+
+                        </a>
+
+                    </form>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const statusSelect = document.querySelector('select[name="status"]');
+    const badge    = document.getElementById('imgRequiredBadge');
+    const hint     = document.getElementById('imgHint');
+    const imgInput = document.getElementById('resolutionImageInput');
+
+    function toggleImageHint() {
+        const isResolved = statusSelect && statusSelect.value === 'Resolved';
+        if (badge)  badge.style.display  = isResolved ? 'inline-block' : 'none';
+        if (hint)   hint.style.display   = isResolved ? 'block' : 'none';
+        if (imgInput) imgInput.required  = isResolved;
+    }
+
+    if (statusSelect) {
+        statusSelect.addEventListener('change', toggleImageHint);
+        toggleImageHint();
+    }
+});
+</script>
+{% endblock %}

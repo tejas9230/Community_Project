@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>Community Complaint Portal Using AI</title>
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='home.css') }}">
+
+    <link rel="preconnect"
+          href="https://fonts.googleapis.com">
+
+    <link rel="preconnect"
+          href="https://fonts.gstatic.com"
+          crossorigin>
+
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap"
+          rel="stylesheet">
+
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+
+</head>
+
+<body>
+
+<!-- ================= BACKGROUND ================= -->
+
+<div class="background">
+
+    <div class="gradient gradient1"></div>
+
+    <div class="gradient gradient2"></div>
+
+    <div class="gradient gradient3"></div>
+
+    <div class="noise"></div>
+
+</div>
+
+<!-- ================= NAVIGATION ================= -->
+
+<nav class="navbar">
+
+    <div class="logo">
+
+        <div class="logo-icon">
+
+            <i class="fa-solid fa-shield-halved"></i>
+
+        </div>
+
+        <div>
+
+            <h2>
+
+                Community Complaint Portal Using AI
+
+            </h2>
+
+            <p>
+
+                Complaint Management
+
+            </p>
+
+        </div>
+
+    </div>
+
+    <ul>
+
+        <li>
+
+            <a href="#features">
+
+                Features
+
+            </a>
+
+        </li>
+
+        <li>
+
+            <a href="#about">
+
+                About
+
+            </a>
+
+        </li>
+
+        <li>
+
+            <a href="/login">
+
+                Login
+
+            </a>
+
+        </li>
+
+        <li>
+
+            <a href="/register"
+               class="register-btn">
+
+                Register
+
+            </a>
+
+        </li>
+
+    </ul>
+
+</nav>
+
+<!-- ================= HERO ================= -->
+
+<section class="hero">
+
+    <div class="hero-left">
+
+        <div class="badge">
+
+            <i class="fa-solid fa-sparkles"></i>
+
+            Modern Complaint Management Platform
+
+        </div>
+
+        <h1>
+
+            Building
+
+            <span>
+
+                Smarter Communities
+
+            </span>
+
+            Through Technology
+
+        </h1>
+
+        <p>
+
+            Report local issues instantly, upload evidence,
+            verify locations with GPS, track complaint
+            progress in real-time and help build a cleaner,
+            safer community.
+
+        </p>
+
+        <div class="hero-buttons">
+
+            <a href="/register"
+               class="primary-btn">
+
+                <i class="fa-solid fa-rocket"></i>
+
+                Get Started
+
+            </a>
+
+            <a href="/login"
+               class="secondary-btn">
+
+                <i class="fa-solid fa-right-to-bracket"></i>
+
+                Login
+
+            </a>
+
+        </div>
+
+        <div class="hero-stats">
+
+            <div>
+
+                <h2>
+
+                    GPS
+
+                </h2>
+
+                <span>
+
+                    Verified
+
+                </span>
+
+            </div>
+
+            <div>
+
+                <h2>
+
+                    Live
+
+                </h2>
+
+                <span>
+
+                    Tracking
+
+                </span>
+
+            </div>
+
+            <div>
+
+                <h2>
+
+                    Smart
+
+                </h2>
+
+                <span>
+
+                    Analytics
+
+                </span>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <div class="hero-right">
+
+        <div class="dashboard">
+
+            <div class="dashboard-header">
+
+                <span class="red"></span>
+
+                <span class="yellow"></span>
+
+                <span class="green"></span>
+
+            </div>
+
+            <h3>
+
+                Community Dashboard
+
+            </h3>
+
+            <div class="dashboard-card">
+
+                <i class="fa-solid fa-location-dot"></i>
+
+                <div>
+
+                    <h4>
+
+                        GPS Tracking
+
+                    </h4>
+
+                    <p>
+
+                        Accurate complaint location
+
+                    </p>
+
+                </div>
+
+            </div>
+
+            <div class="dashboard-card">
+
+                <i class="fa-solid fa-camera"></i>
+
+                <div>
+
+                    <h4>
+
+                        Image Upload
+
+                    </h4>
+
+                    <p>
+
+                        Evidence for complaints
+
+                    </p>
+
+                </div>
+
+            </div>
+
+            <div class="dashboard-card">
+
+                <i class="fa-solid fa-bell"></i>
+
+                <div>
+
+                    <h4>
+
+                        Notifications
+
+                    </h4>
+
+                    <p>
+
+                        Live status updates
+
+                    </p>
+
+                </div>
+
+            </div>
+
+            <div class="dashboard-card">
+
+                <i class="fa-solid fa-chart-column"></i>
+
+                <div>
+
+                    <h4>
+
+                        Analytics
+
+                    </h4>
+
+                    <p>
+
+                        Complaint insights
+
+                    </p>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</section>
+<!-- ================= FEATURES ================= -->
+
+<section id="features" class="features">
+
+    <div class="section-heading">
+
+        <span>WHY CHOOSE US</span>
+
+        <h2>
+
+            Everything Needed To Build
+            A Better Community
+
+        </h2>
+
+        <p>
+
+            A complete digital platform that connects citizens
+            and authorities with transparency, speed and smart
+            technology.
+
+        </p>
+
+    </div>
+
+    <div class="feature-grid">
+
+        <div class="feature-card">
+
+            <div class="feature-icon">
+
+                <i class="fa-solid fa-location-dot"></i>
+
+            </div>
+
+            <h3>GPS Verification</h3>
+
+            <p>
+
+                Prevent fake complaints using live GPS
+                location verification.
+
+            </p>
+
+        </div>
+
+        <div class="feature-card">
+
+            <div class="feature-icon">
+
+                <i class="fa-solid fa-camera"></i>
+
+            </div>
+
+            <h3>Evidence Upload</h3>
+
+            <p>
+
+                Attach photos to provide authorities
+                with better evidence.
+
+            </p>
+
+        </div>
+
+        <div class="feature-card">
+
+            <div class="feature-icon">
+
+                <i class="fa-solid fa-bell"></i>
+
+            </div>
+
+            <h3>Live Notifications</h3>
+
+            <p>
+
+                Receive instant updates whenever your
+                complaint changes status.
+
+            </p>
+
+        </div>
+
+        <div class="feature-card">
+
+            <div class="feature-icon">
+
+                <i class="fa-solid fa-chart-line"></i>
+
+            </div>
+
+            <h3>Smart Analytics</h3>
+
+            <p>
+
+                Analyze complaint trends with interactive
+                visual dashboards.
+
+            </p>
+
+        </div>
+
+        <div class="feature-card">
+
+            <div class="feature-icon">
+
+                <i class="fa-solid fa-users"></i>
+
+            </div>
+
+            <h3>Community First</h3>
+
+            <p>
+
+                Encourage citizen participation and
+                improve local governance.
+
+            </p>
+
+        </div>
+
+        <div class="feature-card">
+
+            <div class="feature-icon">
+
+                <i class="fa-solid fa-shield-halved"></i>
+
+            </div>
+
+            <h3>Secure Platform</h3>
+
+            <p>
+
+                User authentication keeps complaint
+                information safe and secure.
+
+            </p>
+
+        </div>
+
+    </div>
+
+</section>
+
+<!-- ================= STATISTICS ================= -->
+
+<section class="stats">
+
+    <div class="stat-box">
+
+        <h2>24/7</h2>
+
+        <p>
+
+            Monitoring
+
+        </p>
+
+    </div>
+
+    <div class="stat-box">
+
+        <h2>GPS</h2>
+
+        <p>
+
+            Verification
+
+        </p>
+
+    </div>
+
+    <div class="stat-box">
+
+        <h2>100%</h2>
+
+        <p>
+
+            Transparency
+
+        </p>
+
+    </div>
+
+    <div class="stat-box">
+
+        <h2>Live</h2>
+
+        <p>
+
+            Complaint Tracking
+
+        </p>
+
+    </div>
+
+</section>
+
+<!-- ================= ABOUT ================= -->
+
+<section id="about" class="about">
+
+    <div class="about-left">
+
+        <h2>
+
+            Smart Technology For
+            Smarter Communities
+
+        </h2>
+
+        <p>
+
+            The Community Complaint Portal Using AI enables
+            citizens to report issues digitally while allowing
+            administrators to monitor, prioritize and resolve
+            complaints efficiently.
+
+        </p>
+
+        <ul>
+
+            <li>
+
+                <i class="fa-solid fa-circle-check"></i>
+
+                GPS Verified Complaints
+
+            </li>
+
+            <li>
+
+                <i class="fa-solid fa-circle-check"></i>
+
+                Image Based Evidence
+
+            </li>
+
+            <li>
+
+                <i class="fa-solid fa-circle-check"></i>
+
+                Priority Detection
+
+            </li>
+
+            <li>
+
+                <i class="fa-solid fa-circle-check"></i>
+
+                Notifications
+
+            </li>
+
+            <li>
+
+                <i class="fa-solid fa-circle-check"></i>
+
+                Analytics Dashboard
+
+            </li>
+
+        </ul>
+
+    </div>
+
+    <div class="about-right">
+
+        <div class="glass-info">
+
+            <i class="fa-solid fa-earth-asia"></i>
+
+            <h3>
+
+                Together We Build
+                Better Communities
+
+            </h3>
+
+            <p>
+
+                Every complaint submitted contributes
+                towards a safer, cleaner and smarter
+                neighbourhood.
+
+            </p>
+
+        </div>
+
+    </div>
+
+</section>
+
+<!-- ================= CALL TO ACTION ================= -->
+
+<section class="cta">
+
+    <div class="cta-card">
+
+        <h2>
+
+            Ready To Make A Difference?
+
+        </h2>
+
+        <p>
+
+            Join thousands of responsible citizens helping
+            build stronger communities through technology.
+
+        </p>
+
+        <div class="cta-buttons">
+
+            <a href="/register"
+               class="primary-btn">
+
+                Register Now
+
+            </a>
+
+            <a href="/login"
+               class="secondary-btn">
+
+                Login
+
+            </a>
+
+        </div>
+
+    </div>
+
+</section>
+
+<!-- ================= FOOTER ================= -->
+
+<footer>
+
+    <div class="footer-content">
+
+        <div>
+
+            <h2>
+
+              Community Complaint Portal Using AI
+
+            </h2>
+
+            <p>
+
+                A modern digital platform for smarter
+                complaint management.
+
+            </p>
+
+        </div>
+
+        <div>
+
+            <h3>
+
+                Quick Links
+
+            </h3>
+
+            <a href="/">Home</a>
+
+            <a href="/login">Login</a>
+
+            <a href="/register">Register</a>
+
+        </div>
+
+        <div>
+
+            <h3>
+
+                Technologies
+
+            </h3>
+
+            <p>Flask</p>
+
+            <p>SQLite</p>
+
+            <p>HTML • CSS • JavaScript</p>
+
+        </div>
+
+    </div>
+
+    <div class="copyright">
+
+        © 2026 Community Complaint Portal Using AI
+
+    </div>
+
+</footer>
+
+<script src="{{ url_for('static', filename='home.js') }}"></script>
+
+</body>
+
+</html>

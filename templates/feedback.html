@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+    <title>Submit Feedback</title>
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='style.css') }}">
+
+</head>
+
+<body>
+
+<div class="feedback-container">
+
+    <div class="feedback-card">
+
+        <h1>⭐ Complaint Feedback</h1>
+
+        <p>
+            We value your opinion. Please rate our service.
+        </p>
+
+        <form method="POST">
+
+            <label>
+
+                Rating
+
+            </label>
+
+            <select name="rating" required>
+
+                <option value="">Select Rating</option>
+
+                <option value="5">⭐⭐⭐⭐⭐ Excellent</option>
+
+                <option value="4">⭐⭐⭐⭐ Very Good</option>
+
+                <option value="3">⭐⭐⭐ Good</option>
+
+                <option value="2">⭐⭐ Fair</option>
+
+                <option value="1">⭐ Poor</option>
+
+            </select>
+
+            <br><br>
+
+            <label>
+
+                Feedback
+
+            </label>
+
+            <textarea
+
+                name="feedback"
+
+                rows="6"
+
+                placeholder="Share your experience..."
+
+                required></textarea>
+
+            <br><br>
+
+            <button
+                class="save-btn"
+                type="submit">
+
+                ⭐ Submit Feedback
+
+            </button>
+
+            <br><br>
+
+            <a href="/view_complaints">
+
+                <button
+                    type="button"
+                    class="back-btn">
+
+                    ← Back
+
+                </button>
+
+            </a>
+
+        </form>
+
+    </div>
+
+</div>
+
+</body>
+
+</html>

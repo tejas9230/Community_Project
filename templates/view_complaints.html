@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>My Complaints</title>
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='view_complaints.css') }}">
+
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+
+</head>
+
+<body>
+
+<div class="background-animation">
+
+    <span></span>
+    <span></span>
+    <span></span>
+    <span></span>
+
+</div>
+
+<div class="complaints-container">
+
+    <!-- ========================= -->
+    <!-- Header -->
+    <!-- ========================= -->
+
+    <header class="dashboard-header">
+
+        <div class="header-left">
+
+            <div class="profile-circle">
+
+                <i class="fa-solid fa-clipboard-list"></i>
+
+            </div>
+
+            <div>
+
+                <h1>
+
+                    My Complaints
+
+                </h1>
+
+                <p>
+
+                    Track every complaint you've submitted.
+
+                </p>
+
+            </div>
+
+        </div>
+
+        <div>
+
+            <a href="/user_dashboard">
+
+                <button class="back-btn">
+
+                    <i class="fa-solid fa-arrow-left"></i>
+
+                    Dashboard
+
+                </button>
+
+            </a>
+
+        </div>
+
+    </header>
+
+    <!-- ========================= -->
+    <!-- Statistics -->
+    <!-- ========================= -->
+
+    <section class="stats-container">
+
+        <div class="stat-card total">
+
+            <h3>Total Complaints</h3>
+
+            <h1>{{ total }}</h1>
+
+        </div>
+
+        <div class="stat-card pending">
+
+            <h3>Pending</h3>
+
+            <h1>{{ pending }}</h1>
+
+        </div>
+
+        <div class="stat-card resolved">
+
+            <h3>Resolved</h3>
+
+            <h1>{{ resolved }}</h1>
+
+        </div>
+
+        <div class="stat-card rejected">
+
+            <h3>Rejected</h3>
+
+            <h1>{{ rejected }}</h1>
+
+        </div>
+
+    </section>
+
+    <!-- ========================= -->
+    <!-- Search -->
+    <!-- ========================= -->
+
+    <section class="filter-card">
+
+        <form method="GET" action="/view_complaints">
+
+            <div class="filter-row">
+
+                <input
+
+                    type="text"
+
+                    name="search"
+
+                    placeholder="🔍 Search Complaint ID">
+
+                <select name="category">
+
+                    <option value="">All Categories</option>
+
+                    <option value="Water">Water</option>
+
+                    <option value="Electricity">Electricity</option>
+
+                    <option value="Garbage">Garbage</option>
+
+                    <option value="Road Damage">Road Damage</option>
+
+                    <option value="Others">Others</option>
+
+                </select>
+
+                <select name="status">
+
+                    <option value="">All Status</option>
+
+                    <option value="Pending">Pending</option>
+
+                    <option value="In Progress">In Progress</option>
+
+                    <option value="Resolved">Resolved</option>
+
+                    <option value="Rejected">Rejected</option>
+
+                </select>
+
+                <button
+                    class="filter-btn"
+                    type="submit">
+
+                    Search
+
+                </button>
+
+            </div>
+
+        </form>
+
+    </section>
+
+    <!-- ========================= -->
+    <!-- Table -->
+    <!-- ========================= -->
+
+    <section class="table-card">
+
+        <div class="table-header">
+
+            <h2>
+
+                📋 Complaint Details
+
+            </h2>
+
+        </div>
+
+        <div class="table-responsive">
+
+        <table>
+
+            <thead>
+
+            <tr>
+
+                <th>ID</th>
+
+                <th>Category</th>
+
+                <th>Priority</th>
+
+                <th>Address</th>
+
+                <th>Description</th>
+
+                <th>Status</th>
+
+                <th>Image</th>
+
+                <th>Rating</th>
+
+                <th>Feedback</th>
+
+                <th>Action</th>
+
+            </tr>
+
+            </thead>
+
+            <tbody>
+
+{% if complaints %}
+
+{% for complaint in complaints %}
+
+<tr>
+    <!-- Complaint ID -->
+
+    <td>
+
+        <span class="complaint-id">
+
+            SCS-{{ "%04d"|format(complaint[0]) }}
+
+        </span>
+
+    </td>
+
+    <!-- Category -->
+
+    <td>
+
+        {{ complaint[1] }}
+
+    </td>
+
+    <!-- Priority -->
+
+    <td>
+
+        {% if complaint[2] == "Critical" %}
+
+            <span class="priority critical">
+
+                🔴 Critical
+
+            </span>
+
+        {% elif complaint[2] == "High" %}
+
+            <span class="priority high">
+
+                🟠 High
+
+            </span>
+
+        {% elif complaint[2] == "Medium" %}
+
+            <span class="priority medium">
+
+                🟡 Medium
+
+            </span>
+
+        {% else %}
+
+            <span class="priority low">
+
+                🔵 Low
+
+            </span>
+
+        {% endif %}
+
+    </td>
+
+    <!-- Address -->
+
+    <td>
+
+        {{ complaint[3] }}
+
+    </td>
+
+    <!-- Description -->
+
+    <td class="description">
+
+        {{ complaint[6] }}
+
+    </td>
+
+    <!-- Status -->
+
+    <td>
+
+        {% if complaint[7] == "Pending" %}
+
+            <span class="status pending">
+
+                🟡 Pending
+
+            </span>
+
+        {% elif complaint[7] == "In Progress" %}
+
+            <span class="status progress">
+
+                🔵 In Progress
+
+            </span>
+
+        {% elif complaint[7] == "Resolved" %}
+
+            <span class="status resolved">
+
+                🟢 Resolved
+
+            </span>
+
+        {% else %}
+
+            <span class="status rejected">
+
+                🔴 Rejected
+
+            </span>
+
+        {% endif %}
+
+        {% if complaint[7] == "Rejected" and complaint[11] %}
+
+            <div class="reject-reason">
+
+                <strong>Reason:</strong><br>
+
+                {{ complaint[11] }}
+
+            </div>
+
+        {% endif %}
+
+    </td>
+
+    <!-- Image -->
+
+    <td>
+
+        {% if complaint[8] %}
+
+            <button
+
+                class="view-btn"
+
+                onclick="openImage('/static/uploads/{{ complaint[8].split('/')[-1] }}')">
+
+                <i class="fa-solid fa-image"></i>
+
+                View
+
+            </button>
+
+        {% else %}
+
+            <span class="no-image">
+
+                📄 No Image
+
+            </span>
+
+        {% endif %}
+
+    </td>
+
+    <!-- Rating -->
+
+    <td>
+
+        {% if complaint[10] %}
+
+            {{ "⭐" * complaint[10] }}
+
+            <br>
+
+            {{ complaint[10] }}/5
+
+        {% else %}
+
+            <span class="no-data">
+
+                Not Rated
+
+            </span>
+
+        {% endif %}
+
+    </td>
+
+    <!-- Feedback -->
+
+    <td>
+
+        {% if complaint[9] %}
+
+            <div class="feedback-box">
+
+                {{ complaint[9] }}
+
+            </div>
+
+        {% else %}
+
+            <span class="no-data">
+
+                No Feedback
+
+            </span>
+
+        {% endif %}
+
+    </td>
+
+    <!-- Action -->
+
+    <td>
+
+        {% if complaint[7] == "Pending" %}
+
+            <button class="waiting-btn" disabled>
+
+                ⏳ Waiting
+
+            </button>
+
+        {% elif complaint[7] == "In Progress" %}
+
+            <button class="progress-btn" disabled>
+
+                🔄 Under Review
+
+            </button>
+
+        {% elif complaint[9] %}
+
+            <button class="submitted-btn" disabled>
+
+                ✅ Feedback Submitted
+
+            </button>
+
+        {% else %}
+
+            <a href="/feedback/{{ complaint[0] }}">
+
+                <button class="feedback-btn">
+
+                    ⭐ Rate & Review
+
+                </button>
+
+            </a>
+
+        {% endif %}
+
+        {% if complaint[13] %}
+            <br><small style="color:#f87171;font-size:11px;margin-top:4px;display:block;">
+                ⏰ SLA: {{ complaint[13] }}
+            </small>
+        {% endif %}
+
+        <button class="view-btn" style="margin-top:6px;font-size:11px;"
+            onclick="showTimeline({{ complaint[0] }})">
+            📋 Timeline
+        </button>
+
+    </td>
+
+</tr>
+{% endfor %}
+
+{% else %}
+
+<tr>
+
+    <td colspan="10">
+
+        <div class="empty-state">
+
+            <i class="fa-solid fa-folder-open"></i>
+
+            <h2>
+
+                No Complaints Found
+
+            </h2>
+
+            <p>
+
+                You haven't submitted any complaints yet.
+
+            </p>
+
+            <a href="/submit_complaint">
+
+                <button class="feedback-btn">
+
+                    📢 Submit Your First Complaint
+
+                </button>
+
+            </a>
+
+        </div>
+
+    </td>
+
+</tr>
+
+{% endif %}
+
+            </tbody>
+
+        </table>
+
+        </div>
+
+    </section>
+
+    <!-- ========================= -->
+    <!-- Image Popup -->
+    <!-- ========================= -->
+
+    <div id="imageModal" class="image-modal">
+
+        <span
+            class="close-modal"
+            onclick="closeImage()">
+
+            &times;
+
+        </span>
+
+        <img
+            id="popupImage"
+            class="popup-image">
+
+    </div>
+
+    <!-- ========================= -->
+    <!-- Footer -->
+    <!-- ========================= -->
+
+    <footer class="dashboard-footer">
+
+        <a href="/user_dashboard">
+
+            <button class="back-btn">
+
+                <i class="fa-solid fa-arrow-left"></i>
+
+                Back to Dashboard
+
+            </button>
+
+        </a>
+
+    </footer>
+
+    <!-- Timeline Modal -->
+    <div id="timelineModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;
+         background:rgba(0,0,0,0.7);z-index:9999;align-items:center;justify-content:center;">
+        <div style="background:#1e293b;border:1px solid rgba(255,255,255,0.15);border-radius:16px;
+                    padding:28px;max-width:480px;width:90%;max-height:80vh;overflow-y:auto;position:relative;">
+            <button onclick="document.getElementById('timelineModal').style.display='none'"
+                style="position:absolute;top:12px;right:16px;background:none;border:none;
+                       color:#94a3b8;font-size:22px;cursor:pointer;">&times;</button>
+            <h3 style="color:#fff;margin-bottom:20px;font-size:18px;">📋 Complaint Timeline</h3>
+            <div id="timelineBody"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+
+function openImage(image){
+    document.getElementById("popupImage").src = image;
+    document.getElementById("imageModal").style.display = "flex";
+}
+
+function closeImage(){
+    document.getElementById("imageModal").style.display = "none";
+}
+
+window.onclick = function(event){
+    const modal = document.getElementById("imageModal");
+    if(event.target == modal) modal.style.display = "none";
+    const tModal = document.getElementById("timelineModal");
+    if(event.target == tModal) tModal.style.display = "none";
+}
+
+// ── Timeline Modal ──
+function showTimeline(complaintId){
+    const modal = document.getElementById("timelineModal");
+    const body  = document.getElementById("timelineBody");
+    body.innerHTML = "<p style='color:#94a3b8;text-align:center;'>Loading...</p>";
+    modal.style.display = "flex";
+
+    fetch("/api/timeline/" + complaintId)
+    .then(r => r.json())
+    .then(data => {
+        if(!data.entries || data.entries.length === 0){
+            body.innerHTML = "<p style='color:#64748b;text-align:center;'>No timeline entries yet.</p>";
+            return;
+        }
+        const icons = {
+            "Submitted":   "📝",
+            "Assigned":    "👮",
+            "In Progress": "🔧",
+            "Resolved":    "✅",
+            "Rejected":    "❌",
+            "Escalated":   "⚡"
+        };
+        body.innerHTML = data.entries.map((e,i) => `
+            <div style="display:flex;gap:12px;margin-bottom:18px;">
+                <div style="display:flex;flex-direction:column;align-items:center;">
+                    <div style="background:#3b82f6;width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;">
+                        ${icons[e.action] || "🔵"}
+                    </div>
+                    ${i < data.entries.length-1 ? '<div style="flex:1;width:2px;background:rgba(255,255,255,0.1);margin:4px 0;"></div>' : ''}
+                </div>
+                <div style="padding-top:4px;">
+                    <div style="font-weight:600;color:#e2e8f0;">${e.action}</div>
+                    <div style="font-size:12px;color:#94a3b8;">${e.timestamp} &bull; ${e.actor}</div>
+                    ${e.note ? `<div style="font-size:12px;color:#64748b;margin-top:2px;">${e.note}</div>` : ''}
+                </div>
+            </div>
+        `).join('');
+    })
+    .catch(() => {
+        body.innerHTML = "<p style='color:#ef4444;'>Failed to load timeline.</p>";
+    });
+}
+
+window.addEventListener("load",()=>{
+
+    document.querySelectorAll(
+
+        ".stat-card,.filter-card,.table-card"
+
+    ).forEach((card,index)=>{
+
+        card.style.opacity="0";
+
+        card.style.transform="translateY(30px)";
+
+        setTimeout(()=>{
+
+            card.style.transition=".45s ease";
+
+            card.style.opacity="1";
+
+            card.style.transform="translateY(0)";
+
+        },index*120);
+
+    });
+
+});
+
+</script>
+
+</body>
+
+</html>

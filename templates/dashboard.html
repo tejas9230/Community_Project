@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Dashboard</title>
+</head>
+
+<body>
+
+<h2>Complaints Dashboard</h2>
+
+<table border="1">
+
+<tr>
+    <th>ID</th>
+    <th>Name</th>
+    <th>Category</th>
+    <th>Description</th>
+    <th>Status</th>
+</tr>
+
+{% for complaint in complaints %}
+
+<tr>
+    <td>{{ complaint[0] }}</td>
+    <td>{{ complaint[1] }}</td>
+    <td>{{ complaint[2] }}</td>
+    <td>{{ complaint[3] }}</td>
+    <td>{{ complaint[4] }}</td>
+</tr>
+
+{% endfor %}
+
+</table>
+
+</body>
+</html>

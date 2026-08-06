@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>Manage Complaint</title>
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='style.css') }}">
+
+</head>
+
+<body>
+
+<div class="manage-container">
+
+    <div class="manage-header">
+
+        <h1>🛡 Complaint Management</h1>
+
+        <p>Review and update complaint details.</p>
+
+    </div>
+
+    <!-- Complaint Details -->
+
+    <div class="details-card">
+
+        <div class="details-grid">
+
+            <div>
+
+                <label>Complaint ID</label>
+
+                <h3>SCS-{{ "%04d"|format(complaint[0]) }}</h3>
+
+            </div>
+
+            <div>
+
+                <label>User</label>
+
+                <h3>👤 {{ complaint[1] }}</h3>
+
+            </div>
+
+            <div>
+
+                <label>Category</label>
+
+                <h3>{{ complaint[2] }}</h3>
+
+            </div>
+
+            <div>
+
+                <label>Priority</label>
+
+                <h3>{{ complaint[3] }}</h3>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- Address -->
+
+    <div class="info-card">
+
+        <h3>📍 Address</h3>
+
+        <p>{{ complaint[4] }}</p>
+
+    </div>
+
+    <!-- Description -->
+
+    <div class="info-card">
+
+        <h3>📝 Complaint Description</h3>
+
+        <p>{{ complaint[5] }}</p>
+
+    </div>
+
+    <!-- Evidence -->
+
+    <div class="info-card">
+
+        <h3>🖼 Evidence</h3>
+
+        {% if complaint[7] %}
+
+        <img
+            src="/static/uploads/{{ complaint[7].split('/')[-1] }}"
+            class="evidence-image"
+            onclick="openImage('/static/uploads/{{ complaint[7].split('/')[-1] }}')">
+
+        {% else %}
+
+        <div class="no-image-box">
+
+            📄
+
+            <br><br>
+
+            No Image Available
+
+        </div>
+
+        {% endif %}
+
+    </div>
+
+    <!-- Update Form -->
+
+    <form method="POST">
+
+        <div class="update-card">
+
+            <h2>Update Complaint</h2>
+
+            <label>Status</label>
+
+            <select
+                id="status"
+                name="status"
+                onchange="toggleReason()">
+
+                <option value="Pending"
+                {% if complaint[6]=='Pending' %}selected{% endif %}>
+                Pending
+                </option>
+
+                <option value="In Progress"
+                {% if complaint[6]=='In Progress' %}selected{% endif %}>
+                In Progress
+                </option>
+
+                <option value="Resolved"
+                {% if complaint[6]=='Resolved' %}selected{% endif %}>
+                Resolved
+                </option>
+
+                <option value="Rejected"
+                {% if complaint[6]=='Rejected' %}selected{% endif %}>
+                Rejected
+                </option>
+
+            </select>
+            <!-- ========================= -->
+            <!-- Rejection Reason -->
+            <!-- ========================= -->
+
+            <div
+                id="reasonBox"
+                style="{% if complaint[6] != 'Rejected' %}display:none;{% endif %}">
+                <br>
+                <label>Reason for Rejection</label>
+               <textarea id="rejection_reason" name="rejection_reason" rows="4"
+                     placeholder="Enter reason for rejecting this complaint...">{{ complaint[9] if complaint[9] else "" }}</textarea>
+            </div>
+
+            <br>
+
+            <!-- ========================= -->
+            <!-- Assign Officer -->
+            <!-- ========================= -->
+            <label style="margin-top:12px;display:block;font-weight:600;">
+                👮 Assign to Officer
+            </label>
+            <select name="assigned_to" style="width:100%;padding:10px;border-radius:8px;
+                   background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.2);
+                   color:#e2e8f0;font-size:14px;margin-bottom:12px;">
+                <option value="">-- Keep current / No change --</option>
+                {% for o in officers %}
+                <option value="{{ o[0] }}"
+                    {% if complaint[12] == o[0] %}selected{% endif %}>
+                    {{ o[0] }} — {{ o[1] }}
+                </option>
+                {% endfor %}
+            </select>
+            {% if complaint[12] %}
+                <small style="color:#94a3b8;font-size:12px;">
+                    Currently assigned to: <strong style="color:#60a5fa;">{{ complaint[12] }}</strong>
+                </small><br><br>
+            {% endif %}
+
+            <!-- ========================= -->
+            <!-- Officer Remark -->
+            <!-- ========================= -->
+            <label style="font-weight:600;">📋 Officer Remark</label>
+            <textarea name="officer_remark" rows="3"
+                style="width:100%;padding:10px;border-radius:8px;resize:vertical;
+                       background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.2);
+                       color:#e2e8f0;font-size:14px;"
+                placeholder="Add internal remark for this complaint...">{{ complaint[13] if complaint[13] else "" }}</textarea>
+
+            <br>
+
+            <!-- ========================= -->
+            <!-- Complaint Submitted -->
+            <!-- ========================= -->
+
+            <!-- ========================= -->
+<!-- Complaint Submitted -->
+<!-- ========================= -->
+
+<div class="info-card">
+
+    <h3>📅 Complaint Submitted</h3>
+
+    <p>
+
+        {{ complaint[8] if complaint[8] else "Not Available" }}
+
+    </p>
+
+</div>
+
+<!-- ========================= -->
+<!-- Feedback (Only After Closed)
+<!-- ========================= -->
+
+{% if complaint[6] == "Resolved" or complaint[6] == "Rejected" %}
+
+<div class="info-card">
+
+    <h3>⭐ User Rating</h3>
+
+    <p>
+
+        {% if complaint[11] %}
+
+            {% for i in range(complaint[11]) %}
+                ⭐
+            {% endfor %}
+
+            ({{ complaint[11] }}/5)
+
+        {% else %}
+
+            No Rating Yet
+
+        {% endif %}
+
+    </p>
+
+</div>
+
+<div class="info-card">
+
+    <h3>💬 User Feedback</h3>
+
+    <p>
+
+        {% if complaint[10] %}
+
+            {{ complaint[10] }}
+
+        {% else %}
+
+            No feedback submitted yet.
+
+        {% endif %}
+
+    </p>
+
+</div>
+
+{% endif %}
+            <br>
+
+            <!-- ========================= -->
+            <!-- Buttons -->
+            <!-- ========================= -->
+
+            <div class="button-group">
+
+                <button
+                    type="submit"
+                    class="save-btn">
+
+                    💾 Save Changes
+
+                </button>
+
+                <a href="/admin">
+
+                    <button
+                        type="button"
+                        class="back-btn">
+
+                        ← Back
+
+                    </button>
+
+                </a>
+
+            </div>
+
+        </div>
+
+    </form>
+
+</div>
+
+
+<!-- ========================= -->
+<!-- Image Popup -->
+<!-- ========================= -->
+
+<div
+id="imageModal"
+class="image-modal">
+
+    <span
+
+        class="close-modal"
+
+        onclick="closeImage()">
+
+        &times;
+
+    </span>
+
+    <img
+
+        id="popupImage"
+
+        class="popup-image">
+
+</div>
+
+
+<script>
+
+function toggleReason(){
+
+    let status =
+    document.getElementById("status").value;
+
+    let box =
+    document.getElementById("reasonBox");
+
+    let reason =
+    document.getElementById("rejection_reason");
+
+    if(status=="Rejected"){
+
+        box.style.display="block";
+
+        reason.required = true;
+
+    }
+
+    else{
+
+        box.style.display="none";
+
+        reason.required = false;
+
+    }
+
+}
+
+function openImage(path){
+
+    document.getElementById("imageModal").style.display="flex";
+
+    document.getElementById("popupImage").src=path;
+
+}
+
+
+function closeImage(){
+
+    document.getElementById("imageModal").style.display="none";
+
+}
+
+
+window.onclick=function(event){
+
+    let modal=document.getElementById("imageModal");
+
+    if(event.target==modal){
+
+        modal.style.display="none";
+
+    }
+
+}
+
+toggleReason();
+
+</script>
+
+</body>
+
+</html>            

@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register — Community Complaint Portal</title>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='auth.css') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+</head>
+
+<body>
+
+<!-- Animated Background -->
+<div class="background">
+    <div class="circle c1"></div>
+    <div class="circle c2"></div>
+    <div class="circle c3"></div>
+</div>
+
+<div class="login-box">
+
+    <!-- Logo -->
+    <div class="auth-logo">
+        <i class="fa-solid fa-shield-halved"></i>
+    </div>
+
+    <h1>Create Account</h1>
+    <p>Join the Community Complaint Portal</p>
+
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }}">
+                    <i class="fa-solid fa-circle-exclamation"></i>
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <form method="POST" id="registerForm">
+
+        <div class="input-group">
+            <i class="fa-solid fa-user input-icon"></i>
+            <input
+                type="text"
+                name="username"
+                placeholder="Choose a username"
+                required
+                autocomplete="username">
+        </div>
+
+        <div class="input-group">
+            <i class="fa-solid fa-lock input-icon"></i>
+            <input
+                type="password"
+                name="password"
+                id="passwordField"
+                placeholder="Choose a password"
+                required
+                autocomplete="new-password">
+        </div>
+
+        <div class="input-group">
+            <i class="fa-solid fa-lock input-icon"></i>
+            <input
+                type="password"
+                id="confirmPassword"
+                placeholder="Confirm password"
+                required
+                autocomplete="new-password">
+        </div>
+
+        <div id="passwordError" class="alert alert-error" style="display:none;">
+            <i class="fa-solid fa-circle-exclamation"></i>
+            Passwords do not match.
+        </div>
+
+        <button type="submit" id="registerBtn">
+            <span class="btn-text">
+                <i class="fa-solid fa-user-plus"></i>
+                Create Account
+            </span>
+            <span class="btn-loading" style="display:none;">
+                <i class="fa-solid fa-spinner fa-spin"></i>
+                Creating account...
+            </span>
+        </button>
+
+    </form>
+
+    <div class="auth-footer">
+        <span>Already have an account?</span>
+        <a href="/login">Login here</a>
+    </div>
+
+</div>
+
+<script>
+    document.getElementById('registerForm').addEventListener('submit', function(e) {
+        const pw = document.getElementById('passwordField').value;
+        const cpw = document.getElementById('confirmPassword').value;
+        const errDiv = document.getElementById('passwordError');
+
+        if (pw !== cpw) {
+            e.preventDefault();
+            errDiv.style.display = 'flex';
+            return;
+        }
+
+        errDiv.style.display = 'none';
+        const btn = document.getElementById('registerBtn');
+        btn.querySelector('.btn-text').style.display = 'none';
+        btn.querySelector('.btn-loading').style.display = 'inline';
+        btn.disabled = true;
+    });
+</script>
+
+</body>
+</html>

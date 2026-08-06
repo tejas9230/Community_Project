@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Community Complaint Map</title>
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='style.css') }}">
+
+    <link rel="stylesheet"
+          href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+
+</head>
+
+<body>
+
+<div class="page-container">
+
+    <h1 class="dashboard-title">
+        🗺 Community Complaint Map
+    </h1>
+
+    <p class="dashboard-subtitle">
+        Monitor complaint locations across your community.
+    </p>
+
+    <!-- Statistics Cards -->
+
+    <div class="stats-container">
+
+        <div class="stat-card total">
+            <h3>Total Complaints</h3>
+            <h1>{{ total }}</h1>
+        </div>
+
+        <div class="stat-card active">
+            <h3>Pending</h3>
+            <h1>{{ pending }}</h1>
+        </div>
+
+        <div class="stat-card progress">
+            <h3>In Progress</h3>
+            <h1>{{ in_progress }}</h1>
+        </div>
+
+        <div class="stat-card resolved">
+            <h3>Resolved</h3>
+            <h1>{{ resolved }}</h1>
+        </div>
+
+    </div>
+
+    <!-- Legend -->
+
+    <div class="map-legend">
+
+        <h3>Priority Legend</h3>
+
+        <div class="legend-items">
+
+            <span>🔴 Critical</span>
+
+            <span>🟠 High</span>
+
+            <span>🟡 Medium</span>
+
+            <span>🔵 Low</span>
+
+        </div>
+
+    </div>
+
+    <!-- Map -->
+
+    <div class="map-card">
+
+        <div id="map"></div>
+
+    </div>
+
+    <br>
+
+    <a href="/admin" class="back-btn">
+
+        ← Back to Dashboard
+
+    </a>
+
+</div>
+
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+<script>
+
+//=========================
+// Complaint Data
+//=========================
+
+var complaints = {{ complaints|tojson }};
+
+
+//=========================
+// Community Data
+//=========================
+
+var communityName = {{ community[0]|tojson }};
+var communityLat = {{ community[1] }};
+var communityLon = {{ community[2] }};
+var communityRadius = {{ community[3] }} * 1000;
+
+
+//=========================
+// Create Map
+//=========================
+
+var map = L.map('map').setView(
+    [communityLat, communityLon],
+    13
+);
+
+
+//=========================
+// Tile Layer
+//=========================
+
+L.tileLayer(
+'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+{
+    maxZoom:19
+}).addTo(map);
+
+
+//=========================
+// Community Marker
+//=========================
+
+// =====================
+// Home Icon
+// =====================
+
+var homeIcon = L.icon({
+
+    iconUrl: "https://cdn-icons-png.flaticon.com/512/25/25694.png",
+
+    iconSize: [35,35],
+
+    iconAnchor: [17,35],
+
+    popupAnchor: [0,-30]
+
+});
+
+
+// =====================
+// Community Centre
+// =====================
+
+L.marker(
+    [communityLat, communityLon],
+    {
+        icon: homeIcon
+    }
+)
+.addTo(map)
+.bindPopup(
+
+    "<div style='min-width:220px;font-family:Arial'>"+
+
+    "<h3 style='color:#2563eb;margin:0;'>🏠 "+communityName+"</h3><hr>"+
+
+    "<b>Community Centre</b><br>"+
+
+    "Monitoring Radius: "+(communityRadius/1000)+" KM<br><br>"+
+
+    "<span style='color:green;font-weight:bold;'>✔ Admin Monitoring Area</span>"+
+
+    "</div>"
+
+);
+
+
+//=========================
+// Community Circle
+//=========================
+
+L.circle(
+    [communityLat, communityLon],
+    {
+        radius:communityRadius,
+
+        color:"#2563eb",
+
+        fillColor:"#60a5fa",
+
+        fillOpacity:0.18,
+
+        weight:2
+    }
+).addTo(map);
+
+
+//=========================
+// Marker Icons
+//=========================
+var redIcon = new L.Icon({
+
+    iconUrl:"https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png",
+
+    shadowUrl:"https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
+
+    iconSize:[25,41],
+
+    iconAnchor:[12,41],
+
+    popupAnchor:[1,-34]
+
+});
+
+var orangeIcon = new L.Icon({
+
+    iconUrl:"https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-orange.png",
+
+    shadowUrl:"https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
+
+    iconSize:[25,41],
+
+    iconAnchor:[12,41],
+
+    popupAnchor:[1,-34]
+
+});
+
+var yellowIcon = new L.Icon({
+
+    iconUrl:"https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-yellow.png",
+
+    shadowUrl:"https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
+
+    iconSize:[25,41],
+
+    iconAnchor:[12,41],
+
+    popupAnchor:[1,-34]
+
+});
+
+var blueIcon = new L.Icon({
+
+    iconUrl:"https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-blue.png",
+
+    shadowUrl:"https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
+
+    iconSize:[25,41],
+
+    iconAnchor:[12,41],
+
+    popupAnchor:[1,-34]
+
+});
+
+
+//=========================
+// Bounds (Auto Zoom)
+//=========================
+
+var bounds = L.latLngBounds();
+
+bounds.extend([communityLat, communityLon]);
+
+
+//=========================
+// Complaint Markers
+//=========================
+
+for(let i=0;i<complaints.length;i++){
+
+    let id = complaints[i][0];
+    let username = complaints[i][1];
+    let category = complaints[i][2];
+    let priority = complaints[i][3];
+    let address = complaints[i][4];
+    let lat = complaints[i][5];
+    let lon = complaints[i][6];
+    let status = complaints[i][7];
+
+    if(lat && lon){
+
+        let markerIcon;
+
+        if(priority === "Critical"){
+
+            markerIcon = redIcon;
+
+        }
+
+        else if(priority === "High"){
+
+            markerIcon = orangeIcon;
+
+        }
+
+        else if(priority === "Medium"){
+
+            markerIcon = yellowIcon;
+
+        }
+
+        else{
+
+            markerIcon = blueIcon;
+
+        }
+
+        bounds.extend([lat,lon]);
+
+        L.marker(
+            [lat,lon],
+            {
+                icon:markerIcon
+            }
+        )
+        .addTo(map)
+
+        .bindPopup(
+
+        "<div style='min-width:240px;font-family:Arial,sans-serif'>" +
+
+        "<h3 style='margin:0;color:#2563eb;'>SCS-" +
+
+        String(id).padStart(4,'0') +
+
+        "</h3><hr>" +
+
+        "<b>👤 User</b><br>" +
+
+        username +
+
+        "<br><br>" +
+
+        "<b>📂 Category</b><br>" +
+
+        category +
+
+        "<br><br>" +
+
+        "<b>⚡ Priority</b><br>" +
+
+        priority +
+
+        "<br><br>" +
+
+        "<b>📍 Address</b><br>" +
+
+        address +
+
+        "<br><br>" +
+
+        "<b>📌 Status</b><br>" +
+
+        status +
+
+        "<br><br>" +
+
+        "<a href='/update_status/" +
+
+        id +
+
+        "' style='text-decoration:none;'>" +
+
+        "<button style='width:100%;padding:10px;background:#2563eb;color:white;border:none;border-radius:8px;cursor:pointer;'>"
+
+        +
+
+        "Manage Complaint"
+
+        +
+
+        "</button>"
+
+        +
+
+        "</a>"
+
+        +
+
+        "</div>"
+
+        );
+
+    }
+
+}
+//=========================
+// Auto Fit Map
+//=========================
+
+if(bounds.isValid()){
+
+    map.fitBounds(bounds,{
+        padding:[50,50]
+    });
+
+}
+
+</script>
+
+</body>
+
+</html>

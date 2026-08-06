@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+    <title>Community Settings</title>
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='style.css') }}">
+
+    <style>
+        .flash-success {
+            background: linear-gradient(90deg, #059669, #10b981);
+            color: #fff;
+            padding: 12px 20px;
+            border-radius: 10px;
+            margin-bottom: 18px;
+            font-weight: 600;
+            font-size: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 2px 8px rgba(16,185,129,.35);
+            animation: slideIn .4s ease;
+        }
+        .flash-error {
+            background: linear-gradient(90deg, #dc2626, #ef4444);
+            color: #fff;
+            padding: 12px 20px;
+            border-radius: 10px;
+            margin-bottom: 18px;
+            font-weight: 600;
+        }
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        .radius-preview {
+            background: rgba(255,255,255,.08);
+            border-radius: 8px;
+            padding: 8px 16px;
+            margin: 8px 0 16px;
+            font-size: 14px;
+            color: #94a3b8;
+        }
+        .radius-preview span {
+            font-weight: 700;
+            color: #38bdf8;
+        }
+    </style>
+
+</head>
+
+<body>
+
+<div class="settings-container">
+
+    <div class="settings-card">
+
+        <h1>⚙️ Community Settings</h1>
+
+        <p class="settings-subtitle">
+            Configure your community monitoring area.
+        </p>
+
+        {# Flash messages #}
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            {% for cat, msg in messages %}
+              <div class="flash-{{ 'success' if cat == 'success' else 'error' }}">
+                {{ msg }}
+              </div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+
+        <form method="POST">
+
+            <!-- Community Name -->
+
+            <div class="form-group">
+
+                <label>🏘 Community Name</label>
+
+                <input
+                    type="text"
+                    id="community_name"
+                    name="community_name"
+                    value="{{ settings[1] }}"
+                    required>
+
+            </div>
+
+            <!-- Coordinates -->
+
+            <div class="coordinates">
+
+                <div class="form-group">
+
+                    <label>📍 Latitude</label>
+
+                    <input
+                        id="latitude"
+                        type="text"
+                        name="latitude"
+                        value="{{ settings[2] }}"
+                        required>
+
+                </div>
+
+                <div class="form-group">
+
+                    <label>📍 Longitude</label>
+
+                    <input
+                        id="longitude"
+                        type="text"
+                        name="longitude"
+                        value="{{ settings[3] }}"
+                        required>
+
+                </div>
+
+            </div>
+
+            <!-- Current Location Button -->
+
+            <button
+                type="button"
+                class="location-btn"
+                onclick="getLocation()">
+
+                📍 Use Current Location
+
+            </button>
+
+            <br><br>
+
+            <!-- Radius -->
+
+            <div class="form-group">
+
+                <label>🌍 Community Radius (KM)</label>
+
+                <input
+                    type="number"
+                    step="0.1"
+                    id="radius"
+                    name="radius"
+                    value="{{ settings[4] }}"
+                    oninput="updateRadiusPreview(this.value)"
+                    required>
+
+            </div>
+
+            <!-- Radius Preview -->
+
+            <div class="radius-preview">
+                Coverage Area: <span id="radiusDisplay">{{ settings[4] }}</span> KM
+            </div>
+
+            <!-- Save -->
+
+            <button
+                class="save-settings-btn"
+                type="submit">
+
+                💾 Save Settings
+
+            </button>
+
+            <br><br>
+
+            <a href="/admin" class="cancel-btn">
+
+                ← Back to Dashboard
+
+            </a>
+
+        </form>
+
+    </div>
+
+</div>
+
+<script>
+
+function updateRadiusPreview(val) {
+    document.getElementById('radiusDisplay').textContent = val || '0';
+}
+
+function getLocation() {
+
+    if (navigator.geolocation) {
+
+        navigator.geolocation.getCurrentPosition(
+
+            function (position) {
+
+                var lat = position.coords.latitude;
+                var lon = position.coords.longitude;
+
+                document.getElementById("latitude").value  = lat.toFixed(6);
+                document.getElementById("longitude").value = lon.toFixed(6);
+
+                // Reverse geocode with OpenStreetMap
+                fetch(
+                    "https://nominatim.openstreetmap.org/reverse?format=json&lat="
+                    + lat + "&lon=" + lon
+                )
+                .then(r => r.json())
+                .then(data => {
+                    if (data.address) {
+                        let area =
+                            data.address.suburb          ||
+                            data.address.neighbourhood   ||
+                            data.address.village         ||
+                            data.address.town            ||
+                            data.address.city            ||
+                            "My Community";
+                        document.getElementById("community_name").value = area;
+                    }
+                });
+
+            },
+
+            function () {
+                alert("Unable to fetch your location.");
+            }
+
+        );
+
+    } else {
+        alert("Geolocation is not supported by this browser.");
+    }
+
+}
+
+</script>
+
+</body>
+
+</html>
