@@ -1,18 +1,23 @@
-from sentence_transformers import SentenceTransformer
 from sklearn.metrics.pairwise import cosine_similarity
 
 
 class DuplicateComplaintDetector:
 
     def __init__(self):
+        self._model = None
 
-        print("Loading Sentence-BERT model...")
-
-        self.model = SentenceTransformer(
-            "all-MiniLM-L6-v2"
-        )
-
-        print("Model Loaded Successfully.\n")
+    @property
+    def model(self):
+        if self._model is None:
+            try:
+                print("Loading Sentence-BERT model...")
+                from sentence_transformers import SentenceTransformer
+                self._model = SentenceTransformer("all-MiniLM-L6-v2")
+                print("Model Loaded Successfully.\n")
+            except Exception as e:
+                print(f"Warning: Could not load Sentence-BERT model: {e}")
+                self._model = False
+        return self._model if self._model is not False else None
 
 
     # -----------------------------------------
@@ -26,7 +31,7 @@ class DuplicateComplaintDetector:
         top_k=3
     ):
 
-        if len(existing_complaints) == 0:
+        if len(existing_complaints) == 0 or self.model is None:
 
             return []
 

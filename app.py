@@ -1,10 +1,5 @@
 import os
 
-# ── Force HuggingFace to use local cache only (no network needed) ──
-os.environ.setdefault("TRANSFORMERS_OFFLINE", "1")
-os.environ.setdefault("HF_DATASETS_OFFLINE", "1")
-os.environ.setdefault("HF_HUB_OFFLINE", "1")
-
 from flask import Flask, render_template, request, redirect, session, send_from_directory, jsonify, flash
 import sqlite3
 import math
