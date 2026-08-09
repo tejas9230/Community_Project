@@ -23,69 +23,106 @@ USE_POSTGRES = DATABASE_URL.startswith("postgres")
 
 def q(sql: str) -> str:
     """
-    Normalize SQL for the current backend.
-    - Converts ? → %s for PostgreSQL
-    - Converts INSERT OR IGNORE → INSERT ... ON CONFLICT DO NOTHING
-    - Converts AUTOINCREMENT → nothing (PostgreSQL uses SERIAL)
+    Normalize SQL for PostgreSQL backend.
+    - Converts ? → %s
+    - Converts INSERT OR IGNORE → INSERT INTO ... ON CONFLICT DO NOTHING
+    - Converts AUTOINCREMENT → empty string
+    - Converts INTEGER PRIMARY KEY → SERIAL PRIMARY KEY
     """
     if not USE_POSTGRES:
-        return sql  # SQLite — return as-is
+        return sql
 
-    # Placeholder conversion: ? → %s
+    # Replace ? with %s
     sql = sql.replace("?", "%s")
 
-    # INSERT OR IGNORE → INSERT ... ON CONFLICT DO NOTHING
-    sql = re.sub(
-        r'INSERT\s+OR\s+IGNORE\s+INTO',
-        'INSERT INTO', sql, flags=re.IGNORECASE
-    )
-    # Append ON CONFLICT DO NOTHING if we changed it
-    if 'INSERT INTO' in sql and 'ON CONFLICT' not in sql.upper() and re.search(r'INSERT\s+OR\s+IGNORE', sql, re.IGNORECASE) is None:
-        pass  # only add for converted queries (handled below)
+    # INSERT OR IGNORE INTO -> INSERT INTO ... ON CONFLICT DO NOTHING
+    if "INSERT OR IGNORE" in sql.upper():
+        sql = re.sub(r'INSERT\s+OR\s+IGNORE\s+INTO', 'INSERT INTO', sql, flags=re.IGNORECASE)
+        if "ON CONFLICT" not in sql.upper():
+            sql = sql.rstrip().rstrip(";") + " ON CONFLICT DO NOTHING"
 
-    sql = re.sub(
-        r'INSERT\s+INTO\s+([\w]+)\s*\(',
-        lambda m: m.group(0),  # keep as-is, handled by caller pattern
-        sql
-    )
+    # AUTOINCREMENT -> remove
+    sql = re.sub(r'\bAUTOINCREMENT\b', '', sql, flags=re.IGNORECASE)
 
-    # Re-apply ON CONFLICT for converted INSERT OR IGNORE
-    if 'ON CONFLICT DO NOTHING' not in sql.upper():
-        sql = re.sub(
-            r'(INSERT INTO .*?VALUES\s*\([^)]+\))',
-            r'\1 ON CONFLICT DO NOTHING',
-            sql, flags=re.DOTALL | re.IGNORECASE
-        )
-
-    # AUTOINCREMENT → remove (PostgreSQL uses SERIAL)
-    sql = sql.replace("AUTOINCREMENT", "")
-
-    # INTEGER PRIMARY KEY → SERIAL PRIMARY KEY
-    sql = re.sub(
-        r'INTEGER\s+PRIMARY\s+KEY',
-        'SERIAL PRIMARY KEY',
-        sql, flags=re.IGNORECASE
-    )
+    # INTEGER PRIMARY KEY -> SERIAL PRIMARY KEY
+    sql = re.sub(r'\bINTEGER\s+PRIMARY\s+KEY\b', 'SERIAL PRIMARY KEY', sql, flags=re.IGNORECASE)
 
     return sql
+
+
+class PostgresCursorWrapper:
+    def __init__(self, real_cursor):
+        self._cur = real_cursor
+
+    def execute(self, sql, params=None):
+        norm_sql = q(sql)
+        if params is not None:
+            return self._cur.execute(norm_sql, params)
+        return self._cur.execute(norm_sql)
+
+    def executemany(self, sql, seq_of_params):
+        norm_sql = q(sql)
+        return self._cur.executemany(norm_sql, seq_of_params)
+
+    def fetchone(self):
+        return self._cur.fetchone()
+
+    def fetchall(self):
+        return self._cur.fetchall()
+
+    def fetchmany(self, size=None):
+        if size is not None:
+            return self._cur.fetchmany(size)
+        return self._cur.fetchmany()
+
+    def __getattr__(self, name):
+        return getattr(self._cur, name)
+
+
+class PostgresConnectionWrapper:
+    def __init__(self, real_conn):
+        self._conn = real_conn
+
+    def cursor(self, *args, **kwargs):
+        real_cur = self._conn.cursor(*args, **kwargs)
+        return PostgresCursorWrapper(real_cur)
+
+    def commit(self):
+        return self._conn.commit()
+
+    def rollback(self):
+        return self._conn.rollback()
+
+    def close(self):
+        return self._conn.close()
+
+    def __getattr__(self, name):
+        return getattr(self._conn, name)
 
 
 def get_db():
     """
     Return a database connection.
-    - SQLite connection if DATABASE_URL is not set
-    - psycopg2 connection to Supabase if DATABASE_URL is set
+    - Wrapped psycopg2 connection to Supabase if DATABASE_URL is set
+    - Falls back to SQLite if network connection fails or DATABASE_URL is missing
     """
     if USE_POSTGRES:
         import psycopg2
         import psycopg2.extras
         url = DATABASE_URL
-        # Heroku-style postgres:// → postgresql://
         if url.startswith("postgres://"):
             url = url.replace("postgres://", "postgresql://", 1)
-        conn = psycopg2.connect(url)
-        conn.autocommit = False
-        return conn
+        try:
+            conn = psycopg2.connect(url)
+            conn.autocommit = False
+            return PostgresConnectionWrapper(conn)
+        except Exception as e:
+            print(f"[DB] PostgreSQL connection failed: {e}")
+            print("[DB] Falling back to local SQLite database (complaints.db)...")
+            import sqlite3
+            conn = sqlite3.connect("complaints.db")
+            conn.row_factory = sqlite3.Row
+            return conn
     else:
         import sqlite3
         conn = sqlite3.connect("complaints.db")
