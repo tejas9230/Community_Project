@@ -470,7 +470,7 @@ def home():
 
 # Register
 @app.route('/register', methods=['GET', 'POST'])
-@limiter.limit("5 per hour")
+@limiter.limit("60 per hour")
 def register():
 
     if request.method == 'POST':
@@ -504,7 +504,7 @@ def register():
 
 # Login
 @app.route('/login', methods=['GET', 'POST'])
-@limiter.limit("10 per minute")
+@limiter.limit("60 per minute")
 def login():
 
     if request.method == 'POST':
