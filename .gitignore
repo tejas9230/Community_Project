@@ -1,4 +1,4 @@
-﻿.env
+.env
 __pycache__/
 *.pyc
 venv/
@@ -6,3 +6,4 @@ complaints.db
 static/uploads/
 *.log
 cv_dataset/
+*.zip
