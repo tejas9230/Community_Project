@@ -50,6 +50,50 @@ def q(sql: str) -> str:
     return sql
 
 
+class PostgresRow:
+    """A row object that supports both dict key lookup (row['col']) and integer index lookup (row[0])."""
+    def __init__(self, description, tuple_vals):
+        self._vals = tuple_vals
+        self._keys = [col[0].lower() for col in description] if description else []
+        self._mapping = {k: v for k, v in zip(self._keys, tuple_vals)}
+
+    def __getitem__(self, item):
+        if isinstance(item, int):
+            return self._vals[item]
+        if isinstance(item, str):
+            val = self._mapping.get(item.lower())
+            if val is None and item in self._mapping:
+                val = self._mapping[item]
+            return val
+        return self._vals[item]
+
+    def get(self, key, default=None):
+        if isinstance(key, str):
+            return self._mapping.get(key.lower(), self._mapping.get(key, default))
+        try:
+            return self._vals[key]
+        except (IndexError, TypeError):
+            return default
+
+    def keys(self):
+        return self._keys
+
+    def values(self):
+        return self._vals
+
+    def items(self):
+        return self._mapping.items()
+
+    def __iter__(self):
+        return iter(self._vals)
+
+    def __len__(self):
+        return len(self._vals)
+
+    def __repr__(self):
+        return f"<PostgresRow {self._mapping}>"
+
+
 class PostgresCursorWrapper:
     def __init__(self, real_cursor):
         self._cur = real_cursor
@@ -64,16 +108,28 @@ class PostgresCursorWrapper:
         norm_sql = q(sql)
         return self._cur.executemany(norm_sql, seq_of_params)
 
+    def _wrap_row(self, row_tuple):
+        if row_tuple is None:
+            return None
+        if isinstance(row_tuple, PostgresRow):
+            return row_tuple
+        return PostgresRow(self._cur.description, row_tuple)
+
     def fetchone(self):
-        return self._cur.fetchone()
+        row = self._cur.fetchone()
+        return self._wrap_row(row)
 
     def fetchall(self):
-        return self._cur.fetchall()
+        rows = self._cur.fetchall()
+        if not rows:
+            return []
+        return [self._wrap_row(r) for r in rows]
 
     def fetchmany(self, size=None):
-        if size is not None:
-            return self._cur.fetchmany(size)
-        return self._cur.fetchmany()
+        rows = self._cur.fetchmany(size) if size is not None else self._cur.fetchmany()
+        if not rows:
+            return []
+        return [self._wrap_row(r) for r in rows]
 
     def __getattr__(self, name):
         return getattr(self._cur, name)
@@ -84,9 +140,6 @@ class PostgresConnectionWrapper:
         self._conn = real_conn
 
     def cursor(self, *args, **kwargs):
-        import psycopg2.extras
-        if 'cursor_factory' not in kwargs:
-            kwargs['cursor_factory'] = psycopg2.extras.DictCursor
         real_cur = self._conn.cursor(*args, **kwargs)
         return PostgresCursorWrapper(real_cur)
 
