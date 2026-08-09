@@ -412,27 +412,45 @@ def is_hotspot(lat, lon, category, threshold=3):
 # ============================================================
 def run_auto_escalation():
     """Escalate complaints pending 5+ days without action."""
-    conn = get_db()
-    cur  = conn.cursor()
-    cur.execute("""
-        UPDATE complaints
-        SET priority  = CASE
-                WHEN priority = 'Low'    THEN 'Medium'
-                WHEN priority = 'Medium' THEN 'High'
-                WHEN priority = 'High'   THEN 'Critical'
-                ELSE priority
-            END,
-            escalated = 1
-        WHERE status  IN ('Pending', 'In Progress')
-        AND   escalated = 0
-        AND   julianday('now') - julianday(
-                  substr(created_at,7,4)||'-'||
-                  substr(created_at,4,2)||'-'||
-                  substr(created_at,1,2)
-              ) >= 5
-    """)
-    conn.commit()
-    conn.close()
+    try:
+        conn = get_db()
+        cur  = conn.cursor()
+        if USE_POSTGRES:
+            cur.execute("""
+                UPDATE complaints
+                SET priority = CASE
+                        WHEN priority = 'Low'    THEN 'Medium'
+                        WHEN priority = 'Medium' THEN 'High'
+                        WHEN priority = 'High'   THEN 'Critical'
+                        ELSE priority
+                    END,
+                    escalated = 1
+                WHERE status IN ('Pending', 'In Progress')
+                AND (escalated = 0 OR escalated IS NULL)
+                AND (NOW() - TO_TIMESTAMP(created_at, 'DD-MM-YYYY HH24:MI')) >= INTERVAL '5 days'
+            """)
+        else:
+            cur.execute("""
+                UPDATE complaints
+                SET priority = CASE
+                        WHEN priority = 'Low'    THEN 'Medium'
+                        WHEN priority = 'Medium' THEN 'High'
+                        WHEN priority = 'High'   THEN 'Critical'
+                        ELSE priority
+                    END,
+                    escalated = 1
+                WHERE status IN ('Pending', 'In Progress')
+                AND (escalated = 0 OR escalated IS NULL)
+                AND julianday('now') - julianday(
+                    substr(created_at,7,4)||'-'||
+                    substr(created_at,4,2)||'-'||
+                    substr(created_at,1,2)
+                ) >= 5
+            """)
+        conn.commit()
+        conn.close()
+    except Exception as e:
+        print(f"[AutoEscalation Warning] {e}")
 
 
 create_db()
@@ -816,21 +834,17 @@ def submit_complaint():
 
         community = cur.fetchone()
 
-        distance = calculate_distance(
-            latitude,
-            longitude,
-            community[0],
-            community[1]
-        )
-
-        if distance > float(community[2]):
-            conn.close()
-            flash(
-                f'Your location is {round(distance, 2)} KM from the community '
-                f'({community[2]} KM radius allowed). Please raise the issue with your local authority.',
-                'error'
-            )
-            return redirect('/submit_complaint')
+        if community and community[0] is not None:
+            c_lat, c_lon, c_rad = float(community[0]), float(community[1]), float(community[2])
+            distance = calculate_distance(latitude, longitude, c_lat, c_lon)
+            if distance > c_rad:
+                conn.close()
+                flash(
+                    f'Your location is {round(distance, 2)} KM from the community '
+                    f'({c_rad} KM radius allowed). Please raise the issue with your local authority.',
+                    'error'
+                )
+                return redirect('/submit_complaint')
 
         # ------------------------------------
         # Same-user Duplicate Block (spam prevention)
@@ -884,7 +898,6 @@ def submit_complaint():
 
         # For CV check, we need a local path — download if Cloudinary URL
         if image_path.startswith("http"):
-            # Cloudinary upload — re-read from the file for CV (already consumed, skip CV)
             full_image_path = None
         else:
             full_image_path = os.path.join(app.root_path, "static", image_path)
@@ -911,23 +924,43 @@ def submit_complaint():
         conn = get_db()
         cur  = conn.cursor()
 
-        cur.execute("""
-        INSERT INTO complaints
-        (
-            username, category, priority, department,
-            address, latitude, longitude, description,
-            status, image_path, created_at, needs_verification,
-            sla_deadline, updated_at
-        )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """, (
-            session['username'], category, priority, department,
-            address, latitude, longitude, description,
-            "Pending", image_path, created_at, needs_verification,
-            sla_deadline, created_at
-        ))
+        if USE_POSTGRES:
+            cur.execute("""
+            INSERT INTO complaints
+            (
+                username, category, priority, department,
+                address, latitude, longitude, description,
+                status, image_path, created_at, needs_verification,
+                sla_deadline, updated_at
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            RETURNING id
+            """, (
+                session['username'], category, priority, department,
+                address, latitude, longitude, description,
+                "Pending", image_path, created_at, needs_verification,
+                sla_deadline, created_at
+            ))
+            row = cur.fetchone()
+            complaint_id = row[0] if row else None
+        else:
+            cur.execute("""
+            INSERT INTO complaints
+            (
+                username, category, priority, department,
+                address, latitude, longitude, description,
+                status, image_path, created_at, needs_verification,
+                sla_deadline, updated_at
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (
+                session['username'], category, priority, department,
+                address, latitude, longitude, description,
+                "Pending", image_path, created_at, needs_verification,
+                sla_deadline, created_at
+            ))
+            complaint_id = cur.lastrowid
 
-        complaint_id = cur.lastrowid
         conn.commit()
         conn.close()
 
@@ -2420,10 +2453,6 @@ def api_poll():
     })
 
 
-if __name__ == '__main__':
-    app.run(debug=True)
-
-
 # ============================
 # Timeline API
 # ============================
@@ -2591,4 +2620,9 @@ def admin_export():
         mimetype="text/csv",
         headers={"Content-Disposition": f"attachment; filename={filename}"}
     )
+
+
+if __name__ == '__main__':
+    app.run(debug=True)
+
 
