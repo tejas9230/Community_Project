@@ -84,6 +84,9 @@ class PostgresConnectionWrapper:
         self._conn = real_conn
 
     def cursor(self, *args, **kwargs):
+        import psycopg2.extras
+        if 'cursor_factory' not in kwargs:
+            kwargs['cursor_factory'] = psycopg2.extras.DictCursor
         real_cur = self._conn.cursor(*args, **kwargs)
         return PostgresCursorWrapper(real_cur)
 
