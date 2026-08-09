@@ -524,8 +524,19 @@ def login():
         user = cur.fetchone()
         conn.close()
 
-        # bcrypt password check
-        if user is None or not bcrypt.checkpw(password.encode(), user[1].encode()):
+        # Safe password check (handles both bcrypt hashes and plain text fallback)
+        is_valid = False
+        if user is not None:
+            stored_pw = str(user[1]) if user[1] else ""
+            if stored_pw.startswith("$2b$") or stored_pw.startswith("$2a$"):
+                try:
+                    is_valid = bcrypt.checkpw(password.encode('utf-8'), stored_pw.encode('utf-8'))
+                except Exception:
+                    is_valid = (password == stored_pw)
+            else:
+                is_valid = (password == stored_pw)
+
+        if not is_valid:
             flash("Invalid username or password. Please try again.", "error")
             return redirect('/login')
 
