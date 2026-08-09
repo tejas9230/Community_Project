@@ -524,10 +524,29 @@ def login():
         user = cur.fetchone()
         conn.close()
 
+        if user is None:
+            flash("Invalid username or password. Please try again.", "error")
+            return redirect('/login')
+
+        # Safely extract user fields (handles dict, DictRow, sqlite3.Row, and tuple)
+        def _get_field(row, key, idx):
+            try:
+                return row[key]
+            except (TypeError, KeyError, IndexError):
+                try:
+                    return row[idx]
+                except (TypeError, KeyError, IndexError):
+                    return None
+
+        u_name = _get_field(user, 'username', 0)
+        u_pass = _get_field(user, 'password', 1)
+        u_role = _get_field(user, 'role', 2)
+        u_dept = _get_field(user, 'department', 3)
+
         # Safe password check (handles both bcrypt hashes and plain text fallback)
         is_valid = False
-        if user is not None:
-            stored_pw = str(user[1]) if user[1] else ""
+        if u_pass:
+            stored_pw = str(u_pass)
             if stored_pw.startswith("$2b$") or stored_pw.startswith("$2a$"):
                 try:
                     is_valid = bcrypt.checkpw(password.encode('utf-8'), stored_pw.encode('utf-8'))
@@ -544,18 +563,18 @@ def login():
         # Save Session
         # -----------------------------
 
-        session["username"] = user[0]
-        session["role"] = user[2]
-        session["department"] = user[3]
+        session["username"] = u_name
+        session["role"] = u_role
+        session["department"] = u_dept
 
         # -----------------------------
         # Redirect
         # -----------------------------
 
-        if user[2] == "Admin":
+        if u_role == "Admin":
             return redirect("/admin")
 
-        elif user[2] == "Officer":
+        elif u_role == "Officer":
             return redirect("/department_dashboard")
 
         else:
