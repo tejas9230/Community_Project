@@ -1,0 +1,992 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>Analytics Dashboard</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+          rel="stylesheet">
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css"
+          rel="stylesheet">
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+
+        body{
+            background:#f4f7fb;
+        }
+
+        .dashboard-title{
+            font-weight:700;
+            color:#0d6efd;
+        }
+
+        .stat-card{
+
+            border:none;
+
+            border-radius:18px;
+
+            transition:.25s;
+
+            box-shadow:0 5px 18px rgba(0,0,0,.08);
+
+        }
+
+        .stat-card:hover{
+
+            transform:translateY(-5px);
+
+        }
+
+        .stat-icon{
+
+            font-size:34px;
+
+            opacity:.85;
+
+        }
+
+        .stat-value{
+
+            font-size:32px;
+
+            font-weight:bold;
+
+        }
+
+        .section-title{
+
+            font-weight:600;
+
+            margin-bottom:15px;
+
+        }
+
+        .info-card{
+
+            border:none;
+
+            border-radius:16px;
+
+            box-shadow:0 4px 15px rgba(0,0,0,.08);
+
+        }
+
+    </style>
+
+</head>
+
+<body>
+
+<div class="container py-4">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+
+        <div>
+
+            <h2 class="dashboard-title">
+
+                Community Complaint Portal Using AI
+
+            </h2>
+
+            <small class="text-muted">
+
+                Analytics Dashboard
+
+            </small>
+
+        </div>
+
+        <a href="/admin"
+           class="btn btn-primary">
+
+            <i class="bi bi-arrow-left"></i>
+
+            Back
+
+        </a>
+
+    </div>
+
+    <!-- =======================
+            Statistics
+    ======================== -->
+
+    <div class="row g-4">
+
+        <div class="col-lg-4">
+
+            <div class="card stat-card bg-primary text-white">
+
+                <div class="card-body">
+
+                    <div class="d-flex justify-content-between">
+
+                        <div>
+
+                            <small>Total Complaints</small>
+
+                            <div class="stat-value">
+
+                                {{ total }}
+
+                            </div>
+
+                        </div>
+
+                        <i class="bi bi-folder stat-icon"></i>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="col-lg-4">
+
+            <div class="card stat-card bg-warning">
+
+                <div class="card-body">
+
+                    <div class="d-flex justify-content-between">
+
+                        <div>
+
+                            <small>Pending</small>
+
+                            <div class="stat-value">
+
+                                {{ pending }}
+
+                            </div>
+
+                        </div>
+
+                        <i class="bi bi-hourglass stat-icon"></i>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="col-lg-4">
+
+            <div class="card stat-card bg-info text-white">
+
+                <div class="card-body">
+
+                    <div class="d-flex justify-content-between">
+
+                        <div>
+
+                            <small>In Progress</small>
+
+                            <div class="stat-value">
+
+                                {{ in_progress }}
+
+                            </div>
+
+                        </div>
+
+                        <i class="bi bi-tools stat-icon"></i>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="col-lg-4">
+
+            <div class="card stat-card bg-success text-white">
+
+                <div class="card-body">
+
+                    <div class="d-flex justify-content-between">
+
+                        <div>
+
+                            <small>Resolved</small>
+
+                            <div class="stat-value">
+
+                                {{ resolved }}
+
+                            </div>
+
+                        </div>
+
+                        <i class="bi bi-check-circle stat-icon"></i>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="col-lg-4">
+
+            <div class="card stat-card bg-danger text-white">
+
+                <div class="card-body">
+
+                    <div class="d-flex justify-content-between">
+
+                        <div>
+
+                            <small>Rejected</small>
+
+                            <div class="stat-value">
+
+                                {{ rejected }}
+
+                            </div>
+
+                        </div>
+
+                        <i class="bi bi-x-circle stat-icon"></i>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="col-lg-4">
+
+            <div class="card stat-card bg-dark text-white">
+
+                <div class="card-body">
+
+                    <div class="d-flex justify-content-between">
+
+                        <div>
+
+                            <small>Resolution Rate</small>
+
+                            <div class="stat-value">
+
+                                {{ resolution_rate }}%
+
+                            </div>
+
+                        </div>
+
+                        <i class="bi bi-graph-up-arrow stat-icon"></i>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- =======================
+         Smart Insights
+    ======================== -->
+
+    <div class="row mt-4 g-4">
+
+        <div class="col-lg-4">
+
+            <div class="card info-card">
+
+                <div class="card-body">
+
+                    <h5 class="section-title">
+
+                        🏆 Most Reported Category
+
+                    </h5>
+
+                    <h4>
+
+                        {{ most_reported }}
+
+                    </h4>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="col-lg-4">
+
+            <div class="card info-card">
+
+                <div class="card-body">
+
+                    <h5 class="section-title">
+
+                        📍 Most Affected Area
+
+                    </h5>
+
+                    <h4>
+
+                        {{ top_area_name }}
+
+                    </h4>
+
+                    <small>
+
+                        {{ top_area_count }} complaints
+
+                    </small>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="col-lg-4">
+
+            <div class="card info-card">
+
+                <div class="card-body">
+
+                    <h5 class="section-title">
+
+                        🌍 Community Health
+
+                    </h5>
+
+                    <h4>
+
+                        {{ health_status }}
+
+                    </h4>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+    <!-- =======================
+         Charts Section
+    ======================== -->
+
+    <div class="row mt-5">
+
+        <!-- Complaint Category Chart -->
+
+        <div class="col-lg-7 mb-4">
+
+            <div class="card info-card">
+
+                <div class="card-body">
+
+                    <h4 class="section-title">
+
+                        📊 Complaint Category Distribution
+
+                    </h4>
+
+                    <canvas id="categoryChart"></canvas>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- Community Overview -->
+
+        <div class="col-lg-5 mb-4">
+
+            <div class="card info-card h-100">
+
+                <div class="card-body">
+
+                    <h4 class="section-title">
+
+                        🌍 Community Overview
+
+                    </h4>
+
+                    <table class="table table-borderless">
+
+                        <tr>
+
+                            <th>Health Status</th>
+
+                            <td>
+
+                                {% if health_status=="Good" %}
+
+                                <span class="badge bg-success">
+
+                                    {{ health_status }}
+
+                                </span>
+
+                                {% elif health_status=="Moderate" %}
+
+                                <span class="badge bg-warning text-dark">
+
+                                    {{ health_status }}
+
+                                </span>
+
+                                {% else %}
+
+                                <span class="badge bg-danger">
+
+                                    {{ health_status }}
+
+                                </span>
+
+                                {% endif %}
+
+                            </td>
+
+                        </tr>
+
+                        <tr>
+
+                            <th>Most Reported</th>
+
+                            <td>{{ most_reported }}</td>
+
+                        </tr>
+
+                        <tr>
+
+                            <th>Top Area</th>
+
+                            <td>{{ top_area_name }}</td>
+
+                        </tr>
+
+                        <tr>
+
+                            <th>Total Complaints</th>
+
+                            <td>{{ total }}</td>
+
+                        </tr>
+
+                        <tr>
+
+                            <th>Resolution Rate</th>
+
+                            <td>{{ resolution_rate }}%</td>
+
+                        </tr>
+
+                    </table>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- =======================
+         Recent Complaints
+    ======================== -->
+
+    <div class="card info-card mt-4">
+
+        <div class="card-body">
+
+            <h4 class="section-title">
+
+                📝 Recent Complaints
+
+            </h4>
+
+            <div class="table-responsive">
+
+                <table class="table table-hover align-middle">
+
+                    <thead class="table-primary">
+
+                        <tr>
+
+                            <th>ID</th>
+
+                            <th>Citizen</th>
+
+                            <th>Category</th>
+
+                            <th>Status</th>
+
+                            <th>Date</th>
+
+                        </tr>
+
+                    </thead>
+
+                    <tbody>
+
+                        {% for complaint in recent_complaints %}
+
+                        <tr>
+
+                            <td>
+
+                                SCS-{{ "%04d"|format(complaint.id) }}
+
+                            </td>
+
+                            <td>
+
+                                {{ complaint.username }}
+
+                            </td>
+
+                            <td>
+
+                                {{ complaint.category }}
+
+                            </td>
+
+                            <td>
+
+                                {% if complaint.status=="Resolved" %}
+
+                                <span class="badge bg-success">
+
+                                    {{ complaint.status }}
+
+                                </span>
+
+                                {% elif complaint.status=="Rejected" %}
+
+                                <span class="badge bg-danger">
+
+                                    {{ complaint.status }}
+
+                                </span>
+
+                                {% elif complaint.status=="In Progress" %}
+
+                                <span class="badge bg-primary">
+
+                                    {{ complaint.status }}
+
+                                </span>
+
+                                {% else %}
+
+                                <span class="badge bg-warning text-dark">
+
+                                    {{ complaint.status }}
+
+                                </span>
+
+                                {% endif %}
+
+                            </td>
+
+                            <td>
+
+                                {{ complaint.created_at }}
+
+                            </td>
+
+                        </tr>
+
+                        {% endfor %}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- =======================
+         Chart.js
+    ======================== -->
+
+    <script>
+
+        const categoryLabels = [
+
+            {% for row in category_data %}
+
+                "{{ row.category }}",
+
+            {% endfor %}
+
+        ];
+
+        const categoryValues = [
+
+            {% for row in category_data %}
+
+                {{ row.total }},
+
+            {% endfor %}
+
+        ];
+
+        new Chart(
+
+            document.getElementById("categoryChart"),
+
+            {
+
+                type: "pie",
+
+                data: {
+
+                    labels: categoryLabels,
+
+                    datasets: [{
+
+                        data: categoryValues
+
+                    }]
+
+                },
+
+                options: {
+
+                    responsive: true,
+
+                    plugins: {
+
+                        legend: {
+
+                            position: "bottom"
+
+                        }
+
+                    }
+
+                }
+
+            }
+
+        );
+
+    </script>
+
+    <!-- =======================
+         Highest Priority Complaints
+    ======================== -->
+
+    <div class="card info-card mt-4">
+
+        <div class="card-body">
+
+            <h4 class="section-title">
+
+                🔥 Highest Priority Complaints
+
+            </h4>
+
+            <div class="table-responsive">
+
+                <table class="table table-hover align-middle">
+
+                    <thead class="table-danger">
+
+                        <tr>
+
+                            <th>ID</th>
+                            <th>Category</th>
+                            <th>Priority</th>
+                            <th>Area</th>
+                            <th>Status</th>
+
+                        </tr>
+
+                    </thead>
+
+                    <tbody>
+
+                        {% for complaint in priority_complaints %}
+
+                        <tr>
+
+                            <td>
+
+                                SCS-{{ "%04d"|format(complaint.id) }}
+
+                            </td>
+
+                            <td>
+
+                                {{ complaint.category }}
+
+                            </td>
+
+                            <td>
+
+                                {% if complaint.priority=="Critical" %}
+
+                                    <span class="badge bg-danger">
+
+                                        {{ complaint.priority }}
+
+                                    </span>
+
+                                {% elif complaint.priority=="High" %}
+
+                                    <span class="badge bg-warning text-dark">
+
+                                        {{ complaint.priority }}
+
+                                    </span>
+
+                                {% elif complaint.priority=="Medium" %}
+
+                                    <span class="badge bg-info">
+
+                                        {{ complaint.priority }}
+
+                                    </span>
+
+                                {% else %}
+
+                                    <span class="badge bg-secondary">
+
+                                        {{ complaint.priority }}
+
+                                    </span>
+
+                                {% endif %}
+
+                            </td>
+
+                            <td>
+
+                                {{ complaint.address }}
+
+                            </td>
+
+                            <td>
+
+                                {{ complaint.status }}
+
+                            </td>
+
+                        </tr>
+
+                        {% endfor %}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- =======================
+         Department Statistics
+    ======================== -->
+
+    <div class="row mt-4">
+
+        <div class="col-lg-7">
+
+            <div class="card info-card">
+
+                <div class="card-body">
+
+                    <h4 class="section-title">
+
+                        🏢 Department Statistics
+
+                    </h4>
+
+                    <canvas id="departmentChart"></canvas>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="col-lg-5">
+
+            <div class="card info-card">
+
+                <div class="card-body">
+
+                    <h4 class="section-title">
+
+                        📍 Top 5 Affected Areas
+
+                    </h4>
+
+                    <table class="table table-striped">
+
+                        <thead>
+
+                            <tr>
+
+                                <th>Area</th>
+
+                                <th>Complaints</th>
+
+                            </tr>
+
+                        </thead>
+
+                        <tbody>
+
+                            {% for area in top_areas %}
+
+                            <tr>
+
+                                <td>
+
+                                    {{ area.address.split(",")[0] }}
+
+                                </td>
+
+                                <td>
+
+                                    <span class="badge bg-primary">
+
+                                        {{ area.total }}
+
+                                    </span>
+
+                                </td>
+
+                            </tr>
+
+                            {% endfor %}
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- =======================
+         Department Chart
+    ======================== -->
+
+    <script>
+
+        const departmentLabels = [
+
+            {% for row in department_data %}
+
+                "{{ row.department }}",
+
+            {% endfor %}
+
+        ];
+
+        const departmentValues = [
+
+            {% for row in department_data %}
+
+                {{ row.total }},
+
+            {% endfor %}
+
+        ];
+
+        new Chart(
+
+            document.getElementById("departmentChart"),
+
+            {
+
+                type: "bar",
+
+                data: {
+
+                    labels: departmentLabels,
+
+                    datasets: [{
+
+                        label: "Complaints",
+
+                        data: departmentValues
+
+                    }]
+
+                },
+
+                options: {
+
+                    responsive:true,
+
+                    plugins:{
+
+                        legend:{
+
+                            display:false
+
+                        }
+
+                    },
+
+                    scales:{
+
+                        y:{
+
+                            beginAtZero:true
+
+                        }
+
+                    }
+
+                }
+
+            }
+
+        );
+
+    </script>
+
+</div>
+
+</body>
+
+</html>
+
+

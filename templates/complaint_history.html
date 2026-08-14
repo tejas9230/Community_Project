@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>Complaint History</title>
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='complaint_history.css') }}">
+
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+
+</head>
+
+<body>
+
+<div class="background-animation">
+
+    <span></span>
+    <span></span>
+    <span></span>
+    <span></span>
+
+</div>
+
+<div class="history-container">
+
+    <!-- ================= HEADER ================= -->
+
+    <header class="history-header">
+
+        <div class="header-left">
+
+            <div class="logo-circle">
+
+                <i class="fa-solid fa-clock-rotate-left"></i>
+
+            </div>
+
+            <div>
+
+                <h1>
+
+                    Complaint History
+
+                </h1>
+
+                <p>
+
+                    Archive of resolved and rejected complaints.
+
+                </p>
+
+            </div>
+
+        </div>
+
+        <div class="header-right">
+
+            <a href="/admin">
+
+                <button class="back-btn">
+
+                    <i class="fa-solid fa-arrow-left"></i>
+
+                    Dashboard
+
+                </button>
+
+            </a>
+
+        </div>
+
+    </header>
+
+    <!-- ================= STATISTICS ================= -->
+
+    <section class="stats-container">
+
+        <div class="stat-card resolved">
+
+            <div class="stat-icon">
+
+                <i class="fa-solid fa-circle-check"></i>
+
+            </div>
+
+            <div>
+
+                <h3>Resolved</h3>
+
+                <h1>{{ resolved }}</h1>
+
+            </div>
+
+        </div>
+
+        <div class="stat-card rejected">
+
+            <div class="stat-icon">
+
+                <i class="fa-solid fa-circle-xmark"></i>
+
+            </div>
+
+            <div>
+
+                <h3>Rejected</h3>
+
+                <h1>{{ rejected }}</h1>
+
+            </div>
+
+        </div>
+
+        <div class="stat-card rating">
+
+            <div class="stat-icon">
+
+                <i class="fa-solid fa-star"></i>
+
+            </div>
+
+            <div>
+
+                <h3>Average Rating</h3>
+
+                <h1>{{ avg_rating }}</h1>
+
+            </div>
+
+        </div>
+
+        <div class="stat-card feedback">
+
+            <div class="stat-icon">
+
+                <i class="fa-solid fa-comments"></i>
+
+            </div>
+
+            <div>
+
+                <h3>Feedback Received</h3>
+
+                <h1>{{ feedback_count }}</h1>
+
+            </div>
+
+        </div>
+
+    </section>
+
+    <!-- ================= SEARCH ================= -->
+
+    <section class="filter-card">
+
+        <div class="filter-header">
+
+            <h2>
+
+                🔍 Search Complaint History
+
+            </h2>
+
+            <p>
+
+                Search archived complaints.
+
+            </p>
+
+        </div>
+
+        <form method="GET" action="/complaint_history">
+
+            <div class="filter-row">
+
+                <input
+
+                    type="text"
+
+                    name="search"
+
+                    value="{{ request.args.get('search','') }}"
+
+                    placeholder="Complaint ID, User or Address">
+
+                <select name="status">
+
+                    <option value="">All History</option>
+
+                    <option value="Resolved">Resolved</option>
+
+                    <option value="Rejected">Rejected</option>
+
+                </select>
+
+                <select name="category">
+
+                    <option value="">All Categories</option>
+
+                    <option value="Water">Water</option>
+
+                    <option value="Electricity">Electricity</option>
+
+                    <option value="Garbage">Garbage</option>
+
+                    <option value="Road Damage">Road Damage</option>
+
+                    <option value="Others">Others</option>
+
+                </select>
+
+                <button
+                    class="filter-btn"
+                    type="submit">
+
+                    Search
+
+                </button>
+
+            </div>
+
+        </form>
+
+    </section>
+
+    <!-- ================= TABLE ================= -->
+
+    <section class="table-card">
+
+        <div class="table-header">
+
+            <div>
+
+                <h2>
+
+                    📁 Complaint Archive
+
+                </h2>
+
+                <p>
+
+                    Resolved and rejected complaints.
+
+                </p>
+
+            </div>
+
+        </div>
+
+        <div class="table-responsive">
+
+        <table class="history-table">
+
+            <thead>
+
+                <tr>
+
+                    <th>ID</th>
+
+                    <th>User</th>
+
+                    <th>Category</th>
+
+                    <th>Priority</th>
+
+                    <th>Status</th>
+
+                    <th>Rating</th>
+
+                    <th>Feedback</th>
+
+                    <th>Reason</th>
+
+                    <th>Image</th>
+
+                    <th>Action</th>
+
+                </tr>
+
+            </thead>
+
+            <tbody>
+
+                {% if complaints %}
+
+                {% for complaint in complaints %}
+
+                <tr>
+
+                    <td>
+
+                        <span class="complaint-id">
+
+                            SCS-{{ "%04d"|format(complaint[0]) }}
+
+                        </span>
+
+                    </td>
+
+                    <td>
+
+                        <i class="fa-solid fa-user"></i>
+
+                        {{ complaint[1] }}
+
+                    </td>
+
+                    <td>
+
+                        {{ complaint[2] }}
+
+                    </td>
+
+                    <td>
+
+                        {% if complaint[3] == "Critical" %}
+
+                            <span class="priority critical">
+
+                                🔴 Critical
+
+                            </span>
+
+                        {% elif complaint[3] == "High" %}
+
+                            <span class="priority high">
+
+                                🟠 High
+
+                            </span>
+
+                        {% elif complaint[3] == "Medium" %}
+
+                            <span class="priority medium">
+
+                                🟡 Medium
+
+                            </span>
+
+                        {% else %}
+
+                            <span class="priority low">
+
+                                🔵 Low
+
+                            </span>
+
+                        {% endif %}
+
+                    </td>
+
+                    <td>
+
+                        {% if complaint[5] == "Resolved" %}
+
+                            <span class="status resolved">
+
+                                🟢 Resolved
+
+                            </span>
+
+                        {% else %}
+
+                            <span class="status rejected">
+
+                                🔴 Rejected
+
+                            </span>
+
+                        {% endif %}
+
+                    </td>
+
+                    <td>
+
+{% if complaint[9] %}
+
+    {{ "⭐" * complaint[9] }}
+
+    <br>
+
+    ({{ complaint[9] }}/5)
+
+{% else %}
+
+    <span class="no-data">
+
+        -
+
+    </span>
+
+{% endif %}
+
+</td>
+
+<td>
+
+    {% if complaint[8] %}
+
+        <div class="feedback-box">
+
+            {{ complaint[8] }}
+
+        </div>
+
+    {% else %}
+
+        <span class="no-data">
+
+            No Feedback
+
+        </span>
+
+    {% endif %}
+
+</td>
+
+<td>
+
+    {% if complaint[7] %}
+
+        <div class="reason-box">
+
+            {{ complaint[7] }}
+
+        </div>
+
+    {% else %}
+
+        <span class="no-data">
+
+            —
+
+        </span>
+
+    {% endif %}
+
+</td>
+
+<td>
+
+    {% if complaint[6] %}
+
+        <button
+
+            class="view-btn"
+
+            onclick="openImage('/static/uploads/{{ complaint[6].split('/')[-1] }}')">
+
+            <i class="fa-solid fa-image"></i>
+
+            View
+
+        </button>
+
+    {% else %}
+
+        <span class="no-image">
+
+            No Image
+
+        </span>
+
+    {% endif %}
+
+</td>
+
+<td>                       
+
+                        <a href="/update_status/{{ complaint[0] }}">
+
+                            <button class="manage-btn">
+
+                                <i class="fa-solid fa-eye"></i>
+
+                                View
+
+                            </button>
+
+                        </a>
+
+                    </td>
+
+                </tr>    
+                
+                {% endfor %}
+
+                {% else %}
+
+                <tr>
+
+                    <td colspan="10">
+
+                        <div class="empty-state">
+
+                            <i class="fa-solid fa-folder-open"></i>
+
+                            <h2>
+
+                                No Complaint History Found
+
+                            </h2>
+
+                            <p>
+
+                                There are no resolved or rejected complaints matching your search.
+
+                            </p>
+
+                        </div>
+
+                    </td>
+
+                </tr>
+
+                {% endif %}
+
+            </tbody>
+
+        </table>
+
+        </div>
+
+        <div class="table-footer">
+
+            <div>
+
+                Showing archived complaints only.
+
+            </div>
+
+            <a href="/admin">
+
+                <button class="back-btn">
+
+                    <i class="fa-solid fa-arrow-left"></i>
+
+                    Back to Dashboard
+
+                </button>
+
+            </a>
+
+        </div>
+
+    </section>
+
+</div>
+
+<!-- ================= IMAGE POPUP ================= -->
+
+<div id="imageModal" class="image-modal">
+
+    <span
+        class="close-modal"
+        onclick="closeImage()">
+
+        &times;
+
+    </span>
+
+    <img
+        id="popupImage"
+        class="popup-image">
+
+</div>
+
+<!-- ================= JAVASCRIPT ================= -->
+
+<script>
+
+const modal = document.getElementById("imageModal");
+const popupImage = document.getElementById("popupImage");
+
+function openImage(image){
+
+    popupImage.src = image;
+
+    modal.style.display = "flex";
+
+}
+
+function closeImage(){
+
+    modal.style.display = "none";
+
+}
+
+window.onclick = function(event){
+
+    if(event.target === modal){
+
+        closeImage();
+
+    }
+
+};
+
+// Simple entrance animation
+
+window.addEventListener("load",()=>{
+
+    document.querySelectorAll(".stat-card,.table-card,.filter-card").forEach((item,index)=>{
+
+        item.style.opacity="0";
+
+        item.style.transform="translateY(30px)";
+
+        setTimeout(()=>{
+
+            item.style.transition=".5s ease";
+
+            item.style.opacity="1";
+
+            item.style.transform="translateY(0)";
+
+        },index*120);
+
+    });
+
+});
+
+</script>
+
+</body>
+
+</html>                

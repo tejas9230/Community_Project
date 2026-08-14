@@ -1,0 +1,6 @@
+{
+  "name": "Community Complaint Portal",
+  "description": "AI-powered community complaint management system for reporting, categorizing, and tracking local issues.",
+  "requestFramePermissions": ["geolocation"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

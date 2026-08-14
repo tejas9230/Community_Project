@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login — Community Complaint Portal</title>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='auth.css') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+</head>
+
+<body>
+
+<!-- Animated Background -->
+<div class="background">
+    <div class="circle c1"></div>
+    <div class="circle c2"></div>
+    <div class="circle c3"></div>
+</div>
+
+<div class="login-box">
+
+    <!-- Logo -->
+    <div class="auth-logo">
+        <i class="fa-solid fa-shield-halved"></i>
+    </div>
+
+    <h1>Welcome Back</h1>
+    <p>Login to your community portal</p>
+
+    <!-- Flash Error Message -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }}">
+                    <i class="fa-solid fa-circle-exclamation"></i>
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <form method="POST" id="loginForm">
+
+        <div class="input-group">
+            <i class="fa-solid fa-user input-icon"></i>
+            <input
+                type="text"
+                name="username"
+                placeholder="Username"
+                required
+                autocomplete="username">
+        </div>
+
+        <div class="input-group">
+            <i class="fa-solid fa-lock input-icon"></i>
+            <input
+                type="password"
+                name="password"
+                placeholder="Password"
+                required
+                autocomplete="current-password">
+        </div>
+
+        <button type="submit" id="loginBtn">
+            <span class="btn-text">
+                <i class="fa-solid fa-right-to-bracket"></i>
+                Login
+            </span>
+            <span class="btn-loading" style="display:none;">
+                <i class="fa-solid fa-spinner fa-spin"></i>
+                Logging in...
+            </span>
+        </button>
+
+    </form>
+
+    <div class="auth-footer">
+        <span>Don't have an account?</span>
+        <a href="/register">Create one here</a>
+    </div>
+
+</div>
+
+<script>
+    document.getElementById('loginForm').addEventListener('submit', function() {
+        const btn = document.getElementById('loginBtn');
+        btn.querySelector('.btn-text').style.display = 'none';
+        btn.querySelector('.btn-loading').style.display = 'inline';
+        btn.disabled = true;
+    });
+</script>
+
+</body>
+</html>

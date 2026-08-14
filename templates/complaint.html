@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Register Complaint</title>
+</head>
+
+<body>
+
+<h2>Register Complaint</h2>
+
+<form method="POST">
+
+    <input
+        type="text"
+        name="name"
+        placeholder="Enter Name"
+        required>
+
+    <br><br>
+
+    <select name="category">
+
+        <option>Garbage</option>
+        <option>Road Damage</option>
+        <option>Water Leakage</option>
+        <option>Street Light</option>
+
+    </select>
+
+    <br><br>
+
+    <textarea
+        name="description"
+        rows="5"
+        cols="40"
+        placeholder="Describe the issue">
+    </textarea>
+
+    <br><br>
+
+    <button type="submit">
+        Submit Complaint
+    </button>
+
+</form>
+
+</body>
+</html>

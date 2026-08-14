@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>User Dashboard</title>
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='user_dashboard.css') }}">
+
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+
+</head>
+
+<body>
+
+<div class="background-animation">
+
+    <span></span>
+    <span></span>
+    <span></span>
+    <span></span>
+
+</div>
+
+<div class="dashboard-container">
+
+    <!-- ========================= -->
+    <!-- Header -->
+    <!-- ========================= -->
+
+    <header class="dashboard-header">
+
+        <div class="header-left">
+
+            <div class="profile-circle">
+
+                <i class="fa-solid fa-user"></i>
+
+            </div>
+
+            <div>
+
+                <h1>
+
+                    👋 Welcome Back, {{ username }}
+
+                </h1>
+
+                <p>
+
+                  Community Complaint Portal Using AI
+
+                </p>
+
+                <small>
+
+                    Together, let's build a cleaner and safer community.
+
+                </small>
+
+            </div>
+
+        </div>
+
+    </header>
+
+    <!-- ========================= -->
+    <!-- Statistics -->
+    <!-- ========================= -->
+
+    <section class="stats-container">
+
+        <div class="stat-card total">
+
+            <i class="fa-solid fa-file-circle-exclamation"></i>
+
+            <h3>Total Complaints</h3>
+
+            <h1>{{ total }}</h1>
+
+        </div>
+
+        <div class="stat-card pending">
+
+            <i class="fa-solid fa-hourglass-half"></i>
+
+            <h3>Pending</h3>
+
+            <h1>{{ pending }}</h1>
+
+        </div>
+
+        <div class="stat-card progress">
+
+            <i class="fa-solid fa-spinner"></i>
+
+            <h3>In Progress</h3>
+
+            <h1>{{ in_progress }}</h1>
+
+        </div>
+
+        <div class="stat-card resolved">
+
+            <i class="fa-solid fa-circle-check"></i>
+
+            <h3>Resolved</h3>
+
+            <h1>{{ resolved }}</h1>
+
+        </div>
+
+    </section>
+
+    <!-- ========================= -->
+    <!-- Quick Actions -->
+    <!-- ========================= -->
+
+    <section class="quick-actions">
+
+    <!-- Submit Complaint -->
+
+    <a href="/submit_complaint" class="action-card">
+
+        <div class="action-icon blue">
+            <i class="fa-solid fa-bullhorn"></i>
+        </div>
+
+        <h2>Submit Complaint</h2>
+
+        <p>
+            Report a community issue with GPS and evidence.
+        </p>
+
+    </a>
+
+    <!-- My Complaints -->
+
+    <a href="/view_complaints" class="action-card">
+
+        <div class="action-icon purple">
+            <i class="fa-solid fa-clipboard-list"></i>
+        </div>
+
+        <h2>My Complaints</h2>
+
+        <p>
+            Track complaint status and updates.
+        </p>
+
+    </a>
+
+    <!-- Help Center -->
+
+    <a href="/help" class="action-card">
+        <div class="action-icon green">
+            <i class="fa-solid fa-circle-question"></i>
+        </div>
+
+        <h2>Help Center</h2>
+
+        <p>
+            FAQs, complaint guide and emergency contacts.
+        </p>
+
+    </a>
+
+    <!-- Logout -->
+
+    <a href="/logout" class="action-card">
+
+        <div class="action-icon red">
+            <i class="fa-solid fa-right-from-bracket"></i>
+        </div>
+
+        <h2>Logout</h2>
+
+        <p>
+            Securely sign out from your account.
+        </p>
+
+    </a>
+
+</section>
+
+               
+
+    <!-- ========================= -->
+    <!-- Community Tip -->
+    <!-- ========================= -->
+
+    <section class="tip-card">
+
+        <div class="tip-icon">
+
+            <i class="fa-solid fa-lightbulb"></i>
+
+        </div>
+
+        <div>
+
+            <h2>
+
+                Community Tip
+
+            </h2>
+
+            <p>
+
+                Upload a clear image and enable GPS while submitting a complaint.
+                This helps the authorities verify and resolve the issue much faster.
+
+            </p>
+
+        </div>
+
+    </section>
+
+    <!-- ========================= -->
+    <!-- Notifications -->
+    <!-- ========================= -->
+
+    <section class="notification-card">
+
+        <div class="card-title">
+
+            <i class="fa-solid fa-bell"></i>
+
+            <h2>
+
+                Notifications
+
+            </h2>
+
+        </div>
+
+      <div class="notification-box">
+
+    {% if notifications %}
+
+        {% for notification in notifications %}
+
+        <div class="notification-item">
+
+            <i class="fa-solid fa-bell"></i>
+
+            <div>
+
+                <h3>
+
+                    {{ notification[0] }}
+
+                </h3>
+
+                <p>
+
+                    {{ notification[1] }}
+
+                </p>
+
+            </div>
+
+        </div>
+
+        {% endfor %}
+
+    {% else %}
+
+        <div class="notification-item empty">
+
+            <i class="fa-solid fa-circle-check"></i>
+
+            <div>
+
+                <h3>
+
+                    No New Notifications
+
+                </h3>
+
+                <p>
+
+                    You're all caught up. Updates about your complaints will appear here.
+
+                </p>
+
+            </div>
+
+        </div>
+
+    {% endif %}
+
+</div>  
+
+    </section>       
+    <!-- ========================= -->
+    <!-- Recent Activity -->
+    <!-- ========================= -->
+
+    <section class="activity-card">
+
+        <div class="card-title">
+
+            <i class="fa-solid fa-clock-rotate-left"></i>
+
+            <h2>
+
+                Recent Activity
+
+            </h2>
+
+        </div>
+
+        <div class="activity-list">
+
+            <div class="activity-item">
+
+                <div class="activity-icon">
+
+                    <i class="fa-solid fa-paper-plane"></i>
+
+                </div>
+
+                <div>
+
+                    <h3>
+
+                        Complaint Submitted
+
+                    </h3>
+
+                    <p>
+
+                        Your submitted complaints will appear here.
+
+                    </p>
+
+                </div>
+
+            </div>
+
+            <div class="activity-item">
+
+                <div class="activity-icon blue">
+
+                    <i class="fa-solid fa-spinner"></i>
+
+                </div>
+
+                <div>
+
+                    <h3>
+
+                        Status Updates
+
+                    </h3>
+
+                    <p>
+
+                        You'll receive updates whenever your complaint status changes.
+
+                    </p>
+
+                </div>
+
+            </div>
+
+            <div class="activity-item">
+
+                <div class="activity-icon green">
+
+                    <i class="fa-solid fa-star"></i>
+
+                </div>
+
+                <div>
+
+                    <h3>
+
+                        Feedback & Rating
+
+                    </h3>
+
+                    <p>
+
+                        After a complaint is resolved or rejected, you can share your feedback and rate our service.
+
+                    </p>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </section>
+
+    <!-- ========================= -->
+    <!-- Footer -->
+    <!-- ========================= -->
+
+    <footer class="dashboard-footer">
+
+        <p>
+
+<p>Join </p>
+            © 2026 Community Complaint Portal Using AI
+
+        </p>
+
+        <small>
+
+            Developed for Community Service & Citizen Engagement
+
+        </small>
+
+    </footer>
+
+</div>
+
+<script>
+
+window.addEventListener("load", function(){
+
+    const cards = document.querySelectorAll(
+
+        ".stat-card, .action-card, .tip-card, .notification-card, .activity-card"
+
+    );
+
+    cards.forEach((card,index)=>{
+
+        card.style.opacity="0";
+
+        card.style.transform="translateY(30px)";
+
+        setTimeout(()=>{
+
+            card.style.transition=".5s ease";
+
+            card.style.opacity="1";
+
+            card.style.transform="translateY(0)";
+
+        },index*120);
+
+    });
+
+});
+
+</script>
+
+</body>
+
+</html>    

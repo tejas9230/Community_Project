@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Complaint Heatmap | Admin</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box;}
+        body{background:#0f172a;font-family:"Segoe UI",sans-serif;color:#e2e8f0;height:100vh;display:flex;flex-direction:column;}
+        .topbar{background:rgba(15,23,42,0.95);border-bottom:1px solid rgba(255,255,255,0.1);
+                padding:14px 24px;display:flex;align-items:center;justify-content:space-between;z-index:1000;}
+        .topbar h1{font-size:20px;font-weight:700;background:linear-gradient(135deg,#60a5fa,#a78bfa);
+                   -webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+        .back-btn{background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);
+                  color:#e2e8f0;padding:8px 18px;border-radius:8px;text-decoration:none;font-size:13px;}
+        .back-btn:hover{background:rgba(255,255,255,0.15);}
+        #map{flex:1;width:100%;}
+        .legend{position:absolute;bottom:30px;right:16px;background:rgba(15,23,42,0.92);
+                border:1px solid rgba(255,255,255,0.12);border-radius:12px;padding:16px;z-index:999;min-width:180px;}
+        .legend h4{font-size:13px;color:#94a3b8;margin-bottom:10px;text-transform:uppercase;letter-spacing:.5px;}
+        .legend-item{display:flex;align-items:center;gap:8px;margin-bottom:8px;font-size:13px;}
+        .dot{width:12px;height:12px;border-radius:50%;flex-shrink:0;}
+        .filters{position:absolute;top:80px;left:16px;background:rgba(15,23,42,0.92);
+                 border:1px solid rgba(255,255,255,0.12);border-radius:12px;padding:16px;z-index:999;min-width:200px;}
+        .filters h4{font-size:13px;color:#94a3b8;margin-bottom:10px;text-transform:uppercase;}
+        .filter-btn{display:block;width:100%;padding:7px 12px;margin-bottom:6px;border-radius:7px;border:1px solid rgba(255,255,255,0.15);
+                    background:rgba(255,255,255,0.06);color:#e2e8f0;cursor:pointer;font-size:13px;text-align:left;transition:.2s;}
+        .filter-btn.active,.filter-btn:hover{background:rgba(96,165,250,0.2);border-color:#60a5fa;}
+        .stats-bar{position:absolute;top:80px;right:16px;background:rgba(15,23,42,0.92);
+                   border:1px solid rgba(255,255,255,0.12);border-radius:12px;padding:16px;z-index:999;min-width:180px;}
+        .stat-row{display:flex;justify-content:space-between;margin-bottom:8px;font-size:13px;}
+        .stat-val{font-weight:700;color:#60a5fa;}
+        .popup-content{background:#1e293b;color:#e2e8f0;border-radius:8px;padding:4px;}
+    </style>
+</head>
+<body>
+<div class="topbar">
+    <h1>🔥 Complaint Heatmap</h1>
+    <div style="display:flex;gap:12px;align-items:center;">
+        <span id="total-count" style="font-size:13px;color:#94a3b8;">Loading...</span>
+        <a href="/admin" class="back-btn">← Back to Dashboard</a>
+    </div>
+</div>
+
+<div id="map"></div>
+
+<div class="filters">
+    <h4>Filter by Status</h4>
+    <button class="filter-btn active" onclick="filterMap('all',this)">All Complaints</button>
+    <button class="filter-btn" onclick="filterMap('Pending',this)">🟠 Pending</button>
+    <button class="filter-btn" onclick="filterMap('In Progress',this)">🔵 In Progress</button>
+    <button class="filter-btn" onclick="filterMap('Resolved',this)">🟢 Resolved</button>
+    <button class="filter-btn" onclick="filterMap('Rejected',this)">🔴 Rejected</button>
+</div>
+
+<div class="stats-bar">
+    <h4>Summary</h4>
+    <div class="stat-row"><span>Total</span><span class="stat-val" id="s-total">-</span></div>
+    <div class="stat-row"><span>Pending</span><span class="stat-val" id="s-pending">-</span></div>
+    <div class="stat-row"><span>Critical</span><span class="stat-val" style="color:#ef4444;" id="s-critical">-</span></div>
+    <div class="stat-row"><span>Resolved</span><span class="stat-val" style="color:#22c55e;" id="s-resolved">-</span></div>
+    <div class="stat-row"><span>Hotspots</span><span class="stat-val" style="color:#f59e0b;" id="s-hotspots">-</span></div>
+</div>
+
+<div class="legend">
+    <h4>Priority</h4>
+    <div class="legend-item"><div class="dot" style="background:#ef4444;"></div><span>Critical</span></div>
+    <div class="legend-item"><div class="dot" style="background:#f97316;"></div><span>High</span></div>
+    <div class="legend-item"><div class="dot" style="background:#eab308;"></div><span>Medium</span></div>
+    <div class="legend-item"><div class="dot" style="background:#3b82f6;"></div><span>Low</span></div>
+    <div class="legend-item"><div class="dot" style="background:#f59e0b;border:2px solid #fff;"></div><span>Hotspot (3+)</span></div>
+</div>
+
+<script>
+const CENTER_LAT = {{ center_lat }};
+const CENTER_LON = {{ center_lon }};
+
+const map = L.map('map', {zoomControl: true}).setView([CENTER_LAT, CENTER_LON], 14);
+
+L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+    attribution: '&copy; OpenStreetMap &copy; CARTO',
+    subdomains: 'abcd', maxZoom: 20
+}).addTo(map);
+
+// Community boundary circle
+L.circle([CENTER_LAT, CENTER_LON], {
+    color: '#60a5fa', fillColor: '#60a5fa', fillOpacity: 0.05,
+    radius: 5000, weight: 1.5, dashArray: '6,6'
+}).addTo(map).bindPopup('<div class="popup-content">Community boundary</div>');
+
+const colorMap = {Critical:'#ef4444', High:'#f97316', Medium:'#eab308', Low:'#3b82f6'};
+let allPoints = [];
+let markerLayer = L.layerGroup().addTo(map);
+let heatLayer = null;
+let activeFilter = 'all';
+
+function buildHeatData(points) {
+    return points.map(p => [p.lat, p.lon, p.weight * 0.8]);
+}
+
+function renderMap(points) {
+    markerLayer.clearLayers();
+    if (heatLayer) { map.removeLayer(heatLayer); heatLayer = null; }
+
+    const heatData = buildHeatData(points);
+    if (heatData.length > 0) {
+        heatLayer = L.heatLayer(heatData, {
+            radius: 30, blur: 20, maxZoom: 17,
+            gradient: {0.2:'#3b82f6', 0.4:'#eab308', 0.7:'#f97316', 1.0:'#ef4444'}
+        }).addTo(map);
+    }
+
+    // Group by location for hotspot circles
+    const locationGroups = {};
+    points.forEach(p => {
+        const key = `${p.lat.toFixed(3)},${p.lon.toFixed(3)}`;
+        if (!locationGroups[key]) locationGroups[key] = {lat:p.lat,lon:p.lon,count:0,cats:[]};
+        locationGroups[key].count++;
+        locationGroups[key].cats.push(p.category);
+    });
+
+    let hotspotCount = 0;
+    Object.values(locationGroups).forEach(g => {
+        if (g.count >= 3) {
+            hotspotCount++;
+            L.circle([g.lat, g.lon], {
+                color:'#f59e0b', fillColor:'#f59e0b', fillOpacity:0.25,
+                radius: 200, weight: 2
+            }).addTo(markerLayer)
+             .bindPopup(`<div class="popup-content"><b>🔥 Hotspot</b><br>${g.count} complaints<br>${[...new Set(g.cats)].join(', ')}</div>`);
+        }
+    });
+
+    // Individual markers
+    points.forEach(p => {
+        const color = colorMap[p.priority] || '#3b82f6';
+        const icon = L.divIcon({
+            html: `<div style="background:${color};width:10px;height:10px;border-radius:50%;border:2px solid rgba(255,255,255,0.8);"></div>`,
+            className: '', iconSize: [10,10]
+        });
+        L.marker([p.lat, p.lon], {icon})
+         .addTo(markerLayer)
+         .bindPopup(`<div class="popup-content">
+            <b>SCS-${String(p.id).padStart(4,'0')}</b><br>
+            📂 ${p.category}<br>
+            🎯 ${p.priority}<br>
+            📊 ${p.status}
+         </div>`);
+    });
+
+    // Stats
+    document.getElementById('s-total').textContent    = points.length;
+    document.getElementById('s-pending').textContent  = points.filter(p=>p.status==='Pending').length;
+    document.getElementById('s-critical').textContent = points.filter(p=>p.priority==='Critical').length;
+    document.getElementById('s-resolved').textContent = points.filter(p=>p.status==='Resolved').length;
+    document.getElementById('s-hotspots').textContent = hotspotCount;
+    document.getElementById('total-count').textContent = `${points.length} complaints plotted`;
+}
+
+function filterMap(status, btn) {
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    activeFilter = status;
+    const filtered = status === 'all' ? allPoints : allPoints.filter(p => p.status === status);
+    renderMap(filtered);
+}
+
+// Load data
+fetch('/api/heatmap')
+.then(r => r.json())
+.then(data => {
+    allPoints = data.points || [];
+    renderMap(allPoints);
+})
+.catch(() => {
+    document.getElementById('total-count').textContent = 'Failed to load data';
+});
+</script>
+</body>
+</html>
