@@ -535,6 +535,24 @@ app.get('/login', (_req, res) => {
 app.post('/login', async (req: any, res) => {
   const { username, password } = req.body;
   const trimmedUname = (username || '').trim();
+
+  // Ensure default demo accounts exist dynamically
+  if (trimmedUname.toLowerCase() === 'citizen1' && !db.users.some(u => u.username.toLowerCase() === 'citizen1')) {
+    const cHash = await bcrypt.hash('user123', 10);
+    db.users.push({ username: 'citizen1', passwordHash: cHash, role: 'Citizen', email: 'citizen1@gmail.com', phone: '9876543210', created_at: new Date().toISOString() });
+    saveDatabase();
+  }
+  if (trimmedUname.toLowerCase() === 'officer_roads' && !db.users.some(u => u.username.toLowerCase() === 'officer_roads')) {
+    const rHash = await bcrypt.hash('roads123', 10);
+    db.users.push({ username: 'officer_roads', passwordHash: rHash, role: 'Officer', department: 'Roads & Infrastructure', email: 'roads@gov.in', created_at: new Date().toISOString() });
+    saveDatabase();
+  }
+  if (trimmedUname.toLowerCase() === 'admin' && !db.users.some(u => u.username.toLowerCase() === 'admin')) {
+    const aHash = await bcrypt.hash('admin123', 10);
+    db.users.push({ username: 'admin', passwordHash: aHash, role: 'Admin', email: 'admin@gov.in', created_at: new Date().toISOString() });
+    saveDatabase();
+  }
+
   const user = db.users.find(u => u.username.toLowerCase() === trimmedUname.toLowerCase());
 
   if (!user) {
