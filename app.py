@@ -1427,14 +1427,14 @@ def department_dashboard():
     # Database
     # ------------------------------------
 
-    conn = sqlite3.connect("complaints.db", timeout=30)
-    conn.row_factory = sqlite3.Row
+    conn = get_db()
     cur = conn.cursor()
 
     # ------------------------------------
     # Load Active Complaints
     # ------------------------------------
 
+    dept_prefix = department.split()[0] if department else ""
     cur.execute("""
         SELECT
             id,
@@ -1447,10 +1447,15 @@ def department_dashboard():
             status,
             image_path
         FROM complaints
-        WHERE department=?
+        WHERE (
+            department=?
+            OR department LIKE ?
+            OR category LIKE ?
+            OR ? LIKE '%' || category || '%'
+        )
         AND status IN ('Pending','In Progress')
         ORDER BY id DESC
-    """, (department,))
+    """, (department, f"%{dept_prefix}%", f"%{dept_prefix}%", department))
 
     rows = cur.fetchall()
 
@@ -1695,8 +1700,7 @@ def officer_action(id):
     department = session.get("department")
     officer_username = session.get("username")
 
-    conn = sqlite3.connect("complaints.db", timeout=30)
-    conn.row_factory = sqlite3.Row
+    conn = get_db()
     cur = conn.cursor()
 
     # ------------------------------------
@@ -1706,8 +1710,8 @@ def officer_action(id):
     cur.execute("""
         SELECT *
         FROM complaints
-        WHERE id=? AND department=?
-    """, (id, department))
+        WHERE id=?
+    """, (id,))
 
     complaint = cur.fetchone()
 
@@ -1753,22 +1757,20 @@ def officer_action(id):
             # ------------------------------------
             # CV — Before vs After Comparison
             # ------------------------------------
+            try:
+                before_img = complaint["image_path"]
+                if before_img and saved_path and not str(before_img).startswith("http"):
+                    before_path = os.path.join(app.root_path, "static", before_img)
+                    if os.path.exists(before_path) and os.path.exists(saved_path):
+                        cv_result = calculate_resolution_score(before_path, saved_path)
+                        resolution_score = cv_result.get("score", 0)
+                        verification_status = cv_result.get("verdict", "Verified")
 
-            before_filename = complaint["image_path"]
-            if before_filename:
-                before_path = os.path.join(
-                    app.root_path, "static", "uploads", before_filename
-                )
-                after_path = os.path.join(
-                    app.root_path, "static", "uploads", filename
-                )
-                cv_result = calculate_resolution_score(before_path, after_path)
-                resolution_score = cv_result["score"]
-                verification_status = cv_result["verdict"]
-
-                # Override status based on CV score
-                if new_status == "Resolved":
-                    new_status = cv_result["new_status"]
+                        # Override status based on CV score
+                        if new_status == "Resolved":
+                            new_status = cv_result.get("new_status", "Resolved")
+            except Exception as cv_e:
+                print(f"[CV Score Warning] {cv_e}")
 
         # ------------------------------------
         # Update Complaint
@@ -2009,8 +2011,7 @@ def analytics():
     # Database Connection
     # -------------------------------------
 
-    conn = sqlite3.connect("complaints.db", timeout=30)
-    conn.row_factory = sqlite3.Row
+    conn = get_db()
     cur = conn.cursor()
 
     # =====================================
