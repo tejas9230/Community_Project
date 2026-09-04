@@ -14,7 +14,8 @@
     "express": "^5.2.1",
     "express-session": "^1.19.0",
     "multer": "^2.2.0",
-    "nunjucks": "^3.2.4"
+    "nunjucks": "^3.2.4",
+    "pg": "^8.13.1"
   },
   "devDependencies": {
     "@types/bcryptjs": "^3.0.0",
@@ -23,6 +24,7 @@
     "@types/multer": "^2.2.0",
     "@types/node": "^26.2.0",
     "@types/nunjucks": "^3.2.6",
+    "@types/pg": "^8.11.11",
     "tsx": "^4.23.12",
     "typescript": "^7.0.2"
   }

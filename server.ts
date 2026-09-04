@@ -6,8 +6,19 @@ import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
 import dotenv from 'dotenv';
+import pg from 'pg';
 
 dotenv.config();
+
+const { Pool } = pg;
+
+// Supabase PostgreSQL Pool
+const pgPool = process.env.DATABASE_URL
+  ? new Pool({
+      connectionString: process.env.DATABASE_URL,
+      ssl: { rejectUnauthorized: false }
+    })
+  : null;
 
 const app = express();
 const PORT = 3000;
@@ -53,6 +64,7 @@ app.use(session({
 // Flash messages middleware
 app.use((req: any, res: Response, next: NextFunction) => {
   res.locals.session = req.session;
+  res.locals.req = req;
   if (!req.session.flash) req.session.flash = [];
   req.flash = (message: string, category: string = 'info') => {
     req.session.flash.push([category, message]);
@@ -267,6 +279,65 @@ function saveDatabase() {
 }
 
 async function loadOrSeedDatabase() {
+  // If Supabase pool is configured, sync directly from Supabase PostgreSQL!
+  if (pgPool) {
+    try {
+      console.log('Connecting to Supabase PostgreSQL database...');
+      const userRes = await pgPool.query('SELECT username, password, role, department, email, phone FROM users');
+      if (userRes.rows && userRes.rows.length > 0) {
+        db.users = userRes.rows.map(r => ({
+          username: r.username,
+          passwordHash: r.password,
+          role: r.role || 'Citizen',
+          department: r.department,
+          email: r.email || `${r.username}@gov.in`,
+          phone: r.phone || ''
+        }));
+        console.log(`Synced ${db.users.length} users directly from Supabase PostgreSQL!`);
+      }
+
+      const compRes = await pgPool.query('SELECT * FROM complaints ORDER BY id ASC');
+      if (compRes.rows && compRes.rows.length > 0) {
+        db.complaints = compRes.rows.map(r => ({
+          id: r.id,
+          username: r.username,
+          category: r.category,
+          priority: r.priority,
+          department: r.department,
+          address: r.address,
+          latitude: parseFloat(r.latitude) || 17.6870,
+          longitude: parseFloat(r.longitude) || 83.2190,
+          description: r.description,
+          status: r.status,
+          image_path: r.image_path,
+          created_at: r.created_at,
+          updated_at: r.updated_at,
+          sla_deadline: r.sla_deadline,
+          assigned_to: r.assigned_to,
+          needs_verification: r.needs_verification || 0,
+          escalated: r.escalated || 0,
+          upvotes: r.upvotes || 0,
+          is_emergency: r.is_emergency || 0,
+          officer_remark: r.officer_remark,
+          resolution_image: r.resolution_image,
+          resolution_score: r.resolution_score,
+          verification_status: r.verification_status,
+          rejection_reason: r.rejection_reason,
+          rating: r.rating,
+          feedback: r.feedback
+        }));
+        if (db.complaints.length > 0) {
+          db.nextComplaintId = Math.max(...db.complaints.map(c => c.id)) + 1;
+        }
+        console.log(`Synced ${db.complaints.length} complaints directly from Supabase PostgreSQL!`);
+      }
+      saveDatabase();
+      return;
+    } catch (pgErr) {
+      console.error('Supabase connection error, falling back to local storage:', pgErr);
+    }
+  }
+
   if (fs.existsSync(DB_FILE)) {
     try {
       const data = fs.readFileSync(DB_FILE, 'utf-8');
@@ -560,8 +631,18 @@ app.post('/login', async (req: any, res) => {
     return res.redirect('/login');
   }
 
-  const match = await bcrypt.compare(password || '', user.passwordHash);
-  if (!match && password !== user.passwordHash) {
+  let match = false;
+  try {
+    if (user.passwordHash && (user.passwordHash.startsWith('$2a$') || user.passwordHash.startsWith('$2b$'))) {
+      match = await bcrypt.compare(password || '', user.passwordHash);
+    } else {
+      match = (password === user.passwordHash);
+    }
+  } catch (err) {
+    match = (password === user.passwordHash);
+  }
+
+  if (!match) {
     req.flash('Invalid username or password. Please try again.', 'error');
     return res.redirect('/login');
   }
@@ -614,6 +695,19 @@ app.post('/register', async (req: any, res) => {
 
   db.users.push(newUser);
   saveDatabase();
+
+  if (pgPool) {
+    try {
+      await pgPool.query(`
+        INSERT INTO users (username, password, role, department, email, phone)
+        VALUES ($1, $2, $3, $4, $5, $6)
+        ON CONFLICT (username) DO NOTHING
+      `, [trimmedUname, hash, 'Citizen', null, email || '', phone || '']);
+      console.log(`Saved new user ${trimmedUname} to Supabase PostgreSQL!`);
+    } catch (pgErr) {
+      console.error('Error saving user to Supabase:', pgErr);
+    }
+  }
 
   req.flash('Registration successful! You can now log in.', 'success');
   res.redirect('/login');
@@ -705,7 +799,7 @@ app.get('/submit_complaint', (req: any, res) => {
   res.render('submit_complaint.html');
 });
 
-app.post('/submit_complaint', upload.single('image'), (req: any, res) => {
+app.post('/submit_complaint', upload.single('image'), async (req: any, res) => {
   if (!req.session.username) return res.redirect('/login');
 
   const { description, address, latitude, longitude } = req.body;
@@ -755,6 +849,28 @@ app.post('/submit_complaint', upload.single('image'), (req: any, res) => {
   };
 
   db.complaints.unshift(newComplaint);
+
+  if (pgPool) {
+    try {
+      const insRes = await pgPool.query(`
+        INSERT INTO complaints
+        (username, category, priority, department, address, latitude, longitude, description, status, image_path, created_at, updated_at, sla_deadline, assigned_to, needs_verification, escalated, upvotes, is_emergency)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
+        RETURNING id
+      `, [
+        req.session.username, category, priority, department, address || 'Selected Location',
+        parseFloat(latitude) || 17.6870, parseFloat(longitude) || 83.2190, description || '',
+        'Pending', image_path, dateStr, dateStr, sla_deadline,
+        matchingOfficer ? matchingOfficer.username : '', 0, 0, 0, 0
+      ]);
+      if (insRes.rows && insRes.rows[0]) {
+        newComplaint.id = insRes.rows[0].id;
+      }
+      console.log(`Saved complaint #${newComplaint.id} to Supabase PostgreSQL!`);
+    } catch (pgErr) {
+      console.error('Error saving complaint to Supabase:', pgErr);
+    }
+  }
 
   db.history.push({
     id: db.nextHistoryId++,
@@ -844,7 +960,7 @@ app.get('/feedback/:id', (req: any, res) => {
   res.render('feedback.html');
 });
 
-app.post('/feedback/:id', (req: any, res) => {
+app.post('/feedback/:id', async (req: any, res) => {
   if (!req.session.username) return res.redirect('/login');
   const id = parseInt(req.params.id, 10);
   const { rating, feedback } = req.body;
@@ -854,6 +970,15 @@ app.post('/feedback/:id', (req: any, res) => {
     complaint.rating = parseInt(rating, 10) || 5;
     complaint.feedback = feedback || '';
     saveDatabase();
+
+    if (pgPool) {
+      try {
+        await pgPool.query(`UPDATE complaints SET rating = $1, feedback = $2 WHERE id = $3`, [complaint.rating, complaint.feedback, id]);
+        console.log(`Updated feedback for complaint #${id} in Supabase!`);
+      } catch (pgErr) {
+        console.error('Error updating feedback in Supabase:', pgErr);
+      }
+    }
   }
 
   req.flash('Thank you for your rating and feedback!', 'success');
@@ -978,7 +1103,7 @@ app.get('/update_status/:id', (req: any, res) => {
   });
 });
 
-app.post('/update_status/:id', (req: any, res) => {
+app.post('/update_status/:id', async (req: any, res) => {
   if (!req.session.username) return res.redirect('/login');
   const id = parseInt(req.params.id, 10);
   const { status, rejection_reason, assigned_to, officer_remark } = req.body;
@@ -1014,6 +1139,19 @@ app.post('/update_status/:id', (req: any, res) => {
     });
 
     saveDatabase();
+
+    if (pgPool) {
+      try {
+        await pgPool.query(`
+          UPDATE complaints
+          SET status = $1, rejection_reason = $2, assigned_to = $3, officer_remark = $4, updated_at = $5
+          WHERE id = $6
+        `, [status, rejection_reason || null, assigned_to || null, officer_remark || null, dateStr, id]);
+        console.log(`Updated status of complaint #${id} in Supabase!`);
+      } catch (pgErr) {
+        console.error('Error updating complaint in Supabase:', pgErr);
+      }
+    }
   }
 
   req.flash(`Complaint SCS-${String(id).padStart(4, '0')} updated successfully.`, 'success');
@@ -1021,7 +1159,7 @@ app.post('/update_status/:id', (req: any, res) => {
 });
 
 // Direct POST /update_status
-app.post('/update_status', (req: any, res) => {
+app.post('/update_status', async (req: any, res) => {
   if (!req.session.username) return res.redirect('/login');
   const { complaint_id, status, officer_remark, rejection_reason } = req.body;
   const id = parseInt(complaint_id, 10);
@@ -1056,6 +1194,19 @@ app.post('/update_status', (req: any, res) => {
     });
 
     saveDatabase();
+
+    if (pgPool) {
+      try {
+        await pgPool.query(`
+          UPDATE complaints
+          SET status = $1, officer_remark = $2, rejection_reason = $3, updated_at = $4
+          WHERE id = $5
+        `, [status, officer_remark || null, rejection_reason || null, dateStr, id]);
+        console.log(`Direct updated complaint #${id} in Supabase!`);
+      } catch (pgErr) {
+        console.error('Error updating complaint in Supabase:', pgErr);
+      }
+    }
   }
 
   if (req.session.role === 'Admin' || req.session.username === 'admin') {
@@ -1076,10 +1227,12 @@ app.get('/department_dashboard', (req: any, res) => {
   const uname = req.session.username;
 
   // Filter complaints assigned to this department or this officer
-  const deptComplaints = db.complaints.filter(c =>
-    (c.department === dept || c.assigned_to === uname) &&
-    (c.status === 'Pending' || c.status === 'In Progress')
-  );
+  const deptComplaints = db.complaints.filter(c => {
+    const dMatch = !dept || (c.department && c.department.toLowerCase().trim() === dept.toLowerCase().trim());
+    const oMatch = c.assigned_to && c.assigned_to.toLowerCase().trim() === uname.toLowerCase().trim();
+    const sMatch = (c.status === 'Pending' || c.status === 'In Progress');
+    return (dMatch || oMatch) && sMatch;
+  });
 
   const complaintObjs = deptComplaints.map(c => {
     const relatedCount = db.complaints.filter(x => x.category === c.category && x.address === c.address).length;
@@ -1140,7 +1293,7 @@ app.get('/officer_action/:id', (req: any, res) => {
   });
 });
 
-app.post('/officer_action/:id', upload.single('resolution_image'), (req: any, res) => {
+app.post('/officer_action/:id', upload.single('resolution_image'), async (req: any, res) => {
   if (!req.session.username) return res.redirect('/login');
   const id = parseInt(req.params.id, 10);
   const { status, officer_remark } = req.body;
@@ -1181,6 +1334,27 @@ app.post('/officer_action/:id', upload.single('resolution_image'), (req: any, re
     });
 
     saveDatabase();
+
+    if (pgPool) {
+      try {
+        await pgPool.query(`
+          UPDATE complaints
+          SET status = $1, officer_remark = $2, resolution_image = $3, resolution_score = $4, verification_status = $5, updated_at = $6
+          WHERE id = $7
+        `, [
+          complaint.status,
+          complaint.officer_remark,
+          complaint.resolution_image || null,
+          complaint.resolution_score || null,
+          complaint.verification_status || null,
+          dateStr,
+          id
+        ]);
+        console.log(`Updated complaint #${id} in Supabase PostgreSQL!`);
+      } catch (pgErr) {
+        console.error('Error updating complaint in Supabase:', pgErr);
+      }
+    }
   }
 
   req.flash(`Complaint SCS-${String(id).padStart(4, '0')} action saved.`, 'success');
