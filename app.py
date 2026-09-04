@@ -493,12 +493,19 @@ def register():
 
     if request.method == 'POST':
 
-        username = request.form['username']
-        raw_pw   = request.form['password']
+        username = request.form['username'].strip()
+        raw_pw   = request.form['password'].strip()
         password = bcrypt.hashpw(raw_pw.encode(), bcrypt.gensalt()).decode()
 
         conn = get_db()
         cur = conn.cursor()
+
+        # Check if username already exists case-insensitively
+        cur.execute("SELECT username FROM users WHERE LOWER(username) = LOWER(?)", (username,))
+        if cur.fetchone() is not None:
+            conn.close()
+            flash("Username already taken. Please choose a different one.", "error")
+            return redirect('/register')
 
         try:
             cur.execute(
@@ -509,13 +516,15 @@ def register():
                """,
             (username, password, "Citizen", None))
             conn.commit()
-
-        except:
-            flash("Username already taken. Please choose a different one.", "error")
+        except Exception as e:
+            conn.close()
+            print(f"[Register Error] {e}")
+            flash("Could not create account. Please try again.", "error")
             return redirect('/register')
 
         conn.close()
 
+        flash("Account created successfully! Please log in.", "success")
         return redirect('/login')
 
     return render_template('register.html')
@@ -527,8 +536,8 @@ def login():
 
     if request.method == 'POST':
 
-        username = request.form['username']
-        password = request.form['password']
+        username = request.form['username'].strip()
+        password = request.form['password'].strip()
 
         conn = get_db()
         cur = conn.cursor()
@@ -536,7 +545,7 @@ def login():
         cur.execute("""
             SELECT username, password, role, department
             FROM users
-            WHERE username=?
+            WHERE LOWER(username)=LOWER(?)
         """, (username,))
 
         user = cur.fetchone()
