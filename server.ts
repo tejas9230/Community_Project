@@ -499,7 +499,7 @@ async function loadOrSeedDatabase() {
 
 loadOrSeedDatabase();
 
-// AI / NLP Categorization & Priority Predictor
+// AI / NLP Categorization & Priority Predictor (with Explainable AI & Ambiguity Detection)
 function predictComplaint(description: string) {
   const desc = description.toLowerCase();
   let category = "Others";
@@ -507,59 +507,84 @@ function predictComplaint(description: string) {
   let priority = "Medium";
   let confidence = 85;
 
+  const matches: Array<{ cat: string; dept: string; pri: string; conf: number }> = [];
+
   if (desc.match(/water|pipe|leak|tap|supply|tank|chlorine|seepage/)) {
-    category = "Water Supply";
-    department = "Water Supply";
-    priority = "High";
-    confidence = 94;
-  } else if (desc.match(/road|pothole|crack|asphalt|street|path|tar|divider|crater/)) {
-    category = "Road Damage";
-    department = "Roads & Infrastructure";
-    priority = "High";
-    confidence = 92;
-  } else if (desc.match(/street light|dark|lamp|bulb|streetlight|lighting|pole/)) {
-    category = "Street Light";
-    department = "Electricity & Street Lighting";
-    priority = "Medium";
-    confidence = 90;
-  } else if (desc.match(/electric|power|wire|voltage|transformer|shock|current|fuse/)) {
-    category = "Electricity";
-    department = "Electricity & Street Lighting";
-    priority = "Critical";
-    confidence = 96;
-  } else if (desc.match(/garbage|trash|waste|dump|bin|clean|smell|litter|debris/)) {
-    category = "Garbage";
-    department = "Sanitation & Waste Management";
-    priority = "Medium";
-    confidence = 88;
-  } else if (desc.match(/drain|sewage|gutter|overflow|stagnant|manhole|clog/)) {
-    category = "Drainage";
-    department = "Drainage & Sewage";
-    priority = "High";
-    confidence = 91;
-  } else if (desc.match(/dog|stray|monkey|animal|bite|cattle|cow|snake/)) {
-    category = "Animal";
-    department = "Animal Control";
-    priority = "High";
-    confidence = 89;
-  } else if (desc.match(/traffic|signal|jam|parking|congestion|accident|gridlock/)) {
-    category = "Traffic";
-    department = "Traffic & Public Safety";
-    priority = "Medium";
-    confidence = 87;
-  } else if (desc.match(/park|bench|tree|playground|grass|garden|pruning/)) {
-    category = "Parks & Green Spaces";
-    department = "Parks & Green Spaces";
-    priority = "Low";
-    confidence = 86;
-  } else if (desc.match(/property|building|fence|wall|vandalism|public|bus stop/)) {
-    category = "Public Property";
-    department = "Public Property Maintenance";
-    priority = "Low";
-    confidence = 85;
+    matches.push({ cat: "Water Supply", dept: "Water Supply", pri: "High", conf: 94 });
+  }
+  if (desc.match(/road|pothole|crack|asphalt|street|path|tar|divider|crater/)) {
+    matches.push({ cat: "Road Damage", dept: "Roads & Infrastructure", pri: "High", conf: 92 });
+  }
+  if (desc.match(/street light|dark|lamp|bulb|streetlight|lighting|pole/)) {
+    matches.push({ cat: "Street Light", dept: "Electricity & Street Lighting", pri: "Medium", conf: 90 });
+  }
+  if (desc.match(/electric|power|wire|voltage|transformer|shock|current|fuse/)) {
+    matches.push({ cat: "Electricity", dept: "Electricity & Street Lighting", pri: "Critical", conf: 96 });
+  }
+  if (desc.match(/garbage|trash|waste|dump|bin|clean|smell|litter|debris/)) {
+    matches.push({ cat: "Garbage", dept: "Sanitation & Waste Management", pri: "Medium", conf: 88 });
+  }
+  if (desc.match(/drain|sewage|gutter|overflow|stagnant|manhole|clog/)) {
+    matches.push({ cat: "Drainage", dept: "Drainage & Sewage", pri: "High", conf: 91 });
+  }
+  if (desc.match(/dog|stray|monkey|animal|bite|cattle|cow|snake/)) {
+    matches.push({ cat: "Animal", dept: "Animal Control", pri: "High", conf: 89 });
+  }
+  if (desc.match(/traffic|signal|jam|parking|congestion|accident|gridlock/)) {
+    matches.push({ cat: "Traffic", dept: "Traffic & Public Safety", pri: "Medium", conf: 87 });
+  }
+  if (desc.match(/park|bench|tree|playground|grass|garden|pruning/)) {
+    matches.push({ cat: "Parks & Green Spaces", dept: "Parks & Green Spaces", pri: "Low", conf: 86 });
+  }
+  if (desc.match(/property|building|fence|wall|vandalism|public|bus stop/)) {
+    matches.push({ cat: "Public Property", dept: "Public Property Maintenance", pri: "Low", conf: 85 });
   }
 
-  return { success: true, category, department, priority, confidence };
+  // Extract trigger keywords
+  const triggerWords = [
+    'pothole', 'crack', 'asphalt', 'leak', 'pipe', 'water', 'garbage',
+    'trash', 'drainage', 'sewage', 'street light', 'wire', 'electric',
+    'dog', 'animal', 'traffic', 'signal', 'danger', 'broken'
+  ];
+  const keywords = triggerWords.filter(w => desc.includes(w)).slice(0, 5);
+  if (keywords.length === 0) {
+    keywords.push(...desc.split(/\s+/).filter(w => w.length > 4).slice(0, 4));
+  }
+
+  let is_ambiguous = false;
+  let secondary_category: string | null = null;
+  let secondary_department: string | null = null;
+  let margin = 100;
+
+  if (matches.length > 0) {
+    matches.sort((a, b) => b.conf - a.conf);
+    category = matches[0].cat;
+    department = matches[0].dept;
+    priority = matches[0].pri;
+    confidence = matches[0].conf;
+
+    if (matches.length > 1) {
+      margin = Math.abs(matches[0].conf - matches[1].conf);
+      if (margin <= 18) {
+        is_ambiguous = true;
+        secondary_category = matches[1].cat;
+        secondary_department = matches[1].dept;
+      }
+    }
+  }
+
+  return {
+    success: true,
+    category,
+    department,
+    priority,
+    confidence,
+    keywords,
+    is_ambiguous,
+    secondary_category,
+    secondary_department,
+    margin
+  };
 }
 
 function getSlaDeadline(category: string): string {
@@ -793,6 +818,16 @@ app.post('/check_duplicate', (req, res) => {
   });
 });
 
+// Explainable AI Preview Endpoint
+app.post('/predict_preview', (req: any, res) => {
+  const { description } = req.body || {};
+  if (!description || !description.trim()) {
+    return res.json({ success: false, message: 'Description cannot be empty.' });
+  }
+  const result = predictComplaint(description);
+  res.json(result);
+});
+
 // Submit Complaint
 app.get('/submit_complaint', (req: any, res) => {
   if (!req.session.username) return res.redirect('/login');
@@ -802,18 +837,26 @@ app.get('/submit_complaint', (req: any, res) => {
 app.post('/submit_complaint', upload.single('image'), async (req: any, res) => {
   if (!req.session.username) return res.redirect('/login');
 
-  const { description, address, latitude, longitude } = req.body;
+  const { description, address, latitude, longitude, confirmed_category, is_emergency } = req.body;
 
   if (!latitude || !longitude) {
     req.flash('Please pick your location on the map before submitting.', 'error');
     return res.redirect('/submit_complaint');
   }
 
+  const isEmergency = is_emergency === '1' || is_emergency === 'true';
   const aiResult = predictComplaint(description || '');
-  const category = aiResult.category;
-  const department = aiResult.department;
-  const priority = aiResult.priority;
-  const sla_deadline = getSlaDeadline(category);
+  const category = confirmed_category && getDepartmentForCategory(confirmed_category) ? confirmed_category : aiResult.category;
+  const department = getDepartmentForCategory(category);
+  const priority = isEmergency ? 'Critical' : aiResult.priority;
+
+  let sla_deadline = '';
+  if (isEmergency) {
+    const emDate = new Date(Date.now() + 6 * 3600 * 1000);
+    sla_deadline = `${String(emDate.getDate()).padStart(2, '0')}-${String(emDate.getMonth() + 1).padStart(2, '0')}-${emDate.getFullYear()} ${String(emDate.getHours()).padStart(2, '0')}:${String(emDate.getMinutes()).padStart(2, '0')}`;
+  } else {
+    sla_deadline = getSlaDeadline(category);
+  }
 
   let image_path = 'https://images.unsplash.com/photo-1584467735871-8e85353a8413?w=600&auto=format&fit=crop&q=60';
   if (req.file) {
@@ -845,7 +888,8 @@ app.post('/submit_complaint', upload.single('image'), async (req: any, res) => {
     assigned_to: matchingOfficer ? matchingOfficer.username : '',
     needs_verification: 0,
     escalated: 0,
-    upvotes: 0
+    upvotes: 0,
+    is_emergency: isEmergency ? 1 : 0
   };
 
   db.complaints.unshift(newComplaint);
@@ -861,7 +905,7 @@ app.post('/submit_complaint', upload.single('image'), async (req: any, res) => {
         req.session.username, category, priority, department, address || 'Selected Location',
         parseFloat(latitude) || 17.6870, parseFloat(longitude) || 83.2190, description || '',
         'Pending', image_path, dateStr, dateStr, sla_deadline,
-        matchingOfficer ? matchingOfficer.username : '', 0, 0, 0, 0
+        matchingOfficer ? matchingOfficer.username : '', 0, 0, 0, isEmergency ? 1 : 0
       ]);
       if (insRes.rows && insRes.rows[0]) {
         newComplaint.id = insRes.rows[0].id;
@@ -875,10 +919,12 @@ app.post('/submit_complaint', upload.single('image'), async (req: any, res) => {
   db.history.push({
     id: db.nextHistoryId++,
     complaint_id: newId,
-    officer_username: 'System AI',
+    officer_username: isEmergency ? '🚨 Civic SOS System' : 'System AI',
     old_status: '',
     new_status: 'Pending',
-    remarks: `Complaint submitted and classified under ${category} (${department}). Priority: ${priority}.`,
+    remarks: isEmergency
+      ? `EMERGENCY CIVIC SOS: Category: ${category} | Priority locked to Critical | 6h Emergency SLA: ${sla_deadline}`
+      : `Complaint submitted and classified under ${category} (${department}). Priority: ${priority}.`,
     action_time: dateStr
   });
 
@@ -894,6 +940,97 @@ app.post('/submit_complaint', upload.single('image'), async (req: any, res) => {
 
   req.flash(`Complaint SCS-${String(newId).padStart(4, '0')} submitted successfully!`, 'success');
   res.redirect('/view_complaints');
+});
+
+// Citizen 2FA Resolution Verification (Confirm or Dispute)
+app.post('/verify_resolution/:id', async (req: any, res) => {
+  if (!req.session.username) return res.status(401).json({ success: false, message: 'Please log in' });
+  const compId = parseInt(req.params.id);
+  const { action, remarks } = req.body || {};
+
+  const complaint = db.complaints.find(c => c.id === compId);
+  if (!complaint) return res.status(404).json({ success: false, message: 'Complaint not found' });
+
+  if (complaint.username !== req.session.username && req.session.role !== 'Admin') {
+    return res.status(403).json({ success: false, message: 'Unauthorized' });
+  }
+
+  const now = new Date();
+  const dateStr = `${String(now.getDate()).padStart(2, '0')}-${String(now.getMonth() + 1).padStart(2, '0')}-${now.getFullYear()} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+
+  if (action === 'confirm') {
+    complaint.status = 'Closed';
+    complaint.verification_status = 'Verified by Citizen';
+    complaint.updated_at = dateStr;
+
+    db.history.push({
+      id: db.nextHistoryId++,
+      complaint_id: compId,
+      officer_username: req.session.username,
+      old_status: 'Resolved',
+      new_status: 'Closed',
+      remarks: 'Citizen confirmed resolution. Ticket closed.',
+      action_time: dateStr
+    });
+
+    if (pgPool) {
+      try {
+        await pgPool.query("UPDATE complaints SET status='Closed', verification_status='Verified by Citizen', updated_at=$1 WHERE id=$2", [dateStr, compId]);
+      } catch (e) { console.error('Supabase confirm err:', e); }
+    }
+    saveDatabase();
+    return res.json({ success: true, message: 'Resolution confirmed and ticket closed.' });
+  } else if (action === 'dispute') {
+    complaint.status = 'Reopened';
+    complaint.verification_status = 'Disputed';
+    complaint.officer_remark = remarks ? `Citizen Dispute: ${remarks}` : 'Citizen disputed resolution.';
+    complaint.updated_at = dateStr;
+
+    db.history.push({
+      id: db.nextHistoryId++,
+      complaint_id: compId,
+      officer_username: req.session.username,
+      old_status: 'Resolved',
+      new_status: 'Reopened',
+      remarks: complaint.officer_remark,
+      action_time: dateStr
+    });
+
+    if (pgPool) {
+      try {
+        await pgPool.query("UPDATE complaints SET status='Reopened', verification_status='Disputed', officer_remark=$1, updated_at=$2 WHERE id=$3", [complaint.officer_remark, dateStr, compId]);
+      } catch (e) { console.error('Supabase dispute err:', e); }
+    }
+    saveDatabase();
+    return res.json({ success: true, message: 'Complaint reopened and escalated.' });
+  }
+
+  res.status(400).json({ success: false, message: 'Invalid action' });
+});
+
+// Public Wall of Impact
+app.get('/impact_wall', (req: any, res) => {
+  const items = db.complaints.filter(c =>
+    (c.status === 'Resolved' || c.status === 'Closed') &&
+    c.resolution_image
+  );
+  res.render('impact_wall.html', { items });
+});
+
+app.post('/thank_resolution/:id', async (req: any, res) => {
+  const compId = parseInt(req.params.id);
+  const complaint = db.complaints.find(c => c.id === compId);
+  if (complaint) {
+    complaint.upvotes = (complaint.upvotes || 0) + 1;
+    if (pgPool) {
+      try {
+        await pgPool.query("UPDATE complaints SET upvotes = COALESCE(upvotes, 0) + 1 WHERE id=$1", [compId]);
+      } catch (e) {}
+    }
+    saveDatabase();
+    return res.json({ success: true, upvotes: complaint.upvotes });
+  }
+  res.json({ success: true, upvotes: 1 });
 });
 
 app.post('/submit_anyway', (req: any, res) => {

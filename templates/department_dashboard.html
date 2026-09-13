@@ -16,6 +16,8 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css"
           rel="stylesheet">
 
+    <link rel="stylesheet" href="/static/global.css">
+
 </head>
 
 <body class="bg-light">
@@ -34,10 +36,15 @@
 
             </div>
 
-            <div>
+            <div class="d-flex align-items-center gap-2">
 
-                Welcome,
-                <strong>{{ username }}</strong>
+                <a href="/impact_wall" class="btn btn-outline-light btn-sm">⭐ Wall of Impact</a>
+
+                <button type="button" class="btn btn-outline-light btn-sm" id="themeToggleBtn" onclick="toggleCivicTheme()">🌙 Dark</button>
+
+                <span class="ms-2">Welcome, <strong>{{ username }}</strong></span>
+
+                <a href="{{ url_for('logout') }}" class="btn btn-danger btn-sm ms-2">Logout</a>
 
             </div>
 
@@ -227,14 +234,24 @@
 
                                 </span>
 
-                            {% else %}
-
                                 <span class="badge bg-warning text-dark">
 
                                     {{ complaint.status }}
 
                                 </span>
 
+                            {% endif %}
+
+                            {% if complaint.is_emergency == 1 %}
+                                <div class="mt-1">
+                                    <span class="badge bg-danger" style="font-size:10px;">🚨 Civic SOS</span>
+                                </div>
+                            {% endif %}
+
+                            {% if complaint.sla_deadline %}
+                                <div class="sla-countdown-badge mt-1" data-sla="{{ complaint.sla_deadline }}" style="font-size:11px; font-weight:600; padding:2px 8px; border-radius:10px; display:inline-block; border:1px solid #cbd5e1;">
+                                    ⏰ {{ complaint.sla_deadline }}
+                                </div>
                             {% endif %}
 
                         </td>
@@ -327,6 +344,73 @@
     setInterval(poll, 15000);
     setTimeout(poll, 5000);
 })();
+
+// ================= THEME TOGGLE =================
+function applyTheme(theme) {
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('civic_theme', theme);
+    const btn = document.getElementById('themeToggleBtn');
+    if (btn) btn.innerHTML = theme === 'dark' ? '☀️ Light' : '🌙 Dark';
+}
+
+function toggleCivicTheme() {
+    const current = localStorage.getItem('civic_theme') || 'light';
+    applyTheme(current === 'dark' ? 'light' : 'dark');
+}
+
+(function() {
+    const saved = localStorage.getItem('civic_theme') || 'light';
+    applyTheme(saved);
+})();
+
+// ================= DYNAMIC SLA COUNTDOWN =================
+function updateSlaBadges() {
+    const badges = document.querySelectorAll('.sla-countdown-badge');
+    const now = new Date();
+
+    badges.forEach(badge => {
+        const raw = badge.getAttribute('data-sla');
+        if (!raw) return;
+
+        let deadline = null;
+        if (raw.includes('-') && raw.includes(':')) {
+            const parts = raw.split(' ');
+            const dateParts = parts[0].split('-');
+            const timeParts = parts[1].split(':');
+            deadline = new Date(dateParts[2], parseInt(dateParts[1], 10) - 1, dateParts[0], timeParts[0], timeParts[1]);
+        } else {
+            deadline = new Date(raw);
+        }
+
+        if (isNaN(deadline.getTime())) return;
+
+        const diffMs = deadline - now;
+        const diffHours = Math.round(diffMs / (1000 * 60 * 60));
+
+        if (diffHours > 12) {
+            badge.style.background = '#dcfce7';
+            badge.style.color = '#15803d';
+            badge.style.borderColor = '#86efac';
+            badge.innerHTML = `🟢 ${diffHours}h left (Within SLA)`;
+        } else if (diffHours > 0) {
+            badge.style.background = '#fef9c3';
+            badge.style.color = '#a16207';
+            badge.style.borderColor = '#fde047';
+            badge.innerHTML = `🟡 ${diffHours}h left (Urgent SLA)`;
+        } else {
+            const overdue = Math.abs(diffHours);
+            badge.style.background = '#fee2e2';
+            badge.style.color = '#b91c1c';
+            badge.style.borderColor = '#fca5a5';
+            badge.innerHTML = `🔴 Overdue by ${overdue}h (Escalated)`;
+        }
+    });
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+    updateSlaBadges();
+    setInterval(updateSlaBadges, 60000);
+});
 </script>
 
 </body>

@@ -11,6 +11,9 @@
     <title>Submit Complaint</title>
 
     <link rel="stylesheet"
+          href="{{ url_for('static', filename='global.css') }}">
+
+    <link rel="stylesheet"
           href="{{ url_for('static', filename='submit_complaint.css') }}">
 
     <link rel="stylesheet"
@@ -36,26 +39,24 @@
 
     <!-- ================= Header ================= -->
 
-    <div class="page-header">
+    <div class="page-header" style="display:flex; justify-content:space-between; align-items:center;">
 
-        <div class="header-icon">
-
-            <i class="fa-solid fa-bullhorn"></i>
-
+        <div style="display:flex; align-items:center; gap:16px;">
+            <div class="header-icon">
+                <i class="fa-solid fa-bullhorn"></i>
+            </div>
+            <div>
+                <h1>Submit Complaint</h1>
+                <p>
+                    Report issues to help keep your community clean,
+                    safe and well maintained.
+                </p>
+            </div>
         </div>
 
-        <div>
-
-            <h1>Submit Complaint</h1>
-
-            <p>
-
-                Report issues to help keep your community clean,
-                safe and well maintained.
-
-            </p>
-
-        </div>
+        <button type="button" id="themeToggleBtn" onclick="toggleCivicTheme()" style="background:rgba(255,255,255,0.18); border:1px solid rgba(255,255,255,0.35); color:#fff; padding:8px 16px; border-radius:24px; font-weight:600; font-size:13px; cursor:pointer; backdrop-filter:blur(6px); transition:.25s ease;">
+            🌙 Dark
+        </button>
 
     </div>
 
@@ -155,11 +156,100 @@
                 rows="6"
 
                 placeholder="Describe the issue in detail..."
-
                 required>
-
             </textarea>
 
+            <small style="display:block; margin-top:6px; color:#64748b; font-size:12px;">
+                💡 <em>Type your complaint to see real-time AI classification, department assignment, and key word breakdown.</em>
+            </small>
+
+        </div>
+
+        <!-- ================= Explainable AI (XAI) & Ambiguity Card ================= -->
+        <div class="form-card" id="aiDiagnosisCard" style="display:none; border-left: 4px solid #2563eb; background: rgba(37, 99, 235, 0.04);">
+
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <h2 style="font-size:16px; margin:0; display:flex; align-items:center; gap:8px;">
+                    <i class="fa-solid fa-brain" style="color:#2563eb;"></i>
+                    <span>Explainable AI (XAI) Diagnosis</span>
+                </h2>
+                <span id="aiConfBadge" style="background:#2563eb; color:#fff; padding:3px 12px; border-radius:12px; font-size:12px; font-weight:700;">
+                    --% Match
+                </span>
+            </div>
+
+            <div style="margin-top:14px; font-size:14px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; flex-wrap:wrap; gap:8px;">
+                    <div>
+                        <span style="color:#64748b;">Target Department:</span>
+                        <strong id="aiDeptText" style="color:#2563eb; margin-left:4px;">-</strong>
+                        <span style="color:#94a3b8; margin-left:6px;">(<span id="aiCatText">-</span>)</span>
+                    </div>
+                    <div>
+                        <span style="color:#64748b;">Predicted Priority:</span>
+                        <span id="aiPriorityBadge" style="background:#f59e0b; color:#fff; padding:2px 8px; border-radius:8px; font-size:12px; font-weight:600; margin-left:4px;">Medium</span>
+                    </div>
+                </div>
+
+                <div style="height:6px; background:#e2e8f0; border-radius:3px; overflow:hidden; margin:8px 0;">
+                    <div id="aiConfBar" style="height:100%; width:0%; background:#2563eb; transition:width .4s ease;"></div>
+                </div>
+
+                <!-- XAI Trigger Keywords -->
+                <div style="margin-top:12px;">
+                    <div style="font-size:12px; font-weight:600; color:#475569; margin-bottom:6px;">
+                        <i class="fa-solid fa-tags" style="color:#2563eb; margin-right:4px;"></i>
+                        Trigger Keywords Extracted by AI:
+                    </div>
+                    <div id="aiKeywordsContainer" style="display:flex; flex-wrap:wrap; gap:6px;">
+                        <!-- dynamic keyword pills -->
+                    </div>
+                </div>
+
+                <!-- Ambiguity Alert (e.g. Road vs Water conflict solver) -->
+                <div id="aiAmbiguityBox" style="display:none; margin-top:14px; padding:12px 14px; border-radius:10px; background:#fffbeb; border:1px solid #f59e0b; color:#92400e;">
+                    <div style="display:flex; align-items:center; gap:8px; font-weight:700; font-size:13px; color:#b45309;">
+                        <i class="fa-solid fa-scale-balanced"></i>
+                        <span>Smart Ambiguity Alert: Multi-Department Conflict Detected</span>
+                    </div>
+                    <p style="margin:6px 0 10px 0; font-size:12px; line-height:1.4; color:#78350f;">
+                        The model identified overlapping issues (<strong id="ambigCat1">Category 1</strong> vs. <strong id="ambigCat2">Category 2</strong>). Which department should take primary responsibility?
+                    </p>
+                    <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                        <button type="button" id="btnChooseCat1" onclick="chooseCategory(1)" style="flex:1; min-width:140px; padding:8px 14px; border-radius:8px; border:2px solid #2563eb; background:#2563eb; color:#fff; font-weight:600; font-size:12px; cursor:pointer; transition:.2s ease;">
+                            Department 1
+                        </button>
+                        <button type="button" id="btnChooseCat2" onclick="chooseCategory(2)" style="flex:1; min-width:140px; padding:8px 14px; border-radius:8px; border:2px solid #cbd5e1; background:#fff; color:#334155; font-weight:600; font-size:12px; cursor:pointer; transition:.2s ease;">
+                            Department 2
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <input type="hidden" id="confirmed_category" name="confirmed_category" value="">
+
+        <!-- ================= Life-Safety Civic SOS Emergency Override ================= -->
+        <div class="form-card" id="emergencyCard" style="border: 1px solid #e2e8f0; transition: border-color .3s ease, background .3s ease;">
+            <div style="display:flex; justify-content:space-between; align-items:center; cursor:pointer;" onclick="toggleEmergencySwitch()">
+                <div style="display:flex; align-items:center; gap:12px;">
+                    <span style="font-size:24px;">🚨</span>
+                    <div>
+                        <strong style="font-size:15px; color:#dc2626;">Life-Safety "Civic SOS" / Emergency Override</strong>
+                        <p style="margin:2px 0 0 0; font-size:12px; color:#64748b;">
+                            Toggle ON for immediate danger (exposed live wires, open manholes, active road cave-in).
+                        </p>
+                    </div>
+                </div>
+                <div style="position:relative; width:48px; height:26px; background:#cbd5e1; border-radius:13px; transition:background .3s ease;" id="emergencyTrack">
+                    <div style="position:absolute; top:3px; left:3px; width:20px; height:20px; background:#fff; border-radius:50%; transition:transform .3s ease;" id="emergencyThumb"></div>
+                </div>
+            </div>
+            <input type="hidden" id="is_emergency" name="is_emergency" value="0">
+            <div id="emergencyNotice" style="display:none; margin-top:10px; padding:8px 12px; border-radius:8px; background:#fee2e2; border-left:4px solid #dc2626; color:#991b1b; font-size:12px; font-weight:600;">
+                ⚡ Civic SOS Active: Priority hard-locked to <strong>CRITICAL</strong>. Emergency SLA reduced to <strong>6 Hours</strong>.
+            </div>
         </div>
 
         <!-- ================= Image Upload ================= -->
@@ -367,6 +457,162 @@ function showFileName(){
 
 }
 
+// ================= THEME TOGGLE (Dark / Light) =================
+function applyTheme(theme) {
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('civic_theme', theme);
+    const btn = document.getElementById('themeToggleBtn');
+    if (btn) btn.innerHTML = theme === 'dark' ? '☀️ Light' : '🌙 Dark';
+}
+
+function toggleCivicTheme() {
+    const current = localStorage.getItem('civic_theme') || 'light';
+    applyTheme(current === 'dark' ? 'light' : 'dark');
+}
+
+// Initial theme load
+(function() {
+    const saved = localStorage.getItem('civic_theme') || 'light';
+    applyTheme(saved);
+})();
+
+// ================= CIVIC SOS EMERGENCY OVERRIDE =================
+let emergencyActive = false;
+function toggleEmergencySwitch() {
+    emergencyActive = !emergencyActive;
+    const input = document.getElementById('is_emergency');
+    const track = document.getElementById('emergencyTrack');
+    const thumb = document.getElementById('emergencyThumb');
+    const notice = document.getElementById('emergencyNotice');
+    const card = document.getElementById('emergencyCard');
+
+    if (emergencyActive) {
+        input.value = "1";
+        track.style.background = "#dc2626";
+        thumb.style.transform = "translateX(22px)";
+        notice.style.display = "block";
+        card.style.borderColor = "#dc2626";
+        card.style.background = "rgba(220, 38, 38, 0.03)";
+    } else {
+        input.value = "0";
+        track.style.background = "#cbd5e1";
+        thumb.style.transform = "translateX(0px)";
+        notice.style.display = "none";
+        card.style.borderColor = "#e2e8f0";
+        card.style.background = "";
+    }
+}
+
+// ================= EXPLAINABLE AI (XAI) & AMBIGUITY =================
+let xaiTimeout = null;
+let currentCat1 = "";
+let currentCat2 = "";
+
+const descInput = document.getElementById('description');
+if (descInput) {
+    descInput.addEventListener('input', function() {
+        clearTimeout(xaiTimeout);
+        const text = this.value.trim();
+        if (text.length < 5) {
+            document.getElementById('aiDiagnosisCard').style.display = 'none';
+            return;
+        }
+
+        xaiTimeout = setTimeout(() => {
+            fetch('/predict_preview', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ description: text })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (!data.success) return;
+
+                const card = document.getElementById('aiDiagnosisCard');
+                card.style.display = 'block';
+
+                // Category & Dept
+                document.getElementById('aiDeptText').textContent = data.department;
+                document.getElementById('aiCatText').textContent = data.category;
+
+                // Priority Badge
+                const pBadge = document.getElementById('aiPriorityBadge');
+                pBadge.textContent = data.priority;
+                if (data.priority === 'Critical') {
+                    pBadge.style.background = '#dc2626';
+                } else if (data.priority === 'High') {
+                    pBadge.style.background = '#f59e0b';
+                } else if (data.priority === 'Medium') {
+                    pBadge.style.background = '#2563eb';
+                } else {
+                    pBadge.style.background = '#64748b';
+                }
+
+                // Confidence
+                const conf = Math.round(data.confidence || 85);
+                document.getElementById('aiConfBadge').textContent = `${conf}% Match`;
+                document.getElementById('aiConfBar').style.width = `${conf}%`;
+
+                // XAI Keywords
+                const kwContainer = document.getElementById('aiKeywordsContainer');
+                kwContainer.innerHTML = '';
+                if (data.keywords && data.keywords.length > 0) {
+                    data.keywords.forEach(kw => {
+                        const chip = document.createElement('span');
+                        chip.style.cssText = 'background:rgba(37,99,235,0.08); color:#1d4ed8; border:1px solid rgba(37,99,235,0.25); border-radius:12px; padding:2px 10px; font-size:11px; font-weight:600;';
+                        chip.textContent = `#${kw}`;
+                        kwContainer.appendChild(chip);
+                    });
+                } else {
+                    kwContainer.innerHTML = '<span style="font-size:11px; color:#94a3b8;">Analyzing key patterns...</span>';
+                }
+
+                // Ambiguity Solver
+                const ambigBox = document.getElementById('aiAmbiguityBox');
+                if (data.is_ambiguous && data.secondary_category) {
+                    currentCat1 = data.category;
+                    currentCat2 = data.secondary_category;
+                    document.getElementById('ambigCat1').textContent = currentCat1;
+                    document.getElementById('ambigCat2').textContent = currentCat2;
+                    document.getElementById('btnChooseCat1').textContent = `👉 Primary: ${currentCat1} (${data.department})`;
+                    document.getElementById('btnChooseCat2').textContent = `👉 Primary: ${currentCat2} (${data.secondary_department || 'Secondary'})`;
+                    ambigBox.style.display = 'block';
+                    chooseCategory(1); // Default to top 1 until clicked
+                } else {
+                    ambigBox.style.display = 'none';
+                    document.getElementById('confirmed_category').value = '';
+                }
+            })
+            .catch(() => {});
+        }, 400);
+    });
+}
+
+function chooseCategory(opt) {
+    const btn1 = document.getElementById('btnChooseCat1');
+    const btn2 = document.getElementById('btnChooseCat2');
+    const input = document.getElementById('confirmed_category');
+
+    if (opt === 1) {
+        input.value = currentCat1;
+        btn1.style.border = "2px solid #2563eb";
+        btn1.style.background = "#2563eb";
+        btn1.style.color = "#fff";
+
+        btn2.style.border = "2px solid #cbd5e1";
+        btn2.style.background = "#fff";
+        btn2.style.color = "#334155";
+    } else {
+        input.value = currentCat2;
+        btn2.style.border = "2px solid #2563eb";
+        btn2.style.background = "#2563eb";
+        btn2.style.color = "#fff";
+
+        btn1.style.border = "2px solid #cbd5e1";
+        btn1.style.background = "#fff";
+        btn1.style.color = "#334155";
+    }
+}
 </script>
 
 </body>

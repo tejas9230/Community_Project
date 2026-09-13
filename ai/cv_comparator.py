@@ -91,22 +91,48 @@ def check_image_consistency(image_path, predicted_category):
         img_arr = _load_image(image_path)
         if img_arr is None:
             return {"consistent":True,"detected_objects":[],"message":"Could not load image","needs_flag":False}
+
+        img_h, img_w = img_arr.shape[:2]
+        img_area = float(img_h * img_w) if (img_h > 0 and img_w > 0) else 1.0
+
         results  = model(img_arr, verbose=False)
         detected = []
+        salient_detected = []
+
         for r in results:
             for box in r.boxes:
                 if float(box.conf[0]) >= 0.35:
-                    detected.append(r.names[int(box.cls[0])])
+                    obj_name = r.names[int(box.cls[0])]
+                    detected.append(obj_name)
+
+                    # Bounding box salience filter: (w * h) / image_area
+                    xyxy = box.xyxy[0].tolist()
+                    bw = max(0.0, xyxy[2] - xyxy[0])
+                    bh = max(0.0, xyxy[3] - xyxy[1])
+                    area_ratio = (bw * bh) / img_area
+
+                    # Object occupies >= 12% of the frame -> Salient
+                    if area_ratio >= 0.12:
+                        salient_detected.append(obj_name)
+
         expected = CATEGORY_HINTS.get(predicted_category, [])
         if not expected:
             return {"consistent":True,"detected_objects":detected,"message":"Category not verifiable by CV","needs_flag":False}
+
         matched = [o for o in detected if o in expected]
         if matched:
             return {"consistent":True,"detected_objects":detected,"message":f"Image verified: {', '.join(set(matched))} detected","needs_flag":False}
+
         if not detected:
             return {"consistent":True,"detected_objects":[],"message":"Image unclear but accepted","needs_flag":False}
-        return {"consistent":False,"detected_objects":detected,
-                "message":f"Image shows {', '.join(set(detected[:3]))} but complaint is '{predicted_category}'. Flagged for review.","needs_flag":True}
+
+        # If non-matching objects were detected but none occupy >= 12% frame, treat as ambient background noise
+        if not salient_detected:
+            return {"consistent":True,"detected_objects":detected,
+                    "message":f"Image accepted (ambient noise ignored: {', '.join(set(detected))})","needs_flag":False}
+
+        return {"consistent":False,"detected_objects":salient_detected,
+                "message":f"Image shows prominent {', '.join(set(salient_detected[:3]))} (>=12% area) but complaint is '{predicted_category}'. Flagged for review.","needs_flag":True}
     except Exception as e:
         return {"consistent":True,"detected_objects":[],"message":f"CV check skipped ({str(e)[:60]})","needs_flag":False}
 

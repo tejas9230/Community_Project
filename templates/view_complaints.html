@@ -11,6 +11,9 @@
     <title>My Complaints</title>
 
     <link rel="stylesheet"
+          href="{{ url_for('static', filename='global.css') }}">
+
+    <link rel="stylesheet"
           href="{{ url_for('static', filename='view_complaints.css') }}">
 
     <link rel="stylesheet"
@@ -63,7 +66,17 @@
 
         </div>
 
-        <div>
+        <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+
+            <a href="/impact_wall">
+                <button class="back-btn" style="background:#059669; border-color:#059669; color:#fff;">
+                    ⭐ Wall of Impact
+                </button>
+            </a>
+
+            <button type="button" id="themeToggleBtn" onclick="toggleCivicTheme()" class="back-btn" style="color:inherit;">
+                🌙 Dark
+            </button>
 
             <a href="/user_dashboard">
 
@@ -336,9 +349,25 @@
 
         {% elif complaint[7] == "Resolved" %}
 
-            <span class="status resolved">
+            <span class="status resolved" style="background:#0284c7; color:#fff;">
 
-                🟢 Resolved
+                🟢 Resolved (Sign-Off Pending)
+
+            </span>
+
+        {% elif complaint[7] == "Closed" %}
+
+            <span class="status resolved" style="background:#059669; color:#fff;">
+
+                🔒 Closed (Verified)
+
+            </span>
+
+        {% elif complaint[7] == "Reopened" %}
+
+            <span class="status rejected" style="background:#ea580c; color:#fff;">
+
+                ⚠️ Reopened (Disputed)
 
             </span>
 
@@ -350,6 +379,20 @@
 
             </span>
 
+        {% endif %}
+
+        {% if complaint[17] == 1 %}
+            <div style="margin-top:5px;">
+                <span class="badge" style="background:#dc2626; color:#fff; font-size:10px; padding:2px 8px; border-radius:10px;">
+                    🚨 Civic SOS
+                </span>
+            </div>
+        {% endif %}
+
+        {% if complaint[12] %}
+            <div class="sla-countdown-badge" data-sla="{{ complaint[12] }}" style="margin-top:6px; font-size:11px; font-weight:600; padding:3px 8px; border-radius:12px; display:inline-block; border:1px solid #cbd5e1;">
+                ⏰ {{ complaint[12] }}
+            </div>
         {% endif %}
 
         {% if complaint[7] == "Rejected" and complaint[11] %}
@@ -464,6 +507,62 @@
 
             </button>
 
+        {% elif complaint[7] == "Resolved" %}
+
+            <!-- Citizen Two-Factor Resolution Sign-Off -->
+            <div style="display:flex; flex-direction:column; gap:5px; margin-bottom:6px;">
+
+                <button type="button" class="view-btn" style="background:#16a34a; border-color:#16a34a; font-size:11px; padding:6px 8px; font-weight:700;"
+                    onclick="verifyResolution({{ complaint[0] }}, 'confirm')">
+                    ✅ Confirm Fixed
+                </button>
+
+                <button type="button" class="view-btn" style="background:#dc2626; border-color:#dc2626; font-size:11px; padding:6px 8px; font-weight:700;"
+                    onclick="openDisputeModal({{ complaint[0] }})">
+                    ⚠️ Dispute / Broken
+                </button>
+
+            </div>
+
+            {% if complaint[13] %}
+                <button type="button" class="view-btn" style="font-size:10px; margin-bottom:4px; background:#2563eb; border-color:#2563eb;"
+                    onclick="openImage('/static/uploads/{{ complaint[13].split('/')[-1] }}')">
+                    📸 Repair Photo (CV: {{ complaint[14] or 85 }}%)
+                </button>
+            {% endif %}
+
+        {% elif complaint[7] == "Closed" %}
+
+            {% if complaint[9] %}
+
+                <button class="submitted-btn" disabled>
+
+                    ✅ Feedback Submitted
+
+                </button>
+
+            {% else %}
+
+                <a href="/feedback/{{ complaint[0] }}">
+
+                    <button class="feedback-btn">
+
+                        ⭐ Rate & Review
+
+                    </button>
+
+                </a>
+
+            {% endif %}
+
+        {% elif complaint[7] == "Reopened" %}
+
+            <button class="progress-btn" disabled style="background:#ea580c; border-color:#ea580c;">
+
+                🔄 Re-inspected
+
+            </button>
+
         {% elif complaint[9] %}
 
             <button class="submitted-btn" disabled>
@@ -484,12 +583,6 @@
 
             </a>
 
-        {% endif %}
-
-        {% if complaint[13] %}
-            <br><small style="color:#f87171;font-size:11px;margin-top:4px;display:block;">
-                ⏰ SLA: {{ complaint[13] }}
-            </small>
         {% endif %}
 
         <button class="view-btn" style="margin-top:6px;font-size:11px;"
@@ -601,6 +694,26 @@
             <h3 style="color:#fff;margin-bottom:20px;font-size:18px;">📋 Complaint Timeline</h3>
             <div id="timelineBody"></div>
         </div>
+    <!-- Dispute Modal -->
+    <div id="disputeModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;
+         background:rgba(0,0,0,0.7);z-index:9999;align-items:center;justify-content:center;">
+        <div style="background:#1e293b;border:1px solid rgba(255,255,255,0.15);border-radius:16px;
+                    padding:28px;max-width:480px;width:90%;position:relative;color:#fff;">
+            <button onclick="closeDisputeModal()"
+                style="position:absolute;top:12px;right:16px;background:none;border:none;
+                       color:#94a3b8;font-size:22px;cursor:pointer;">&times;</button>
+            <h3 style="color:#f87171;margin-bottom:12px;font-size:18px;">⚠️ Dispute Resolution</h3>
+            <p style="font-size:13px;color:#cbd5e1;margin-bottom:14px;">
+                Please explain why the issue is still not fixed so the department can re-inspect:
+            </p>
+            <input type="hidden" id="disputeComplaintId" value="">
+            <textarea id="disputeRemarks" rows="4" style="width:100%;border-radius:8px;padding:10px;background:#0f172a;border:1px solid #334155;color:#fff;font-size:13px;resize:vertical;"
+                placeholder="e.g. Work was incomplete, issue still persists..."></textarea>
+            <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:16px;">
+                <button type="button" onclick="closeDisputeModal()" style="padding:8px 16px;border-radius:8px;background:#334155;color:#fff;border:none;cursor:pointer;">Cancel</button>
+                <button type="button" onclick="submitDispute()" style="padding:8px 16px;border-radius:8px;background:#dc2626;color:#fff;border:none;font-weight:600;cursor:pointer;">Submit Dispute</button>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -620,6 +733,116 @@ window.onclick = function(event){
     if(event.target == modal) modal.style.display = "none";
     const tModal = document.getElementById("timelineModal");
     if(event.target == tModal) tModal.style.display = "none";
+    const dModal = document.getElementById("disputeModal");
+    if(event.target == dModal) dModal.style.display = "none";
+}
+
+// ================= THEME TOGGLE =================
+function applyTheme(theme) {
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('civic_theme', theme);
+    const btn = document.getElementById('themeToggleBtn');
+    if (btn) btn.innerHTML = theme === 'dark' ? '☀️ Light' : '🌙 Dark';
+}
+
+function toggleCivicTheme() {
+    const current = localStorage.getItem('civic_theme') || 'light';
+    applyTheme(current === 'dark' ? 'light' : 'dark');
+}
+
+(function() {
+    const saved = localStorage.getItem('civic_theme') || 'light';
+    applyTheme(saved);
+})();
+
+// ================= DYNAMIC SLA COUNTDOWN =================
+function updateSlaBadges() {
+    const badges = document.querySelectorAll('.sla-countdown-badge');
+    const now = new Date();
+
+    badges.forEach(badge => {
+        const raw = badge.getAttribute('data-sla');
+        if (!raw) return;
+
+        // format: DD-MM-YYYY HH:MM
+        let deadline = null;
+        if (raw.includes('-') && raw.includes(':')) {
+            const parts = raw.split(' ');
+            const dateParts = parts[0].split('-');
+            const timeParts = parts[1].split(':');
+            deadline = new Date(dateParts[2], parseInt(dateParts[1], 10) - 1, dateParts[0], timeParts[0], timeParts[1]);
+        } else {
+            deadline = new Date(raw);
+        }
+
+        if (isNaN(deadline.getTime())) return;
+
+        const diffMs = deadline - now;
+        const diffHours = Math.round(diffMs / (1000 * 60 * 60));
+
+        if (diffHours > 12) {
+            badge.style.background = '#dcfce7';
+            badge.style.color = '#15803d';
+            badge.style.borderColor = '#86efac';
+            badge.innerHTML = `🟢 ${diffHours}h left (Within SLA)`;
+        } else if (diffHours > 0) {
+            badge.style.background = '#fef9c3';
+            badge.style.color = '#a16207';
+            badge.style.borderColor = '#fde047';
+            badge.innerHTML = `🟡 ${diffHours}h left (Urgent SLA)`;
+        } else {
+            const overdue = Math.abs(diffHours);
+            badge.style.background = '#fee2e2';
+            badge.style.color = '#b91c1c';
+            badge.style.borderColor = '#fca5a5';
+            badge.innerHTML = `🔴 Overdue by ${overdue}h (Escalated)`;
+        }
+    });
+}
+
+// ================= CITIZEN 2FA RESOLUTION SIGN-OFF =================
+function verifyResolution(complaintId, action, remarks = '') {
+    if (action === 'confirm' && !confirm("Confirm that this issue has been completely fixed and close the ticket?")) {
+        return;
+    }
+
+    fetch('/verify_resolution/' + complaintId, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: action, remarks: remarks })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            alert(data.message || "Resolution updated successfully!");
+            location.reload();
+        } else {
+            alert("Error: " + (data.message || "Could not update resolution."));
+        }
+    })
+    .catch(() => {
+        alert("Failed to submit resolution verification.");
+    });
+}
+
+function openDisputeModal(complaintId) {
+    document.getElementById('disputeComplaintId').value = complaintId;
+    document.getElementById('disputeRemarks').value = '';
+    document.getElementById('disputeModal').style.display = 'flex';
+}
+
+function closeDisputeModal() {
+    document.getElementById('disputeModal').style.display = 'none';
+}
+
+function submitDispute() {
+    const id = document.getElementById('disputeComplaintId').value;
+    const remarks = document.getElementById('disputeRemarks').value.trim();
+    if (!remarks) {
+        alert("Please provide a reason for disputing this repair.");
+        return;
+    }
+    verifyResolution(id, 'dispute', remarks);
 }
 
 // ── Timeline Modal ──
@@ -688,6 +911,9 @@ window.addEventListener("load",()=>{
         },index*120);
 
     });
+
+    updateSlaBadges();
+    setInterval(updateSlaBadges, 60000);
 
 });
 

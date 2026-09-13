@@ -36,7 +36,7 @@ vectorizer = joblib.load(VECTORIZER_PATH)
 
 def predict_complaint(complaint_text):
     """
-    Predict complaint category.
+    Predict complaint category with Explainable AI keywords and Ambiguity detection.
 
     Parameters:
         complaint_text (str)
@@ -58,12 +58,45 @@ def predict_complaint(complaint_text):
     # Convert to TF-IDF
     vector = vectorizer.transform([cleaned_text])
 
-    # Predict category
-    predicted_category = model.predict(vector)[0]
+    # Predict category and class probabilities
+    probabilities = model.predict_proba(vector)[0]
+    classes = model.classes_
+    sorted_indices = probabilities.argsort()[::-1]
 
-    # Predict confidence
-    probability = model.predict_proba(vector).max()
-    confidence = confidence_percentage(probability)
+    top1_idx = sorted_indices[0]
+    predicted_category = classes[top1_idx]
+    top1_prob = float(probabilities[top1_idx])
+    confidence = confidence_percentage(top1_prob)
+
+    # Extract top keywords (Explainable AI)
+    keywords = []
+    try:
+        feature_names = vectorizer.get_feature_names_out()
+        coo = vector.tocoo()
+        sorted_items = sorted(zip(coo.col, coo.data), key=lambda x: x[1], reverse=True)
+        keywords = [str(feature_names[idx]) for idx, score in sorted_items[:5]]
+    except Exception:
+        keywords = [w for w in cleaned_text.split() if len(w) > 3][:5]
+
+    # Detect ambiguity (e.g. Road vs Water conflict)
+    is_ambiguous = False
+    secondary_category = None
+    secondary_department = None
+    margin = 100.0
+
+    if len(sorted_indices) > 1:
+        top2_idx = sorted_indices[1]
+        top2_cat = classes[top2_idx]
+        top2_prob = float(probabilities[top2_idx])
+        margin = round((top1_prob - top2_prob) * 100, 1)
+
+        # Ambiguity threshold: margin <= 18% and top2 prob >= 15%
+        if margin <= 18.0 and top2_prob >= 0.15:
+            is_ambiguous = True
+            secondary_category = top2_cat
+            sec_details = CATEGORY_MAPPING.get(top2_cat)
+            if sec_details:
+                secondary_department = sec_details.get("department")
 
     # Get mapping
     details = CATEGORY_MAPPING.get(predicted_category)
@@ -80,5 +113,10 @@ def predict_complaint(complaint_text):
         "category": predicted_category,
         "department": details["department"],
         "priority": details["priority"],
-        "confidence": confidence
+        "confidence": confidence,
+        "keywords": keywords,
+        "is_ambiguous": is_ambiguous,
+        "secondary_category": secondary_category,
+        "secondary_department": secondary_department,
+        "margin": margin
     }

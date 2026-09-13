@@ -8,7 +8,8 @@ from dotenv import load_dotenv
 load_dotenv()  # loads .env file if present
 from werkzeug.utils import secure_filename
 from ai.classifier import predict_complaint
-from datetime import datetime
+from datetime import datetime, timedelta
+from models.department_mapping import CATEGORY_MAPPING
 from ai.duplicate_detector import DuplicateComplaintDetector
 from ai.cv_comparator import check_image_consistency, calculate_resolution_score
 from utils.priority_queue import PriorityQueueManager
@@ -779,6 +780,16 @@ def check_duplicate():
     })
 
 
+@app.route('/predict_preview', methods=['POST'])
+def predict_preview():
+    data = request.get_json(silent=True) or {}
+    description = data.get('description', '').strip()
+    if not description:
+        return jsonify({"success": False, "message": "Description cannot be empty."})
+    result = predict_complaint(description)
+    return jsonify(result)
+
+
 @app.route('/submit_complaint', methods=['GET', 'POST'])
 @limiter.limit("5 per minute")
 def submit_complaint():
@@ -821,11 +832,22 @@ def submit_complaint():
         priority = ai_result["priority"]
         confidence = ai_result["confidence"]
 
+        # Check if citizen confirmed a department during ambiguity prompt
+        confirmed_category = request.form.get('confirmed_category', '').strip()
+        if confirmed_category and confirmed_category in CATEGORY_MAPPING:
+            category = confirmed_category
+            department = CATEGORY_MAPPING[category]["department"]
+            priority = CATEGORY_MAPPING[category]["priority"]
+
+        # Check if Civic SOS Emergency Override was selected
+        is_emergency = 1 if request.form.get('is_emergency') in ('1', 'true', 'True') else 0
+
         print("\n========== AI Prediction ==========")
         print(f"Category   : {category}")
         print(f"Department : {department}")
         print(f"Priority   : {priority}")
         print(f"Confidence : {confidence}%")
+        print(f"Emergency  : {'YES' if is_emergency else 'NO'}")
         print("===================================\n")
 
         # ------------------------------------
@@ -878,7 +900,9 @@ def submit_complaint():
         # ------------------------------------
         # Smart GPS Priority Escalation
         # ------------------------------------
-        if nearby_count >= 7:
+        if is_emergency:
+            priority = "Critical"
+        elif nearby_count >= 7:
             priority = "Critical"
         elif nearby_count >= 5:
             priority = "Critical" if priority in ("High", "Critical") else "High"
@@ -924,7 +948,11 @@ def submit_complaint():
         # ------------------------------------
         # SLA Deadline
         # ------------------------------------
-        sla_deadline = get_sla_deadline(category)
+        if is_emergency:
+            # Life-Safety Civic SOS: 6-Hour Emergency SLA
+            sla_deadline = (datetime.now() + timedelta(hours=6)).strftime("%d-%m-%Y %H:%M")
+        else:
+            sla_deadline = get_sla_deadline(category)
         created_at   = datetime.now().strftime("%d-%m-%Y %H:%M")
 
         # ------------------------------------
@@ -940,15 +968,15 @@ def submit_complaint():
                 username, category, priority, department,
                 address, latitude, longitude, description,
                 status, image_path, created_at, needs_verification,
-                sla_deadline, updated_at
+                sla_deadline, updated_at, is_emergency
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             RETURNING id
             """, (
                 session['username'], category, priority, department,
                 address, latitude, longitude, description,
                 "Pending", image_path, created_at, needs_verification,
-                sla_deadline, created_at
+                sla_deadline, created_at, is_emergency
             ))
             row = cur.fetchone()
             complaint_id = row[0] if row else None
@@ -959,14 +987,14 @@ def submit_complaint():
                 username, category, priority, department,
                 address, latitude, longitude, description,
                 status, image_path, created_at, needs_verification,
-                sla_deadline, updated_at
+                sla_deadline, updated_at, is_emergency
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """, (
                 session['username'], category, priority, department,
                 address, latitude, longitude, description,
                 "Pending", image_path, created_at, needs_verification,
-                sla_deadline, created_at
+                sla_deadline, created_at, is_emergency
             ))
             complaint_id = cur.lastrowid
 
@@ -976,8 +1004,12 @@ def submit_complaint():
         # ------------------------------------
         # Timeline entry
         # ------------------------------------
-        add_timeline(complaint_id, session['username'], "Submitted",
-                     f"Category: {category} | Priority: {priority} | SLA: {sla_deadline}")
+        if is_emergency:
+            add_timeline(complaint_id, session['username'], "🚨 Civic SOS Emergency",
+                         f"EMERGENCY OVERRIDE: Category: {category} | Priority: Critical | Emergency SLA: 6 Hours ({sla_deadline})")
+        else:
+            add_timeline(complaint_id, session['username'], "Submitted",
+                         f"Category: {category} | Priority: {priority} | SLA: {sla_deadline}")
 
         # ------------------------------------
         # Notifications
@@ -1145,7 +1177,12 @@ def view_complaints():
         feedback,
         rating,
         rejection_reason,
-        sla_deadline
+        sla_deadline,
+        resolution_image,
+        resolution_score,
+        officer_remark,
+        needs_verification,
+        is_emergency
     FROM complaints
     WHERE username=?
     """
@@ -1269,6 +1306,115 @@ def feedback(id):
     conn.close()
 
     return render_template("feedback.html")
+
+
+@app.route('/verify_resolution/<int:complaint_id>', methods=['POST'])
+def verify_resolution(complaint_id):
+    if 'username' not in session:
+        return jsonify({"success": False, "message": "Please log in first."}), 401
+
+    username = session['username']
+    action = request.form.get('action') or (request.get_json(silent=True) or {}).get('action')
+    remarks = request.form.get('remarks') or (request.get_json(silent=True) or {}).get('remarks') or ''
+
+    conn = get_db()
+    cur = conn.cursor()
+
+    cur.execute("SELECT id, username, status, category FROM complaints WHERE id=?", (complaint_id,))
+    comp = cur.fetchone()
+    if not comp:
+        conn.close()
+        return jsonify({"success": False, "message": "Complaint not found."}), 404
+
+    comp_user = comp[1]
+    if comp_user != username and session.get('role') != 'Admin' and username != 'admin':
+        conn.close()
+        return jsonify({"success": False, "message": "Unauthorized."}), 403
+
+    now_str = datetime.now().strftime("%d-%m-%Y %H:%M")
+
+    if action == 'confirm':
+        cur.execute("""
+            UPDATE complaints
+            SET status = 'Closed', verification_status = 'Verified by Citizen', updated_at = ?
+            WHERE id = ?
+        """, (now_str, complaint_id))
+        conn.commit()
+        conn.close()
+
+        add_timeline(complaint_id, username, "Citizen Confirmed", "Citizen verified the resolution. Ticket permanently closed.")
+        add_notification("admin", f"Complaint SCS-{complaint_id:04d} was verified and permanently closed by citizen {username}.")
+        flash(f"Thank you! Resolution for SCS-{complaint_id:04d} verified and ticket closed.", "success")
+        return jsonify({"success": True, "status": "Closed", "message": "Resolution confirmed."})
+
+    elif action == 'dispute':
+        dispute_note = f"Disputed by citizen: {remarks}" if remarks else "Disputed by citizen (unresolved)."
+        cur.execute("""
+            UPDATE complaints
+            SET status = 'Reopened', verification_status = 'Disputed', officer_remark = ?, updated_at = ?
+            WHERE id = ?
+        """, (dispute_note, now_str, complaint_id))
+        conn.commit()
+        conn.close()
+
+        add_timeline(complaint_id, username, "Citizen Disputed", dispute_note)
+        add_notification("admin", f"⚠️ Dispute Alert: Complaint SCS-{complaint_id:04d} was marked as unresolved by {username}. Reason: {remarks}")
+        flash(f"Complaint SCS-{complaint_id:04d} has been reopened and escalated for re-inspection.", "warning")
+        return jsonify({"success": True, "status": "Reopened", "message": "Complaint reopened."})
+
+    conn.close()
+    return jsonify({"success": False, "message": "Invalid action."}), 400
+
+
+@app.route('/impact_wall')
+def impact_wall():
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("""
+        SELECT id, category, department, address, description,
+               image_path, resolution_image, resolution_score,
+               created_at, updated_at, upvotes
+        FROM complaints
+        WHERE status IN ('Resolved', 'Closed')
+          AND resolution_image IS NOT NULL
+          AND resolution_image != ''
+        ORDER BY id DESC
+        LIMIT 30
+    """)
+    records = cur.fetchall()
+    conn.close()
+
+    wall_items = []
+    for r in records:
+        wall_items.append({
+            "id": r[0],
+            "category": r[1],
+            "department": r[2],
+            "address": r[3],
+            "description": r[4],
+            "image_path": r[5],
+            "resolution_image": r[6],
+            "resolution_score": r[7] or 85,
+            "created_at": r[8],
+            "updated_at": r[9],
+            "upvotes": r[10] or 0
+        })
+
+    return render_template("impact_wall.html", items=wall_items)
+
+
+@app.route('/thank_resolution/<int:complaint_id>', methods=['POST'])
+def thank_resolution(complaint_id):
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("UPDATE complaints SET upvotes = COALESCE(upvotes, 0) + 1 WHERE id = ?", (complaint_id,))
+    conn.commit()
+    cur.execute("SELECT COALESCE(upvotes, 0) FROM complaints WHERE id = ?", (complaint_id,))
+    row = cur.fetchone()
+    conn.close()
+    count = row[0] if row else 1
+    return jsonify({"success": True, "upvotes": count})
+
 
 @app.route('/admin')
 def admin():

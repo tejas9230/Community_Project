@@ -57,11 +57,23 @@
         <div class="collapse navbar-collapse"
              id="navbarNav">
 
-            <ul class="navbar-nav ms-auto align-items-center">
+            <ul class="navbar-nav ms-auto align-items-center gap-2">
+
+                <li class="nav-item">
+                    <a href="/impact_wall" class="btn btn-outline-light btn-sm px-3">
+                        <i class="bi bi-star-fill text-warning me-1"></i> Wall of Impact
+                    </a>
+                </li>
+
+                <li class="nav-item">
+                    <button type="button" id="themeToggleBtn" onclick="toggleCivicTheme()" class="btn btn-outline-light btn-sm px-3">
+                        🌙 Dark
+                    </button>
+                </li>
 
                 {% if session.get('username') %}
 
-                <li class="nav-item me-3">
+                <li class="nav-item ms-2 me-2">
 
                     <span class="text-white">
 
@@ -142,6 +154,25 @@
 <!-- Bootstrap JS -->
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+function applyTheme(theme) {
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('civic_theme', theme);
+    const btn = document.getElementById('themeToggleBtn');
+    if (btn) btn.innerHTML = theme === 'dark' ? '☀️ Light' : '🌙 Dark';
+}
+
+function toggleCivicTheme() {
+    const current = localStorage.getItem('civic_theme') || 'light';
+    applyTheme(current === 'dark' ? 'light' : 'dark');
+}
+
+(function() {
+    const saved = localStorage.getItem('civic_theme') || 'light';
+    applyTheme(saved);
+})();
+</script>
 
 {% block scripts %}
 {% endblock %}
