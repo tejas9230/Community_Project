@@ -52,6 +52,62 @@
 
         <div class="card-body">
 
+            <!-- ================= ACTIVE ADMIN DIRECTIVES (TWO-WAY INTERACTIVE COMMS) ================= -->
+            {% if active_directives and active_directives|length > 0 %}
+            <div class="mb-4">
+                {% for dir in active_directives %}
+                <div id="dir-card-{{ dir.id }}" class="card mb-3 shadow-sm border-2 {% if dir.priority == 'Critical' %}border-danger bg-danger-subtle{% elif dir.priority == 'Urgent' %}border-warning bg-warning-subtle{% else %}border-primary bg-primary-subtle{% endif %}">
+                    <div class="card-body py-3">
+                        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="badge {% if dir.priority == 'Critical' %}bg-danger{% elif dir.priority == 'Urgent' %}bg-warning text-dark{% else %}bg-primary{% endif %} fs-6">
+                                    <i class="bi bi-broadcast me-1"></i> {{ dir.priority|upper }} DIRECTIVE
+                                </span>
+                                <span class="text-muted small"><i class="bi bi-clock me-1"></i>{{ dir.created_at }}</span>
+                                <span class="badge bg-secondary">From: {{ dir.from_user }}</span>
+                            </div>
+                            <div>
+                                <span class="badge bg-dark fs-6" id="dir-status-badge-{{ dir.id }}">Status: {{ dir.status }}</span>
+                            </div>
+                        </div>
+                        <p class="mb-2 fw-semibold" style="font-size:14px; line-height:1.5;">
+                            {{ dir.message }}
+                        </p>
+                        {% if dir.response_note %}
+                        <div class="small text-success mb-2" id="dir-note-{{ dir.id }}">
+                            <i class="bi bi-check-circle me-1"></i> Latest response: {{ dir.response_note }}
+                        </div>
+                        {% else %}
+                        <div class="small text-muted mb-2" id="dir-note-{{ dir.id }}" style="display:none;"></div>
+                        {% endif %}
+
+                        <!-- 1-Click Quick Response Chips -->
+                        <div class="d-flex align-items-center gap-2 flex-wrap pt-2 border-top">
+                            <span class="small fw-bold text-muted me-1">1-Click Response:</span>
+                            <button type="button" onclick="respondDirective({{ dir.id }}, 'Acknowledged & Dispatched')" class="btn btn-sm btn-outline-dark">
+                                🫡 Acknowledged & Dispatched
+                            </button>
+                            <button type="button" onclick="respondDirective({{ dir.id }}, 'Crew On-Site')" class="btn btn-sm btn-outline-primary">
+                                🚜 Crew On-Site
+                            </button>
+                            <button type="button" onclick="respondDirective({{ dir.id }}, 'Work Completed')" class="btn btn-sm btn-outline-success">
+                                ✅ Work Completed
+                            </button>
+                            <button type="button" onclick="respondDirective({{ dir.id }}, 'Need Backup Equipment')" class="btn btn-sm btn-outline-danger">
+                                ⚠️ Need Backup Equipment
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="alert alert-secondary py-2 px-3 d-flex align-items-center justify-content-between mb-4 shadow-sm" style="font-size:13px; border-radius:10px;">
+                <span><i class="bi bi-shield-check text-success me-2 fs-5 align-middle"></i><strong>No active priority directives from Admin.</strong> Department operations running under standard SLA.</span>
+                <span class="badge bg-success">Status: Ready & On Duty</span>
+            </div>
+            {% endif %}
+
             {% if complaints %}
 
             <div class="table-responsive">
@@ -411,6 +467,46 @@ document.addEventListener("DOMContentLoaded", () => {
     updateSlaBadges();
     setInterval(updateSlaBadges, 60000);
 });
+
+function respondDirective(dirId, statusText) {
+    const badge = document.getElementById('dir-status-badge-' + dirId);
+    const note = document.getElementById('dir-note-' + dirId);
+
+    if (badge) {
+        badge.textContent = 'Updating...';
+        badge.className = 'badge bg-secondary fs-6';
+    }
+
+    fetch('/api/directives/respond/' + dirId, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: statusText })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.status === 'success') {
+            if (badge) {
+                badge.textContent = 'Status: ' + statusText;
+                if (statusText.includes('Completed')) {
+                    badge.className = 'badge bg-success fs-6';
+                } else if (statusText.includes('Crew')) {
+                    badge.className = 'badge bg-primary fs-6';
+                } else if (statusText.includes('Acknowledged')) {
+                    badge.className = 'badge bg-warning text-dark fs-6';
+                } else {
+                    badge.className = 'badge bg-danger fs-6';
+                }
+            }
+            if (note) {
+                note.style.display = 'block';
+                note.innerHTML = `<i class="bi bi-check-circle me-1"></i> Acknowledged at ${data.updated_at}: <strong>${statusText}</strong>`;
+            }
+        } else {
+            alert(data.message || 'Failed to update directive status.');
+        }
+    })
+    .catch(() => alert('Network error communicating with command center.'));
+}
 </script>
 
 </body>

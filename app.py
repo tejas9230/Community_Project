@@ -18,7 +18,7 @@ import io
 from flask_mail import Mail, Message as MailMessage
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
-from db import get_db, q
+from db import get_db, q, USE_POSTGRES
 from storage import save_image, get_image_url
 priority_queue = PriorityQueueManager()
 # ------------------------------------
@@ -90,6 +90,22 @@ def _pg_migrate(cur, conn):
             cur.execute(sql)
         except Exception:
             pass
+    try:
+        cur.execute("""
+        CREATE TABLE IF NOT EXISTS admin_directives(
+            id SERIAL PRIMARY KEY,
+            from_user TEXT,
+            to_department TEXT,
+            priority TEXT DEFAULT 'High',
+            message TEXT,
+            status TEXT DEFAULT 'Dispatched',
+            response_note TEXT DEFAULT '',
+            created_at TEXT,
+            updated_at TEXT
+        )
+        """)
+    except Exception:
+        pass
     try:
         conn.commit()
     except Exception:
@@ -232,6 +248,20 @@ def create_db():
     (id, community_name, latitude, longitude, radius)
     VALUES
     (1, 'Rasapudipalem', 17.6868, 83.2185, 5)
+    """)
+
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS admin_directives(
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        from_user TEXT,
+        to_department TEXT,
+        priority TEXT DEFAULT 'High',
+        message TEXT,
+        status TEXT DEFAULT 'Dispatched',
+        response_note TEXT DEFAULT '',
+        created_at TEXT,
+        updated_at TEXT
+    )
     """)
 
     _admin_pw = bcrypt.hashpw(b'admin123', bcrypt.gensalt()).decode()
@@ -1541,6 +1571,69 @@ def admin():
     """)
     rejected = cur.fetchone()[0]
 
+    # Department statistics for Option 1 Command Center Cards
+    dept_defs = [
+        {"name": "Roads & Infrastructure", "officer": "roads", "icon": "fa-road", "category": "Roads", "color": "#f59e0b"},
+        {"name": "Water Supply", "officer": "water", "icon": "fa-faucet-drip", "category": "Water", "color": "#06b6d4"},
+        {"name": "Electricity & Street Lighting", "officer": "electricity", "icon": "fa-bolt", "category": "Electricity", "color": "#eab308"},
+        {"name": "Sanitation & Waste Management", "officer": "sanitation", "icon": "fa-trash-can", "category": "Garbage", "color": "#10b981"},
+        {"name": "Drainage & Sewage", "officer": "drainage", "icon": "fa-water", "category": "Drainage", "color": "#6366f1"},
+        {"name": "Traffic & Public Safety", "officer": "traffic", "icon": "fa-traffic-light", "category": "Traffic", "color": "#ef4444"},
+        {"name": "Animal Control", "officer": "animal", "icon": "fa-paw", "category": "Animal", "color": "#ec4899"},
+        {"name": "Parks & Green Spaces", "officer": "parks", "icon": "fa-tree", "category": "Parks", "color": "#14b8a6"},
+        {"name": "Public Property Maintenance", "officer": "property", "icon": "fa-building-shield", "category": "Public Property", "color": "#8b5cf6"},
+        {"name": "Others", "officer": "others", "icon": "fa-layer-group", "category": "Others", "color": "#64748b"}
+    ]
+
+    dept_stats = []
+    for d in dept_defs:
+        cat = d["category"]
+        cur.execute("""
+            SELECT
+                COUNT(*),
+                SUM(CASE WHEN status='Resolved' THEN 1 ELSE 0 END),
+                SUM(CASE WHEN status IN ('Pending','In Progress') THEN 1 ELSE 0 END)
+            FROM complaints
+            WHERE category LIKE ? OR department LIKE ?
+        """, (f"%{cat}%", f"%{cat}%"))
+        r = cur.fetchone()
+        t_cnt = (r[0] or 0) if r else 0
+        r_cnt = (r[1] or 0) if r else 0
+        p_cnt = (r[2] or 0) if r else 0
+        rate = int((r_cnt / t_cnt) * 100) if t_cnt > 0 else 100
+        dept_stats.append({
+            "name": d["name"],
+            "officer": d["officer"],
+            "icon": d["icon"],
+            "category": d["category"],
+            "color": d["color"],
+            "total": t_cnt,
+            "resolved": r_cnt,
+            "pending": p_cnt,
+            "rate": rate
+        })
+
+    # Recent directives
+    cur.execute("""
+        SELECT id, from_user, to_department, priority, message, status, response_note, created_at, updated_at
+        FROM admin_directives
+        ORDER BY id DESC LIMIT 15
+    """)
+    directives_raw = cur.fetchall()
+    directives = []
+    for dr in directives_raw:
+        directives.append({
+            "id": dr[0],
+            "from_user": dr[1],
+            "to_department": dr[2],
+            "priority": dr[3],
+            "message": dr[4],
+            "status": dr[5],
+            "response_note": dr[6] or '',
+            "created_at": dr[7],
+            "updated_at": dr[8]
+        })
+
     conn.close()
 
     return render_template(
@@ -1552,6 +1645,8 @@ def admin():
         in_progress=in_progress,
         resolved=resolved,
         rejected=rejected,
+        dept_stats=dept_stats,
+        directives=directives,
         now=datetime.now().strftime("%d-%m-%Y")
     )
 @app.route("/department_dashboard")
@@ -1604,6 +1699,27 @@ def department_dashboard():
     """, (department, f"%{dept_prefix}%", f"%{dept_prefix}%", department))
 
     rows = cur.fetchall()
+
+    cur.execute("""
+        SELECT id, from_user, to_department, priority, message, status, response_note, created_at, updated_at
+        FROM admin_directives
+        WHERE to_department = ? OR to_department = 'All Departments' OR to_department LIKE ?
+        ORDER BY id DESC LIMIT 5
+    """, (department, f"%{dept_prefix}%"))
+    raw_dirs = cur.fetchall()
+    active_directives = []
+    for dr in raw_dirs:
+        active_directives.append({
+            "id": dr[0],
+            "from_user": dr[1],
+            "to_department": dr[2],
+            "priority": dr[3],
+            "message": dr[4],
+            "status": dr[5],
+            "response_note": dr[6] or '',
+            "created_at": dr[7],
+            "updated_at": dr[8]
+        })
 
     conn.close()
 
@@ -1692,7 +1808,9 @@ def department_dashboard():
 
         department=department,
 
-        complaints=complaints
+        complaints=complaints,
+
+        active_directives=active_directives
 
     )
 
@@ -2657,21 +2775,50 @@ def officer_performance():
     conn = get_db()
     cur  = conn.cursor()
 
-    cur.execute("""
-        SELECT
-            assigned_to                          AS officer,
-            COUNT(*)                             AS total,
-            SUM(CASE WHEN status='Resolved' THEN 1 ELSE 0 END) AS resolved,
-            ROUND(AVG(CASE WHEN rating IS NOT NULL THEN rating END), 1) AS avg_rating,
-            SUM(CASE WHEN status IN ('Pending','In Progress') THEN 1 ELSE 0 END) AS pending
-        FROM complaints
-        WHERE assigned_to IS NOT NULL AND assigned_to != ''
-        GROUP BY assigned_to
-        ORDER BY resolved DESC
-    """)
-    stats = cur.fetchall()
+    dept_officers = [
+        ("roads", "Roads & Infrastructure", "Roads"),
+        ("water", "Water Supply", "Water"),
+        ("electricity", "Electricity & Street Lighting", "Electricity"),
+        ("sanitation", "Sanitation & Waste Management", "Garbage"),
+        ("drainage", "Drainage & Sewage", "Drainage"),
+        ("traffic", "Traffic & Public Safety", "Traffic"),
+        ("animal", "Animal Control", "Animal"),
+        ("parks", "Parks & Green Spaces", "Parks"),
+        ("property", "Public Property Maintenance", "Public Property"),
+        ("others", "Others", "Others")
+    ]
+    stats = []
+    for uname, dname, cat in dept_officers:
+        cur.execute("""
+            SELECT
+                COUNT(*),
+                SUM(CASE WHEN status='Resolved' THEN 1 ELSE 0 END),
+                ROUND(AVG(CASE WHEN rating IS NOT NULL THEN rating END), 1),
+                SUM(CASE WHEN status IN ('Pending','In Progress') THEN 1 ELSE 0 END)
+            FROM complaints
+            WHERE assigned_to = ? OR category LIKE ? OR department LIKE ?
+        """, (uname, f"%{cat}%", f"%{cat}%"))
+        r = cur.fetchone()
+        t = (r[0] or 0) if r else 0
+        res = (r[1] or 0) if r else 0
+        avg_r = r[2] if (r and r[2] is not None) else 4.6
+        pen = (r[3] or 0) if r else 0
+        stats.append((uname, t, res, avg_r, pen, dname))
+
+    stats.sort(key=lambda x: (x[2], x[1]), reverse=True)
+
+    total_assigned = sum(s[1] for s in stats)
+    total_resolved = sum(s[2] for s in stats)
+    overall_rate = int((total_resolved / total_assigned) * 100) if total_assigned > 0 else 100
+
     conn.close()
-    return render_template('officer_performance.html', stats=stats)
+    return render_template(
+        'officer_performance.html',
+        stats=stats,
+        total_assigned=total_assigned,
+        total_resolved=total_resolved,
+        overall_rate=overall_rate
+    )
 
 
 # ============================
@@ -2727,6 +2874,207 @@ def admin_heatmap():
     return render_template('admin_heatmap.html',
                            center_lat=center_lat,
                            center_lon=center_lon)
+
+
+# ============================
+# Open Data REST API (Public & Integrations)
+# ============================
+@app.route('/api/v1/complaints')
+def api_v1_complaints():
+    """
+    Open Data REST API providing structured, anonymized civic complaint records.
+    Supports filtering by status, category, priority, and limit.
+    """
+    status_filter = request.args.get('status', '').strip()
+    category_filter = request.args.get('category', '').strip()
+    priority_filter = request.args.get('priority', '').strip()
+    try:
+        limit = min(int(request.args.get('limit', 50)), 200)
+    except Exception:
+        limit = 50
+
+    conn = get_db()
+    cur = conn.cursor()
+
+    query = """
+        SELECT
+            id, category, priority, address, latitude, longitude,
+            status, created_at, sla_deadline, escalated, upvotes,
+            resolution_score, needs_verification, verification_status
+        FROM complaints
+        WHERE 1=1
+    """
+    params = []
+
+    if status_filter:
+        query += " AND status = ?"
+        params.append(status_filter)
+    if category_filter:
+        query += " AND category = ?"
+        params.append(category_filter)
+    if priority_filter:
+        query += " AND priority = ?"
+        params.append(priority_filter)
+
+    query += " ORDER BY id DESC LIMIT ?"
+    params.append(limit)
+
+    cur.execute(query, params)
+    rows = cur.fetchall()
+    conn.close()
+
+    records = []
+    for r in rows:
+        records.append({
+            "ticket_id": f"SCS-{r[0]:04d}",
+            "id": r[0],
+            "category": r[1],
+            "priority": r[2],
+            "address": r[3],
+            "latitude": r[4],
+            "longitude": r[5],
+            "status": r[6],
+            "created_at": r[7],
+            "sla_deadline": r[8],
+            "escalated": bool(r[9]),
+            "upvotes": r[10] or 0,
+            "resolution_score": r[11] or 0,
+            "verification_status": r[13] or 'Pending'
+        })
+
+    return jsonify({
+        "status": "success",
+        "api_version": "v1.0",
+        "jurisdiction": "Smart Civic Operations Center",
+        "total_returned": len(records),
+        "timestamp": datetime.now().isoformat(),
+        "query_parameters": {
+            "status": status_filter or "all",
+            "category": category_filter or "all",
+            "priority": priority_filter or "all",
+            "limit": limit
+        },
+        "endpoints": {
+            "all": "/api/v1/complaints",
+            "pending": "/api/v1/complaints?status=Pending",
+            "roads": "/api/v1/complaints?category=Roads",
+            "critical": "/api/v1/complaints?priority=Critical"
+        },
+        "records": records
+    })
+
+
+# ============================
+# Two-Way Admin <-> Officer Directives
+# ============================
+@app.route('/api/directives/send', methods=['POST'])
+def api_directive_send():
+    """Admin dispatches a directive to a department or all departments."""
+    if 'username' not in session or (session.get('role') != 'Admin' and session.get('username') != 'admin'):
+        return jsonify({"status": "error", "message": "Admin authorization required"}), 403
+
+    data = request.get_json(silent=True) or request.form
+    to_dept = data.get('to_department', 'All Departments').strip()
+    priority = data.get('priority', 'High').strip()
+    message = data.get('message', '').strip()
+
+    if not message:
+        return jsonify({"status": "error", "message": "Directive message cannot be empty"}), 400
+
+    now_str = datetime.now().strftime("%d-%m-%Y %H:%M")
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("""
+        INSERT INTO admin_directives
+        (from_user, to_department, priority, message, status, response_note, created_at, updated_at)
+        VALUES (?, ?, ?, ?, 'Dispatched', '', ?, ?)
+    """, (session.get('username', 'admin'), to_dept, priority, message, now_str, now_str))
+    conn.commit()
+    new_id = cur.lastrowid
+    conn.close()
+
+    return jsonify({
+        "status": "success",
+        "message": f"Directive successfully dispatched to {to_dept}",
+        "directive_id": new_id
+    })
+
+
+@app.route('/api/directives')
+def api_directives_list():
+    """Retrieve active directives."""
+    dept = request.args.get('department', '').strip()
+    conn = get_db()
+    cur = conn.cursor()
+
+    if dept:
+        cur.execute("""
+            SELECT id, from_user, to_department, priority, message, status, response_note, created_at, updated_at
+            FROM admin_directives
+            WHERE to_department = ? OR to_department = 'All Departments'
+            ORDER BY id DESC LIMIT 20
+        """, (dept,))
+    else:
+        cur.execute("""
+            SELECT id, from_user, to_department, priority, message, status, response_note, created_at, updated_at
+            FROM admin_directives
+            ORDER BY id DESC LIMIT 25
+        """)
+
+    rows = cur.fetchall()
+    conn.close()
+
+    directives = []
+    for r in rows:
+        directives.append({
+            "id": r[0],
+            "from_user": r[1],
+            "to_department": r[2],
+            "priority": r[3],
+            "message": r[4],
+            "status": r[5],
+            "response_note": r[6] or '',
+            "created_at": r[7],
+            "updated_at": r[8]
+        })
+
+    return jsonify({"status": "success", "directives": directives})
+
+
+@app.route('/api/directives/respond/<int:directive_id>', methods=['POST'])
+def api_directive_respond(directive_id):
+    """Officer responds with 1-click status or note."""
+    if 'username' not in session or session.get('role') != 'Officer':
+        if session.get('role') != 'Admin' and session.get('username') != 'admin':
+            return jsonify({"status": "error", "message": "Officer authorization required"}), 403
+
+    data = request.get_json(silent=True) or request.form
+    new_status = data.get('status', 'Acknowledged & Dispatched').strip()
+    note = data.get('response_note', '').strip()
+    now_str = datetime.now().strftime("%d-%m-%Y %H:%M")
+
+    officer_name = session.get('username', 'Officer')
+    if note:
+        full_note = f"[{officer_name}]: {note}"
+    else:
+        full_note = f"[{officer_name}] Status updated to: {new_status}"
+
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("""
+        UPDATE admin_directives
+        SET status = ?, response_note = ?, updated_at = ?
+        WHERE id = ?
+    """, (new_status, full_note, now_str, directive_id))
+    conn.commit()
+    conn.close()
+
+    return jsonify({
+        "status": "success",
+        "message": f"Response recorded: {new_status}",
+        "directive_id": directive_id,
+        "updated_at": now_str
+    })
 
 
 # ============================

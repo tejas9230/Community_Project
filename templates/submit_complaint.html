@@ -22,6 +22,96 @@
     <link rel="stylesheet"
           href="https://unpkg.com/leaflet/dist/leaflet.css"/>
 
+    <style>
+    .lang-pill-container {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        align-items: center;
+        margin-bottom: 12px;
+    }
+    .lang-pill {
+        background: rgba(37, 99, 235, 0.08);
+        border: 1px solid rgba(37, 99, 235, 0.25);
+        color: #2563eb;
+        padding: 6px 14px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all .2s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+    .lang-pill:hover, .lang-pill.active {
+        background: #2563eb;
+        color: #ffffff;
+        border-color: #2563eb;
+        box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+    }
+    .voice-btn {
+        background: linear-gradient(135deg, #ef4444, #dc2626);
+        color: #ffffff;
+        border: none;
+        padding: 8px 18px;
+        border-radius: 24px;
+        font-size: 13px;
+        font-weight: 700;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        transition: all .25s ease;
+        box-shadow: 0 4px 14px rgba(239, 68, 68, 0.35);
+    }
+    .voice-btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 6px 18px rgba(239, 68, 68, 0.45);
+    }
+    .voice-btn.recording {
+        background: linear-gradient(135deg, #7c3aed, #6d28d9);
+        animation: voicePulse 1.5s infinite;
+    }
+    @keyframes voicePulse {
+        0% { box-shadow: 0 0 0 0 rgba(124, 58, 237, 0.6); }
+        70% { box-shadow: 0 0 0 14px rgba(124, 58, 237, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(124, 58, 237, 0); }
+    }
+    .voice-wave-box {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        background: rgba(124, 58, 237, 0.08);
+        border: 1px solid rgba(124, 58, 237, 0.25);
+        border-radius: 12px;
+        padding: 10px 16px;
+        margin-top: 10px;
+        margin-bottom: 12px;
+    }
+    .voice-wave-bars {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        height: 20px;
+    }
+    .voice-wave-bars span {
+        display: inline-block;
+        width: 4px;
+        background: #7c3aed;
+        border-radius: 2px;
+        animation: soundWave 0.8s infinite ease-in-out alternate;
+    }
+    .voice-wave-bars span:nth-child(1) { height: 6px; animation-delay: 0.1s; }
+    .voice-wave-bars span:nth-child(2) { height: 16px; animation-delay: 0.3s; }
+    .voice-wave-bars span:nth-child(3) { height: 22px; animation-delay: 0.2s; }
+    .voice-wave-bars span:nth-child(4) { height: 14px; animation-delay: 0.4s; }
+    .voice-wave-bars span:nth-child(5) { height: 8px; animation-delay: 0.15s; }
+    @keyframes soundWave {
+        0% { transform: scaleY(0.3); }
+        100% { transform: scaleY(1.3); }
+    }
+    </style>
 </head>
 
 <body>
@@ -139,28 +229,61 @@
 
         <div class="form-card">
 
-            <h2>
+            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:12px;">
+                <h2 style="margin:0;">
+                    <i class="fa-solid fa-file-lines"></i>
+                    Problem Description
+                </h2>
 
-                <i class="fa-solid fa-file-lines"></i>
+                <!-- 🎙️ Speak Complaint Button -->
+                <button type="button" id="voiceRecordBtn" onclick="toggleVoiceRecording()" class="voice-btn">
+                    <i class="fa-solid fa-microphone"></i>
+                    <span>Speak Complaint (Voice)</span>
+                </button>
+            </div>
 
-                Problem Description
+            <!-- Multilingual Language Selector Bar -->
+            <div class="lang-pill-container">
+                <span style="font-size:12px; font-weight:700; color:#64748b; margin-right:4px;">
+                    <i class="fa-solid fa-language"></i> Language:
+                </span>
+                <button type="button" class="lang-pill active" data-lang="en-IN" onclick="switchLanguage('en-IN')">
+                    🇬🇧 English
+                </button>
+                <button type="button" class="lang-pill" data-lang="hi-IN" onclick="switchLanguage('hi-IN')">
+                    🇮🇳 हिन्दी
+                </button>
+                <button type="button" class="lang-pill" data-lang="te-IN" onclick="switchLanguage('te-IN')">
+                    🇮🇳 తెలుగు
+                </button>
+                <button type="button" class="lang-pill" data-lang="ta-IN" onclick="switchLanguage('ta-IN')">
+                    🇮🇳 தமிழ்
+                </button>
+            </div>
 
-            </h2>
+            <!-- Listening Soundwave Animation Box -->
+            <div id="voiceWaveBox" class="voice-wave-box" style="display:none;">
+                <div class="voice-wave-bars">
+                    <span></span><span></span><span></span><span></span><span></span>
+                </div>
+                <div style="flex:1;">
+                    <strong id="voiceStatusText" style="color:#7c3aed; font-size:13px;">Listening... Speak now</strong>
+                </div>
+                <button type="button" onclick="stopVoiceRecording()" style="background:#dc2626; color:#fff; border:none; padding:4px 12px; border-radius:12px; font-size:11px; font-weight:700; cursor:pointer;">
+                    Stop
+                </button>
+            </div>
 
             <textarea
-
                 id="description"
-
                 name="description"
-
                 rows="6"
-
-                placeholder="Describe the issue in detail..."
+                placeholder="Describe the issue in detail (e.g. Huge pothole on main road causing traffic delays, street light not working for 3 days)..."
                 required>
             </textarea>
 
-            <small style="display:block; margin-top:6px; color:#64748b; font-size:12px;">
-                💡 <em>Type your complaint to see real-time AI classification, department assignment, and key word breakdown.</em>
+            <small id="langHintText" style="display:block; margin-top:6px; color:#64748b; font-size:12px;">
+                💡 <em>Type or speak your complaint in English, हिन्दी, తెలుగు, or தமிழ் to see real-time AI classification & XAI keywords.</em>
             </small>
 
         </div>
@@ -611,6 +734,148 @@ function chooseCategory(opt) {
         btn1.style.border = "2px solid #cbd5e1";
         btn1.style.background = "#fff";
         btn1.style.color = "#334155";
+    }
+}
+
+// ==========================================
+// Multilingual & Web Speech Recognition System
+// ==========================================
+let currentLangCode = 'en-IN';
+const langConfigs = {
+    'en-IN': {
+        name: 'English',
+        placeholder: 'Describe the issue in detail (e.g. Huge pothole on main road causing traffic delays, street light not working for 3 days)...',
+        hint: '💡 Type or speak your complaint in English to see real-time AI classification & XAI keywords.',
+        listening: '🎙️ Listening in English... Speak clearly into your microphone.'
+    },
+    'hi-IN': {
+        name: 'हिन्दी (Hindi)',
+        placeholder: 'समस्या का विस्तार से वर्णन करें (जैसे: मुख्य सड़क पर गहरा गड्ढा, 3 दिनों से स्ट्रीट लाइट बंद है)...',
+        hint: '💡 अपनी शिकायत बोलें या लिखें - एआई तुरंत विभाग और प्राथमिक शब्दों की पहचान करेगा।',
+        listening: '🎙️ हिन्दी में सुन रहे हैं... कृपया स्पष्ट बोलें।'
+    },
+    'te-IN': {
+        name: 'తెలుగు (Telugu)',
+        placeholder: 'సమస్యను వివరంగా వివరించండి (ఉదా: ప్రధాన రహదారిపై పెద్ద గుంత, 3 రోజులుగా వీధి దీపం వెలగడం లేదు)...',
+        hint: '💡 మీ ఫిర్యాదును మాట్లాడండి లేదా టైప్ చేయండి - AI విభాగాన్ని గుర్తిస్తుంది.',
+        listening: '🎙️ తెలుగులో వింటున్నాము... దయచేసి స్పష్టంగా మాట్లాడండి.'
+    },
+    'ta-IN': {
+        name: 'தமிழ் (Tamil)',
+        placeholder: 'பிரச்சினையை விரிவாக விவரிக்கவும் (எ.கா: பிரதான சாலையில் பெரிய குழி, 3 நாட்களாக தெருவிளக்கு எரியவில்லை)...',
+        hint: '💡 உங்கள் புகாரைப் பேசுங்கள் அல்லது தட்டச்சு செய்யுங்கள் - AI தானாகவே துறையை அடையாளம் காணும்.',
+        listening: '🎙️ தமிழில் கேட்கிறது... தெளிவாக பேசவும்.'
+    }
+};
+
+function switchLanguage(code) {
+    currentLangCode = code;
+    document.querySelectorAll('.lang-pill').forEach(btn => {
+        if (btn.getAttribute('data-lang') === code) {
+            btn.classList.add('active');
+        } else {
+            btn.classList.remove('active');
+        }
+    });
+
+    const cfg = langConfigs[code] || langConfigs['en-IN'];
+    const desc = document.getElementById('description');
+    if (desc) {
+        desc.placeholder = cfg.placeholder;
+    }
+    const hintEl = document.getElementById('langHintText');
+    if (hintEl) {
+        hintEl.innerHTML = `💡 <em>${cfg.hint}</em>`;
+    }
+}
+
+let speechRecognizer = null;
+let isRecording = false;
+
+function toggleVoiceRecording() {
+    if (isRecording) {
+        stopVoiceRecording();
+    } else {
+        startVoiceRecording();
+    }
+}
+
+function startVoiceRecording() {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+        alert('Your browser does not support Speech Recognition. Please use Google Chrome, Microsoft Edge, or Safari, or type your complaint manually.');
+        return;
+    }
+
+    try {
+        speechRecognizer = new SpeechRecognition();
+        speechRecognizer.lang = currentLangCode;
+        speechRecognizer.continuous = true;
+        speechRecognizer.interimResults = true;
+
+        const waveBox = document.getElementById('voiceWaveBox');
+        const voiceBtn = document.getElementById('voiceRecordBtn');
+        const voiceStatus = document.getElementById('voiceStatusText');
+        const cfg = langConfigs[currentLangCode] || langConfigs['en-IN'];
+
+        speechRecognizer.onstart = function() {
+            isRecording = true;
+            if (waveBox) waveBox.style.display = 'flex';
+            if (voiceBtn) {
+                voiceBtn.classList.add('recording');
+                voiceBtn.innerHTML = '<i class="fa-solid fa-circle-stop"></i> <span>Stop Listening</span>';
+            }
+            if (voiceStatus) voiceStatus.textContent = cfg.listening;
+        };
+
+        speechRecognizer.onresult = function(event) {
+            let finalTranscript = '';
+            for (let i = event.resultIndex; i < event.results.length; ++i) {
+                if (event.results[i].isFinal) {
+                    finalTranscript += event.results[i][0].transcript + ' ';
+                }
+            }
+            if (finalTranscript) {
+                const desc = document.getElementById('description');
+                if (desc) {
+                    desc.value = (desc.value.trim() ? desc.value.trim() + ' ' : '') + finalTranscript.trim();
+                    // Auto-trigger XAI classification & keyword extraction
+                    desc.dispatchEvent(new Event('input'));
+                }
+            }
+        };
+
+        speechRecognizer.onerror = function(event) {
+            console.warn('Speech recognition error:', event.error);
+            if (event.error === 'not-allowed') {
+                alert('Microphone permission was denied. Please allow microphone access in your browser address bar.');
+            }
+            stopVoiceRecording();
+        };
+
+        speechRecognizer.onend = function() {
+            stopVoiceRecording();
+        };
+
+        speechRecognizer.start();
+    } catch (e) {
+        console.error('Failed to start speech recognition:', e);
+        stopVoiceRecording();
+    }
+}
+
+function stopVoiceRecording() {
+    isRecording = false;
+    if (speechRecognizer) {
+        try { speechRecognizer.stop(); } catch(e) {}
+        speechRecognizer = null;
+    }
+    const waveBox = document.getElementById('voiceWaveBox');
+    const voiceBtn = document.getElementById('voiceRecordBtn');
+    if (waveBox) waveBox.style.display = 'none';
+    if (voiceBtn) {
+        voiceBtn.classList.remove('recording');
+        voiceBtn.innerHTML = '<i class="fa-solid fa-microphone"></i> <span>Speak Complaint (Voice)</span>';
     }
 }
 </script>

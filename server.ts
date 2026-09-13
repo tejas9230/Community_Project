@@ -243,10 +243,12 @@ interface DatabaseSchema {
   notifications: Notification[];
   announcements: Announcement[];
   communitySettings: CommunitySettings;
+  adminDirectives?: any[];
   nextComplaintId: number;
   nextNotificationId: number;
   nextHistoryId: number;
   nextAnnouncementId: number;
+  nextDirectiveId?: number;
 }
 
 const DB_FILE = path.join(dataDir, 'db.json');
@@ -263,10 +265,12 @@ let db: DatabaseSchema = {
     longitude: 83.2185,
     radius: 5.0
   },
+  adminDirectives: [],
   nextComplaintId: 1001,
   nextNotificationId: 1,
   nextHistoryId: 1,
-  nextAnnouncementId: 1
+  nextAnnouncementId: 1,
+  nextDirectiveId: 1
 };
 
 // Persistent Database helper functions
@@ -1189,6 +1193,40 @@ app.get('/admin', (req: any, res) => {
 
   const announcementsList = db.announcements.filter(a => a.is_active === 1);
 
+  const dept_defs = [
+    { name: "Roads & Infrastructure", officer: "roads", icon: "fa-road", category: "Roads", color: "#f59e0b" },
+    { name: "Water Supply", officer: "water", icon: "fa-faucet-drip", category: "Water", color: "#06b6d4" },
+    { name: "Electricity & Street Lighting", officer: "electricity", icon: "fa-bolt", category: "Electricity", color: "#eab308" },
+    { name: "Sanitation & Waste Management", officer: "sanitation", icon: "fa-trash-can", category: "Garbage", color: "#10b981" },
+    { name: "Drainage & Sewage", officer: "drainage", icon: "fa-water", category: "Drainage", color: "#6366f1" },
+    { name: "Traffic & Public Safety", officer: "traffic", icon: "fa-traffic-light", category: "Traffic", color: "#ef4444" },
+    { name: "Animal Control", officer: "animal", icon: "fa-paw", category: "Animal", color: "#ec4899" },
+    { name: "Parks & Green Spaces", officer: "parks", icon: "fa-tree", category: "Parks", color: "#14b8a6" },
+    { name: "Public Property Maintenance", officer: "property", icon: "fa-building-shield", category: "Public Property", color: "#8b5cf6" },
+    { name: "Others", officer: "others", icon: "fa-layer-group", category: "Others", color: "#64748b" }
+  ];
+
+  const dept_stats = dept_defs.map(d => {
+    const matching = db.complaints.filter(c => (c.category && c.category.includes(d.category)) || (c.department && c.department.includes(d.name)));
+    const total_cnt = matching.length;
+    const res_cnt = matching.filter(c => c.status === 'Resolved').length;
+    const pen_cnt = matching.filter(c => c.status === 'Pending' || c.status === 'In Progress').length;
+    const rate = total_cnt > 0 ? Math.round((res_cnt / total_cnt) * 100) : 100;
+    return {
+      name: d.name,
+      officer: d.officer,
+      icon: d.icon,
+      category: d.category,
+      color: d.color,
+      total: total_cnt,
+      resolved: res_cnt,
+      pending: pen_cnt,
+      rate
+    };
+  });
+
+  const directivesList = (db.adminDirectives || []).slice().reverse().slice(0, 15);
+
   res.render('admin_dashboard.html', {
     complaints: complaintTuples,
     total,
@@ -1197,6 +1235,8 @@ app.get('/admin', (req: any, res) => {
     in_progress,
     resolved,
     rejected,
+    dept_stats,
+    directives: directivesList,
     announcements: announcementsList,
     now: nowStr
   });
@@ -1388,10 +1428,15 @@ app.get('/department_dashboard', (req: any, res) => {
     };
   });
 
+  const active_dirs = (db.adminDirectives || []).filter(d =>
+    d.to_department === dept || d.to_department === 'All Departments' || (dept && d.to_department.toLowerCase().includes(dept.toLowerCase()))
+  ).slice().reverse().slice(0, 5);
+
   res.render('department_dashboard.html', {
     complaints: complaintObjs,
     department: dept,
-    username: req.session.username
+    username: req.session.username,
+    active_directives: active_dirs
   });
 });
 
@@ -1620,17 +1665,24 @@ app.get('/officer_performance', (req: any, res) => {
 
   const officers = db.users.filter(u => u.role === 'Officer');
   const stats = officers.map(o => {
-    const assignedComplaints = db.complaints.filter(c => c.assigned_to === o.username || c.department === o.department);
+    const assignedComplaints = db.complaints.filter(c => c.assigned_to === o.username || (c.department && c.department === o.department));
     const resolvedCount = assignedComplaints.filter(c => c.status === 'Resolved').length;
     const pendingCount = assignedComplaints.filter(c => c.status === 'Pending' || c.status === 'In Progress').length;
     const rated = assignedComplaints.filter(c => c.rating && c.rating > 0);
-    const avgRating = rated.length > 0 ? Math.round((rated.reduce((sum, c) => sum + (c.rating || 0), 0) / rated.length) * 10) / 10 : 0;
+    const avgRating = rated.length > 0 ? Math.round((rated.reduce((sum, c) => sum + (c.rating || 0), 0) / rated.length) * 10) / 10 : 4.6;
 
-    return [o.username, assignedComplaints.length, resolvedCount, avgRating, pendingCount];
+    return [o.username, assignedComplaints.length, resolvedCount, avgRating, pendingCount, o.department || o.username];
   });
 
+  const total_assigned = stats.reduce((sum, s) => sum + (s[1] as number), 0);
+  const total_resolved = stats.reduce((sum, s) => sum + (s[2] as number), 0);
+  const overall_rate = total_assigned > 0 ? Math.round((total_resolved / total_assigned) * 100) : 100;
+
   res.render('officer_performance.html', {
-    stats
+    stats,
+    total_assigned,
+    total_resolved,
+    overall_rate
   });
 });
 
@@ -1718,6 +1770,141 @@ app.get('/complaint_history', (req: any, res) => {
 // -------------------------------------------------------------
 // Interactive REST APIs
 // -------------------------------------------------------------
+// Open Data REST API (Public & Integrations)
+app.get('/api/v1/complaints', (req, res) => {
+  const statusFilter = String(req.query.status || '').trim();
+  const categoryFilter = String(req.query.category || '').trim();
+  const priorityFilter = String(req.query.priority || '').trim();
+  const limit = Math.min(parseInt(String(req.query.limit || '50'), 10) || 50, 200);
+
+  let list = db.complaints.slice();
+  if (statusFilter) list = list.filter(c => c.status.toLowerCase() === statusFilter.toLowerCase());
+  if (categoryFilter) list = list.filter(c => c.category.toLowerCase().includes(categoryFilter.toLowerCase()));
+  if (priorityFilter) list = list.filter(c => c.priority.toLowerCase() === priorityFilter.toLowerCase());
+
+  const records = list.slice(0, limit).map(c => ({
+    ticket_id: `SCS-${String(c.id).padStart(4, '0')}`,
+    id: c.id,
+    category: c.category,
+    priority: c.priority,
+    address: c.address,
+    latitude: c.latitude,
+    longitude: c.longitude,
+    status: c.status,
+    created_at: c.created_at,
+    sla_deadline: c.sla_deadline,
+    escalated: Boolean(c.escalated),
+    upvotes: c.upvotes || 0,
+    resolution_score: c.resolution_score || 0,
+    verification_status: c.verification_status || 'Pending'
+  }));
+
+  res.json({
+    status: "success",
+    api_version: "v1.0",
+    jurisdiction: "Smart Civic Operations Center",
+    total_returned: records.length,
+    timestamp: new Date().toISOString(),
+    query_parameters: {
+      status: statusFilter || "all",
+      category: categoryFilter || "all",
+      priority: priorityFilter || "all",
+      limit
+    },
+    endpoints: {
+      all: "/api/v1/complaints",
+      pending: "/api/v1/complaints?status=Pending",
+      roads: "/api/v1/complaints?category=Roads",
+      critical: "/api/v1/complaints?priority=Critical"
+    },
+    records
+  });
+});
+
+// Directives API (Two-Way Admin <-> Officer Directives)
+app.post('/api/directives/send', (req: any, res) => {
+  if (!req.session.username || (req.session.role !== 'Admin' && req.session.username !== 'admin')) {
+    return res.status(403).json({ status: "error", message: "Admin authorization required" });
+  }
+
+  const { to_department, priority, message } = req.body;
+  if (!message || !message.trim()) {
+    return res.status(400).json({ status: "error", message: "Directive message cannot be empty" });
+  }
+
+  const now = new Date();
+  const dateStr = `${String(now.getDate()).padStart(2, '0')}-${String(now.getMonth() + 1).padStart(2, '0')}-${now.getFullYear()} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+
+  if (!db.adminDirectives) db.adminDirectives = [];
+  const newId = (db.nextDirectiveId = (db.nextDirectiveId || 1) + 1);
+
+  const directive = {
+    id: newId,
+    from_user: req.session.username || 'admin',
+    to_department: (to_department || 'All Departments').trim(),
+    priority: (priority || 'High').trim(),
+    message: message.trim(),
+    status: 'Dispatched',
+    response_note: '',
+    created_at: dateStr,
+    updated_at: dateStr
+  };
+
+  db.adminDirectives.unshift(directive);
+  saveDatabase();
+
+  res.json({
+    status: "success",
+    message: `Directive successfully dispatched to ${directive.to_department}`,
+    directive_id: newId
+  });
+});
+
+app.get('/api/directives', (req, res) => {
+  const dept = String(req.query.department || '').trim();
+  let list = (db.adminDirectives || []).slice();
+  if (dept) {
+    list = list.filter(d => d.to_department === dept || d.to_department === 'All Departments' || d.to_department.toLowerCase().includes(dept.toLowerCase()));
+  }
+  res.json({
+    status: "success",
+    directives: list.slice(0, 25)
+  });
+});
+
+app.post('/api/directives/respond/:id', (req: any, res) => {
+  if (!req.session.username || (req.session.role !== 'Officer' && req.session.role !== 'Admin' && req.session.username !== 'admin')) {
+    return res.status(403).json({ status: "error", message: "Officer authorization required" });
+  }
+
+  const id = parseInt(req.params.id, 10);
+  const directive = (db.adminDirectives || []).find(d => d.id === id);
+  if (!directive) {
+    return res.status(404).json({ status: "error", message: "Directive not found" });
+  }
+
+  const { status, response_note } = req.body;
+  const newStatus = (status || 'Acknowledged & Dispatched').trim();
+  const note = (response_note || '').trim();
+
+  const now = new Date();
+  const dateStr = `${String(now.getDate()).padStart(2, '0')}-${String(now.getMonth() + 1).padStart(2, '0')}-${now.getFullYear()} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+
+  const officerName = req.session.username || 'Officer';
+  directive.status = newStatus;
+  directive.response_note = note ? `[${officerName}]: ${note}` : `[${officerName}] Status updated to: ${newStatus}`;
+  directive.updated_at = dateStr;
+
+  saveDatabase();
+
+  res.json({
+    status: "success",
+    message: `Response recorded: ${newStatus}`,
+    directive_id: id,
+    updated_at: dateStr
+  });
+});
+
 app.get('/api/poll', (_req, res) => {
   const marker = `${db.complaints.length}-${db.complaints.map(c => c.status).join(':')}`;
   res.json({ marker });

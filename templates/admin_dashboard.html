@@ -101,30 +101,26 @@
       {% endif %}
     {% endwith %}
 
-    <!-- Quick Links Bar -->
-    <div style="display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap;">
-        <a href="/officer_performance">
+    <!-- Quick Links Bar (Heatmap & Settings removed from top as they exist as large cards below) -->
+    <div style="display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap;align-items:center;">
+        <a href="/officer_performance" style="text-decoration:none;">
             <button style="background:rgba(99,102,241,0.2);border:1px solid #6366f1;color:#a5b4fc;
-                    padding:8px 18px;border-radius:8px;cursor:pointer;font-size:13px;">
-                <i class="fa-solid fa-chart-bar" style="margin-right:6px;"></i>Officer Performance
+                    padding:8px 18px;border-radius:8px;cursor:pointer;font-size:13px;display:flex;align-items:center;gap:6px;">
+                <i class="fa-solid fa-chart-bar"></i> Officer Performance
             </button>
         </a>
-        <a href="/admin/heatmap">
-            <button style="background:rgba(239,68,68,0.2);border:1px solid #ef4444;color:#fca5a5;
-                    padding:8px 18px;border-radius:8px;cursor:pointer;font-size:13px;">
-                <i class="fa-solid fa-map-location-dot" style="margin-right:6px;"></i>Complaint Heatmap
-            </button>
-        </a>
-        <a href="/admin/export">
+        <button type="button" onclick="openApiExplorerModal()" style="background:rgba(14,165,233,0.2);border:1px solid #0ea5e9;color:#7dd3fc;
+                padding:8px 18px;border-radius:8px;cursor:pointer;font-size:13px;display:flex;align-items:center;gap:6px;">
+            <i class="fa-solid fa-code"></i> Open Data REST API
+        </button>
+        <button type="button" onclick="openDirectiveModal()" style="background:rgba(234,179,8,0.2);border:1px solid #eab308;color:#fde047;
+                padding:8px 18px;border-radius:8px;cursor:pointer;font-size:13px;display:flex;align-items:center;gap:6px;">
+            <i class="fa-solid fa-bullhorn"></i> Dispatch Directive
+        </button>
+        <a href="/admin/export" style="text-decoration:none;">
             <button style="background:rgba(34,197,94,0.2);border:1px solid #22c55e;color:#86efac;
-                    padding:8px 18px;border-radius:8px;cursor:pointer;font-size:13px;">
-                <i class="fa-solid fa-file-csv" style="margin-right:6px;"></i>Export CSV
-            </button>
-        </a>
-        <a href="/admin_settings">
-            <button style="background:rgba(16,185,129,0.2);border:1px solid #10b981;color:#6ee7b7;
-                    padding:8px 18px;border-radius:8px;cursor:pointer;font-size:13px;">
-                <i class="fa-solid fa-gear" style="margin-right:6px;"></i>Community Settings
+                    padding:8px 18px;border-radius:8px;cursor:pointer;font-size:13px;display:flex;align-items:center;gap:6px;">
+                <i class="fa-solid fa-file-csv"></i> Export CSV
             </button>
         </a>
     </div>
@@ -291,6 +287,135 @@
 
         </a>
 
+    </section>
+
+    <!-- ================= CIVIC COMMAND CENTER: OFFICER DISPATCH & DIRECTIVES (DESIGN OPTION 1) ================= -->
+    <section class="command-center-section" style="margin-bottom:30px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:18px; flex-wrap:wrap; gap:12px;">
+            <div>
+                <h2 style="font-size:20px; font-weight:700; color:#f8fafc; margin:0; display:flex; align-items:center; gap:10px;">
+                    <i class="fa-solid fa-tower-broadcast" style="color:#60a5fa;"></i>
+                    Civic Command Center: Departmental Operations
+                </h2>
+                <p style="color:#94a3b8; font-size:13px; margin:4px 0 0 0;">
+                    Real-time officer readiness, resolution efficiency telemetry, and direct two-way dispatch memos.
+                </p>
+            </div>
+            <div style="display:flex; gap:10px;">
+                <button type="button" onclick="openDirectiveModal()" style="background:linear-gradient(135deg,#3b82f6,#2563eb); border:none; color:#fff; padding:9px 18px; border-radius:10px; font-weight:700; font-size:13px; cursor:pointer; display:flex; align-items:center; gap:8px; box-shadow:0 4px 14px rgba(37,99,235,0.35);">
+                    <i class="fa-solid fa-bullhorn"></i> Dispatch Directive
+                </button>
+                <a href="/officer_performance" style="text-decoration:none;">
+                    <button type="button" style="background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.2); color:#e2e8f0; padding:9px 16px; border-radius:10px; font-weight:600; font-size:13px; cursor:pointer; display:flex; align-items:center; gap:6px;">
+                        <i class="fa-solid fa-chart-pie"></i> Detailed Analytics
+                    </button>
+                </a>
+            </div>
+        </div>
+
+        <!-- Department Command Cards Grid -->
+        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:16px; margin-bottom:22px;">
+            {% for d in dept_stats %}
+            <div style="background:rgba(30,41,59,0.7); border:1px solid rgba(255,255,255,0.1); border-radius:14px; padding:16px 18px; backdrop-filter:blur(8px); position:relative; overflow:hidden; transition:transform .2s ease, border-color .2s ease;"
+                 onmouseover="this.style.transform='translateY(-3px)'; this.style.borderColor='{{ d.color }}';"
+                 onmouseout="this.style.transform='translateY(0)'; this.style.borderColor='rgba(255,255,255,0.1)';">
+                
+                <!-- Top Status Bar -->
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+                    <div style="display:flex; align-items:center; gap:10px;">
+                        <div style="width:36px; height:36px; border-radius:10px; background:rgba(255,255,255,0.06); display:flex; align-items:center; justify-content:center; color:{{ d.color }}; font-size:16px; border:1px solid rgba(255,255,255,0.1);">
+                            <i class="fa-solid {{ d.icon }}"></i>
+                        </div>
+                        <div>
+                            <h4 style="margin:0; font-size:14px; font-weight:700; color:#f1f5f9; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:140px;" title="{{ d.name }}">{{ d.name }}</h4>
+                            <span style="font-size:11px; color:#94a3b8;"><i class="fa-solid fa-user-shield" style="margin-right:3px;"></i>@{{ d.officer }}</span>
+                        </div>
+                    </div>
+                    <span style="display:inline-flex; align-items:center; gap:5px; background:rgba(34,197,94,0.15); border:1px solid rgba(34,197,94,0.35); color:#86efac; padding:3px 8px; border-radius:12px; font-size:11px; font-weight:700;">
+                        <span style="width:6px; height:6px; border-radius:50%; background:#22c55e;"></span>
+                        On Duty
+                    </span>
+                </div>
+
+                <!-- Resolution Rate Bar -->
+                <div style="margin-bottom:12px;">
+                    <div style="display:flex; justify-content:space-between; font-size:11px; color:#94a3b8; margin-bottom:5px;">
+                        <span>Resolution Efficiency</span>
+                        <strong style="color:{% if d.rate >= 75 %}#4ade80{% elif d.rate >= 45 %}#facc15{% else %}#f87171{% endif %};">{{ d.rate }}%</strong>
+                    </div>
+                    <div style="height:6px; background:rgba(255,255,255,0.08); border-radius:3px; overflow:hidden;">
+                        <div style="height:100%; width:{{ d.rate }}%; background:{% if d.rate >= 75 %}#22c55e{% elif d.rate >= 45 %}#eab308{% else %}#ef4444{% endif %}; border-radius:3px; transition:width .6s ease;"></div>
+                    </div>
+                </div>
+
+                <!-- Counts Matrix -->
+                <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:6px; background:rgba(15,23,42,0.5); padding:8px 10px; border-radius:8px; text-align:center; font-size:11px; margin-bottom:12px;">
+                    <div>
+                        <span style="color:#94a3b8; display:block;">Total</span>
+                        <strong style="color:#f8fafc; font-size:13px;">{{ d.total }}</strong>
+                    </div>
+                    <div>
+                        <span style="color:#94a3b8; display:block;">Resolved</span>
+                        <strong style="color:#4ade80; font-size:13px;">{{ d.resolved }}</strong>
+                    </div>
+                    <div>
+                        <span style="color:#94a3b8; display:block;">Pending</span>
+                        <strong style="color:#f87171; font-size:13px;">{{ d.pending }}</strong>
+                    </div>
+                </div>
+
+                <!-- Direct Action Button -->
+                <button type="button" onclick="openDirectiveModal('{{ d.name }}')" style="width:100%; background:rgba(59,130,246,0.12); border:1px solid rgba(59,130,246,0.3); color:#93c5fd; padding:6px 12px; border-radius:8px; font-size:11px; font-weight:700; cursor:pointer; transition:.2s ease; display:flex; align-items:center; justify-content:center; gap:6px;"
+                        onmouseover="this.style.background='rgba(59,130,246,0.25)';"
+                        onmouseout="this.style.background='rgba(59,130,246,0.12)';">
+                    <i class="fa-solid fa-paper-plane"></i> Dispatch Directive
+                </button>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Live Directive Stream / Recent Directives -->
+        <div style="background:rgba(30,41,59,0.7); border:1px solid rgba(255,255,255,0.1); border-radius:14px; padding:18px 20px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; flex-wrap:wrap; gap:8px;">
+                <h3 style="font-size:15px; font-weight:700; color:#f8fafc; margin:0; display:flex; align-items:center; gap:8px;">
+                    <i class="fa-solid fa-comments" style="color:#38bdf8;"></i>
+                    Tactical Directive Stream (Two-Way Comms)
+                </h3>
+                <span style="font-size:12px; color:#94a3b8;">Real-time field response logs</span>
+            </div>
+
+            <div id="directiveStreamContainer" style="display:flex; flex-direction:column; gap:10px; max-height:260px; overflow-y:auto; padding-right:4px;">
+                {% if directives %}
+                {% for dir in directives %}
+                <div style="background:rgba(15,23,42,0.6); border-left:4px solid {% if dir.priority == 'Critical' %}#ef4444{% elif dir.priority == 'Urgent' %}#f59e0b{% else %}#3b82f6{% endif %}; border-radius:8px; padding:12px 14px; display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:10px;">
+                    <div style="flex:1; min-width:260px;">
+                        <div style="display:flex; align-items:center; gap:8px; margin-bottom:4px;">
+                            <span style="font-weight:700; color:#f1f5f9; font-size:13px;">To: {{ dir.to_department }}</span>
+                            <span style="background:{% if dir.priority == 'Critical' %}rgba(239,68,68,0.2){% elif dir.priority == 'Urgent' %}rgba(245,158,11,0.2){% else %}rgba(59,130,246,0.2){% endif %}; color:{% if dir.priority == 'Critical' %}#fca5a5{% elif dir.priority == 'Urgent' %}#fde047{% else %}#93c5fd{% endif %}; border:1px solid currentColor; padding:1px 8px; border-radius:10px; font-size:10px; font-weight:700;">{{ dir.priority }}</span>
+                            <span style="font-size:11px; color:#64748b;">{{ dir.created_at }}</span>
+                        </div>
+                        <p style="margin:0; font-size:12px; color:#cbd5e1; line-height:1.4;">{{ dir.message }}</p>
+                        {% if dir.response_note %}
+                        <div style="margin-top:6px; font-size:11px; color:#86efac; background:rgba(34,197,94,0.1); padding:4px 8px; border-radius:6px; display:inline-block;">
+                            <i class="fa-solid fa-reply me-1"></i> {{ dir.response_note }}
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div>
+                        <span style="background:{% if 'Completed' in dir.status %}#22c55e{% elif 'Crew' in dir.status %}#6366f1{% elif 'Acknowledged' in dir.status %}#f59e0b{% else %}#3b82f6{% endif %}; color:#fff; padding:3px 10px; border-radius:12px; font-size:11px; font-weight:700;">
+                            {{ dir.status }}
+                        </span>
+                    </div>
+                </div>
+                {% endfor %}
+                {% else %}
+                <div style="text-align:center; padding:25px; color:#64748b; font-size:13px;">
+                    <i class="fa-solid fa-inbox" style="font-size:24px; margin-bottom:8px; display:block; opacity:0.4;"></i>
+                    No tactical directives dispatched yet. Use "Dispatch Directive" to communicate with department teams.
+                </div>
+                {% endif %}
+            </div>
+        </div>
     </section>
 
     <!-- ================= SEARCH ================= -->
@@ -851,10 +976,282 @@ function showToast(message){
 
         toast.classList.remove("show");
 
-    },3000);
+    }, 3000);
+}
+</script>
 
+<!-- ================= DIRECTIVE DISPATCH MODAL ================= -->
+<div id="directiveModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.78); z-index:9999; backdrop-filter:blur(6px); align-items:center; justify-content:center; padding:20px;">
+    <div style="background:#1e293b; border:1px solid rgba(255,255,255,0.15); border-radius:16px; width:100%; max-width:540px; box-shadow:0 25px 50px -12px rgba(0,0,0,0.6); overflow:hidden;">
+        <div style="background:rgba(255,255,255,0.04); padding:16px 22px; border-bottom:1px solid rgba(255,255,255,0.1); display:flex; justify-content:space-between; align-items:center;">
+            <h3 style="margin:0; font-size:16px; font-weight:700; color:#f8fafc; display:flex; align-items:center; gap:8px;">
+                <i class="fa-solid fa-bullhorn" style="color:#60a5fa;"></i>
+                Dispatch Command Directive
+            </h3>
+            <button type="button" onclick="closeDirectiveModal()" style="background:none; border:none; color:#94a3b8; font-size:22px; cursor:pointer; line-height:1;">&times;</button>
+        </div>
+        <form id="directiveForm" onsubmit="submitDirective(event)" style="padding:20px 22px;">
+            <div style="margin-bottom:14px;">
+                <label style="display:block; font-size:12px; font-weight:700; color:#cbd5e1; margin-bottom:6px;">Target Department</label>
+                <select id="dirTargetDept" style="width:100%; background:#0f172a; border:1px solid #334155; color:#f8fafc; padding:9px 12px; border-radius:8px; font-size:13px;">
+                    <option value="All Departments">📢 All Departments (Broadcast)</option>
+                    <option value="Roads & Infrastructure">Roads & Infrastructure</option>
+                    <option value="Water Supply">Water Supply</option>
+                    <option value="Electricity & Street Lighting">Electricity & Street Lighting</option>
+                    <option value="Sanitation & Waste Management">Sanitation & Waste Management</option>
+                    <option value="Drainage & Sewage">Drainage & Sewage</option>
+                    <option value="Traffic & Public Safety">Traffic & Public Safety</option>
+                    <option value="Animal Control">Animal Control</option>
+                    <option value="Parks & Green Spaces">Parks & Green Spaces</option>
+                    <option value="Public Property Maintenance">Public Property Maintenance</option>
+                </select>
+            </div>
+            <div style="margin-bottom:14px;">
+                <label style="display:block; font-size:12px; font-weight:700; color:#cbd5e1; margin-bottom:6px;">Priority Level</label>
+                <select id="dirPriority" style="width:100%; background:#0f172a; border:1px solid #334155; color:#f8fafc; padding:9px 12px; border-radius:8px; font-size:13px;">
+                    <option value="Critical">🚨 Critical (Urgent Emergency / 6h SLA)</option>
+                    <option value="Urgent" selected>⚡ Urgent (High Priority)</option>
+                    <option value="Routine">📋 Routine (Standard Inspection)</option>
+                </select>
+            </div>
+            <!-- Quick Preset Chips -->
+            <div style="margin-bottom:12px;">
+                <label style="display:block; font-size:11px; color:#94a3b8; margin-bottom:6px;">Quick Presets:</label>
+                <div style="display:flex; gap:6px; flex-wrap:wrap;">
+                    <button type="button" onclick="setPresetMsg('🚨 Emergency pothole repair required along main arterial road immediately.')" style="background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.15); color:#cbd5e1; padding:4px 8px; border-radius:6px; font-size:11px; cursor:pointer;">Pothole SOS</button>
+                    <button type="button" onclick="setPresetMsg('💧 Water pipeline rupture reported by multiple residents. Immediate shutoff & repair required.')" style="background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.15); color:#cbd5e1; padding:4px 8px; border-radius:6px; font-size:11px; cursor:pointer;">Water Rupture</button>
+                    <button type="button" onclick="setPresetMsg('⚡ Multiple streetlight outage detected. Inspect transformer and restore line.')" style="background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.15); color:#cbd5e1; padding:4px 8px; border-radius:6px; font-size:11px; cursor:pointer;">Lighting Outage</button>
+                    <button type="button" onclick="setPresetMsg('🧹 Overflowing garbage dump reported near residential cluster. Dispatch clearance van.')" style="background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.15); color:#cbd5e1; padding:4px 8px; border-radius:6px; font-size:11px; cursor:pointer;">Waste Clear</button>
+                </div>
+            </div>
+            <div style="margin-bottom:18px;">
+                <label style="display:block; font-size:12px; font-weight:700; color:#cbd5e1; margin-bottom:6px;">Directive Instructions</label>
+                <textarea id="dirMessage" rows="4" style="width:100%; background:#0f172a; border:1px solid #334155; color:#f8fafc; padding:10px 12px; border-radius:8px; font-size:13px; line-height:1.4;" placeholder="Type tactical directive instructions for the officer team..." required></textarea>
+            </div>
+            <div style="display:flex; justify-content:flex-end; gap:10px;">
+                <button type="button" onclick="closeDirectiveModal()" style="background:rgba(255,255,255,0.1); border:none; color:#cbd5e1; padding:9px 18px; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer;">Cancel</button>
+                <button type="submit" style="background:linear-gradient(135deg,#3b82f6,#2563eb); border:none; color:#fff; padding:9px 20px; border-radius:8px; font-size:13px; font-weight:700; cursor:pointer; display:flex; align-items:center; gap:6px;">
+                    <i class="fa-solid fa-paper-plane"></i> Dispatch Directive
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- ================= OPEN DATA REST API EXPLORER MODAL ================= -->
+<div id="apiExplorerModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.78); z-index:9999; backdrop-filter:blur(6px); align-items:center; justify-content:center; padding:20px;">
+    <div style="background:#1e293b; border:1px solid rgba(255,255,255,0.15); border-radius:16px; width:100%; max-width:700px; max-height:90vh; display:flex; flex-direction:column; box-shadow:0 25px 50px -12px rgba(0,0,0,0.6); overflow:hidden;">
+        <div style="background:rgba(255,255,255,0.04); padding:16px 22px; border-bottom:1px solid rgba(255,255,255,0.1); display:flex; justify-content:space-between; align-items:center;">
+            <div>
+                <h3 style="margin:0; font-size:16px; font-weight:700; color:#f8fafc; display:flex; align-items:center; gap:8px;">
+                    <i class="fa-solid fa-code" style="color:#38bdf8;"></i>
+                    Open Data REST API Explorer
+                </h3>
+                <span style="font-size:11px; color:#94a3b8;">Citizen Portal Public API (v1.0)</span>
+            </div>
+            <button type="button" onclick="closeApiExplorerModal()" style="background:none; border:none; color:#94a3b8; font-size:22px; cursor:pointer; line-height:1;">&times;</button>
+        </div>
+        <div style="padding:18px 22px; overflow-y:auto; flex:1;">
+            <div style="display:flex; gap:8px; margin-bottom:14px;">
+                <input type="text" id="apiEndpointUrl" value="/api/v1/complaints?limit=25" readonly style="flex:1; background:#0f172a; border:1px solid #334155; color:#38bdf8; padding:8px 12px; border-radius:8px; font-family:monospace; font-size:13px;">
+                <button type="button" onclick="copyApiUrl()" style="background:rgba(56,189,248,0.15); border:1px solid #38bdf8; color:#7dd3fc; padding:8px 14px; border-radius:8px; font-size:12px; font-weight:700; cursor:pointer;">
+                    <i class="fa-solid fa-copy"></i> Copy
+                </button>
+                <button type="button" onclick="fetchApiPreview()" style="background:#0284c7; border:none; color:#fff; padding:8px 16px; border-radius:8px; font-size:12px; font-weight:700; cursor:pointer;">
+                    <i class="fa-solid fa-play"></i> Send Request
+                </button>
+            </div>
+
+            <!-- Parameters Filter -->
+            <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; margin-bottom:14px;">
+                <div>
+                    <label style="font-size:11px; color:#94a3b8; display:block; margin-bottom:4px;">Filter Category</label>
+                    <select id="apiParamCategory" onchange="buildApiUrl()" style="width:100%; background:#0f172a; border:1px solid #334155; color:#cbd5e1; padding:6px 8px; border-radius:6px; font-size:12px;">
+                        <option value="">All Categories</option>
+                        <option value="Roads">Roads</option>
+                        <option value="Water">Water</option>
+                        <option value="Electricity">Electricity</option>
+                        <option value="Garbage">Garbage</option>
+                        <option value="Drainage">Drainage</option>
+                        <option value="Traffic">Traffic</option>
+                        <option value="Animal">Animal</option>
+                    </select>
+                </div>
+                <div>
+                    <label style="font-size:11px; color:#94a3b8; display:block; margin-bottom:4px;">Filter Status</label>
+                    <select id="apiParamStatus" onchange="buildApiUrl()" style="width:100%; background:#0f172a; border:1px solid #334155; color:#cbd5e1; padding:6px 8px; border-radius:6px; font-size:12px;">
+                        <option value="">All Statuses</option>
+                        <option value="Pending">Pending</option>
+                        <option value="In Progress">In Progress</option>
+                        <option value="Resolved">Resolved</option>
+                    </select>
+                </div>
+                <div>
+                    <label style="font-size:11px; color:#94a3b8; display:block; margin-bottom:4px;">Record Limit</label>
+                    <select id="apiParamLimit" onchange="buildApiUrl()" style="width:100%; background:#0f172a; border:1px solid #334155; color:#cbd5e1; padding:6px 8px; border-radius:6px; font-size:12px;">
+                        <option value="10">10 Records</option>
+                        <option value="25" selected>25 Records</option>
+                        <option value="50">50 Records</option>
+                        <option value="100">100 Records</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- cURL snippet -->
+            <div style="margin-bottom:12px;">
+                <span style="font-size:11px; color:#64748b; font-weight:700;">cURL Example:</span>
+                <pre id="apiCurlSnippet" style="background:#090d16; border:1px solid rgba(255,255,255,0.06); padding:8px 12px; border-radius:6px; color:#a5b4fc; font-size:11px; overflow-x:auto; margin:4px 0 0 0;">curl -X GET "http://localhost:5000/api/v1/complaints?limit=25"</pre>
+            </div>
+
+            <!-- Response Preview Block -->
+            <div>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                    <span style="font-size:11px; color:#94a3b8; font-weight:700;">Live JSON Response (<span id="apiStatusBadge" style="color:#4ade80;">Ready</span>)</span>
+                    <a id="apiDownloadLink" href="/api/v1/complaints?limit=25" target="_blank" download style="color:#38bdf8; font-size:11px; text-decoration:none;">
+                        <i class="fa-solid fa-arrow-up-right-from-square me-1"></i> Open Raw JSON
+                    </a>
+                </div>
+                <pre id="apiJsonPreview" style="background:#090d16; border:1px solid rgba(255,255,255,0.08); padding:12px; border-radius:8px; color:#e2e8f0; font-size:12px; font-family:monospace; max-height:220px; overflow:auto; margin:0;">Click "Send Request" to test live endpoint...</pre>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Directive Modal Controls
+function openDirectiveModal(deptName) {
+    const modal = document.getElementById('directiveModal');
+    if (!modal) return;
+    if (deptName) {
+        const sel = document.getElementById('dirTargetDept');
+        if (sel) {
+            for (let opt of sel.options) {
+                if (opt.value.includes(deptName) || deptName.includes(opt.value)) {
+                    sel.value = opt.value;
+                    break;
+                }
+            }
+        }
+    }
+    modal.style.display = 'flex';
 }
 
+function closeDirectiveModal() {
+    const modal = document.getElementById('directiveModal');
+    if (modal) modal.style.display = 'none';
+}
+
+function setPresetMsg(text) {
+    const txt = document.getElementById('dirMessage');
+    if (txt) txt.value = text;
+}
+
+function submitDirective(e) {
+    e.preventDefault();
+    const toDept = document.getElementById('dirTargetDept').value;
+    const priority = document.getElementById('dirPriority').value;
+    const message = document.getElementById('dirMessage').value.trim();
+
+    if (!message) return;
+
+    fetch('/api/directives/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            to_department: toDept,
+            priority: priority,
+            message: message
+        })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.status === 'success') {
+            closeDirectiveModal();
+            showToast('📢 Directive successfully dispatched to ' + toDept);
+            // Append directly to stream
+            const stream = document.getElementById('directiveStreamContainer');
+            if (stream) {
+                const item = document.createElement('div');
+                item.style.cssText = `background:rgba(15,23,42,0.6); border-left:4px solid ${priority==='Critical'?'#ef4444':priority==='Urgent'?'#f59e0b':'#3b82f6'}; border-radius:8px; padding:12px 14px; display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:10px; margin-bottom:10px;`;
+                item.innerHTML = `
+                    <div style="flex:1; min-width:260px;">
+                        <div style="display:flex; align-items:center; gap:8px; margin-bottom:4px;">
+                            <span style="font-weight:700; color:#f1f5f9; font-size:13px;">To: ${toDept}</span>
+                            <span style="background:rgba(59,130,246,0.2); color:#93c5fd; border:1px solid currentColor; padding:1px 8px; border-radius:10px; font-size:10px; font-weight:700;">${priority}</span>
+                            <span style="font-size:11px; color:#64748b;">Just now</span>
+                        </div>
+                        <p style="margin:0; font-size:12px; color:#cbd5e1; line-height:1.4;">${message}</p>
+                    </div>
+                    <div>
+                        <span style="background:#3b82f6; color:#fff; padding:3px 10px; border-radius:12px; font-size:11px; font-weight:700;">Dispatched</span>
+                    </div>
+                `;
+                stream.insertBefore(item, stream.firstChild);
+            }
+            document.getElementById('dirMessage').value = '';
+        } else {
+            alert(data.message || 'Failed to dispatch directive.');
+        }
+    })
+    .catch(() => alert('Network error while dispatching directive.'));
+}
+
+// Open Data API Explorer Controls
+function openApiExplorerModal() {
+    const modal = document.getElementById('apiExplorerModal');
+    if (!modal) return;
+    modal.style.display = 'flex';
+    fetchApiPreview();
+}
+
+function closeApiExplorerModal() {
+    const modal = document.getElementById('apiExplorerModal');
+    if (modal) modal.style.display = 'none';
+}
+
+function buildApiUrl() {
+    const cat = document.getElementById('apiParamCategory').value;
+    const stat = document.getElementById('apiParamStatus').value;
+    const lim = document.getElementById('apiParamLimit').value;
+
+    let url = `/api/v1/complaints?limit=${lim}`;
+    if (cat) url += `&category=${encodeURIComponent(cat)}`;
+    if (stat) url += `&status=${encodeURIComponent(stat)}`;
+
+    document.getElementById('apiEndpointUrl').value = url;
+    document.getElementById('apiDownloadLink').href = url;
+    document.getElementById('apiCurlSnippet').textContent = `curl -X GET "${window.location.origin}${url}"`;
+}
+
+function fetchApiPreview() {
+    buildApiUrl();
+    const url = document.getElementById('apiEndpointUrl').value;
+    const badge = document.getElementById('apiStatusBadge');
+    const preview = document.getElementById('apiJsonPreview');
+
+    if (badge) { badge.textContent = 'Loading...'; badge.style.color = '#f59e0b'; }
+    if (preview) preview.textContent = 'Executing GET ' + url + '...';
+
+    fetch(url)
+        .then(r => r.json())
+        .then(data => {
+            if (badge) { badge.textContent = 'HTTP 200 OK'; badge.style.color = '#4ade80'; }
+            if (preview) preview.textContent = JSON.stringify(data, null, 2);
+        })
+        .catch(err => {
+            if (badge) { badge.textContent = 'Error'; badge.style.color = '#ef4444'; }
+            if (preview) preview.textContent = 'Error fetching API: ' + err.message;
+        });
+}
+
+function copyApiUrl() {
+    const url = window.location.origin + document.getElementById('apiEndpointUrl').value;
+    navigator.clipboard.writeText(url).then(() => {
+        showToast('🔗 API Endpoint URL copied to clipboard!');
+    }).catch(() => {
+        showToast('Failed to copy URL.');
+    });
+}
 </script>
 
 </body>

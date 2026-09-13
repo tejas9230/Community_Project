@@ -169,7 +169,7 @@ def get_db():
         if url.startswith("postgres://"):
             url = url.replace("postgres://", "postgresql://", 1)
         try:
-            conn = psycopg2.connect(url)
+            conn = psycopg2.connect(url, connect_timeout=5)
             conn.autocommit = False
             return PostgresConnectionWrapper(conn)
         except Exception as e:
