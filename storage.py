@@ -42,7 +42,15 @@ def save_image(file_obj, prefix: str = "complaint") -> str | None:
         return None
 
     if USE_CLOUDINARY:
-        return _save_to_cloudinary(file_obj, prefix)
+        try:
+            return _save_to_cloudinary(file_obj, prefix)
+        except Exception as e:
+            print(f"[Storage] Cloudinary upload failed ({e}), falling back to local storage...")
+            try:
+                file_obj.seek(0)
+            except Exception:
+                pass
+            return _save_locally(file_obj, filename, prefix)
     else:
         return _save_locally(file_obj, filename, prefix)
 

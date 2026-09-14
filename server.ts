@@ -346,6 +346,20 @@ async function loadOrSeedDatabase() {
     try {
       const data = fs.readFileSync(DB_FILE, 'utf-8');
       db = JSON.parse(data);
+      if (!Array.isArray(db.users)) db.users = [];
+      if (!Array.isArray(db.complaints)) db.complaints = [];
+      if (!Array.isArray(db.history)) db.history = [];
+      if (!Array.isArray(db.notifications)) db.notifications = [];
+      if (!Array.isArray(db.announcements)) db.announcements = [];
+      if (!Array.isArray(db.adminDirectives)) db.adminDirectives = [];
+      if (!db.communitySettings) {
+        db.communitySettings = {
+          name: 'Rasapudipalem Community',
+          latitude: 17.6868,
+          longitude: 83.2185,
+          radius: 5.0
+        };
+      }
       console.log(`Loaded ${db.users.length} users and ${db.complaints.length} complaints from persistent database.`);
       return;
     } catch (err) {
@@ -637,19 +651,40 @@ app.post('/login', async (req: any, res) => {
   const trimmedUname = (username || '').trim();
 
   // Ensure default demo accounts exist dynamically
-  if (trimmedUname.toLowerCase() === 'citizen1' && !db.users.some(u => u.username.toLowerCase() === 'citizen1')) {
-    const cHash = await bcrypt.hash('user123', 10);
-    db.users.push({ username: 'citizen1', passwordHash: cHash, role: 'Citizen', email: 'citizen1@gmail.com', phone: '9876543210', created_at: new Date().toISOString() });
-    saveDatabase();
-  }
-  if (trimmedUname.toLowerCase() === 'officer_roads' && !db.users.some(u => u.username.toLowerCase() === 'officer_roads')) {
-    const rHash = await bcrypt.hash('roads123', 10);
-    db.users.push({ username: 'officer_roads', passwordHash: rHash, role: 'Officer', department: 'Roads & Infrastructure', email: 'roads@gov.in', created_at: new Date().toISOString() });
-    saveDatabase();
-  }
-  if (trimmedUname.toLowerCase() === 'admin' && !db.users.some(u => u.username.toLowerCase() === 'admin')) {
-    const aHash = await bcrypt.hash('admin123', 10);
-    db.users.push({ username: 'admin', passwordHash: aHash, role: 'Admin', email: 'admin@gov.in', created_at: new Date().toISOString() });
+  const DEMO_OFFICER_MAP: Record<string, { role: string, dept?: string, pw: string }> = {
+    'admin': { role: 'Admin', pw: 'admin123' },
+    'roads': { role: 'Officer', dept: 'Roads & Infrastructure', pw: 'roads123' },
+    'officer_roads': { role: 'Officer', dept: 'Roads & Infrastructure', pw: 'roads123' },
+    'water': { role: 'Officer', dept: 'Water Supply', pw: 'water123' },
+    'electricity': { role: 'Officer', dept: 'Electricity & Street Lighting', pw: 'electricity123' },
+    'officer_electricity': { role: 'Officer', dept: 'Electricity & Street Lighting', pw: 'electricity123' },
+    'sanitation': { role: 'Officer', dept: 'Sanitation & Waste Management', pw: 'sanitation123' },
+    'officer_sanitation': { role: 'Officer', dept: 'Sanitation & Waste Management', pw: 'sanitation123' },
+    'drainage': { role: 'Officer', dept: 'Drainage & Sewage', pw: 'drainage123' },
+    'officer_drainage': { role: 'Officer', dept: 'Drainage & Sewage', pw: 'drainage123' },
+    'parks': { role: 'Officer', dept: 'Parks & Green Spaces', pw: 'parks123' },
+    'property': { role: 'Officer', dept: 'Public Property Maintenance', pw: 'property123' },
+    'animal': { role: 'Officer', dept: 'Animal Control', pw: 'animal123' },
+    'traffic': { role: 'Officer', dept: 'Traffic & Public Safety', pw: 'traffic123' },
+    'others': { role: 'Officer', dept: 'Others', pw: 'others123' },
+    'citizen1': { role: 'Citizen', pw: 'user123' },
+    'citizen2': { role: 'Citizen', pw: 'user123' },
+    'citizen3': { role: 'Citizen', pw: 'user123' },
+    'demo_user': { role: 'Citizen', pw: 'citizen123' }
+  };
+
+  const normUser = trimmedUname.toLowerCase();
+  if (DEMO_OFFICER_MAP[normUser] && !db.users.some(u => u.username.toLowerCase() === normUser)) {
+    const dInfo = DEMO_OFFICER_MAP[normUser];
+    const pHash = await bcrypt.hash(dInfo.pw, 10);
+    db.users.push({
+      username: normUser,
+      passwordHash: pHash,
+      role: dInfo.role as any,
+      department: dInfo.dept,
+      email: `${normUser}@gov.in`,
+      created_at: new Date().toISOString()
+    });
     saveDatabase();
   }
 
@@ -680,9 +715,12 @@ app.post('/login', async (req: any, res) => {
   req.session.role = user.role;
   req.session.department = user.department;
 
-  if (user.role === 'Admin') {
+  const roleLower = String(user.role || '').toLowerCase();
+  const unameLower = String(user.username || '').toLowerCase();
+
+  if (roleLower === 'admin' || unameLower === 'admin') {
     return res.redirect('/admin');
-  } else if (user.role === 'Officer') {
+  } else if (roleLower === 'officer') {
     return res.redirect('/department_dashboard');
   } else {
     return res.redirect('/user_dashboard');
@@ -1141,15 +1179,16 @@ app.get('/admin', (req: any, res) => {
 
   const { search, category, priority, status, escalated } = req.query;
 
-  let activeComplaints = db.complaints.filter(c => c.status === 'Pending' || c.status === 'In Progress');
+  const allComplaints = db.complaints || [];
+  let activeComplaints = allComplaints.filter(c => c && (c.status === 'Pending' || c.status === 'In Progress'));
 
   if (search) {
     const s = String(search).trim().toLowerCase();
     activeComplaints = activeComplaints.filter(c =>
-      String(c.id).includes(s) ||
-      c.username.toLowerCase().includes(s) ||
-      c.address.toLowerCase().includes(s) ||
-      c.description.toLowerCase().includes(s)
+      String(c.id || '').includes(s) ||
+      String(c.username || '').toLowerCase().includes(s) ||
+      String(c.address || '').toLowerCase().includes(s) ||
+      String(c.description || '').toLowerCase().includes(s)
     );
   }
   if (category) {
@@ -1166,10 +1205,10 @@ app.get('/admin', (req: any, res) => {
   }
 
   const complaintTuples = activeComplaints.map(c => {
-    const area_reports = db.complaints.filter(x => x.category === c.category && x.address === c.address).length;
+    const area_reports = allComplaints.filter(x => x && x.category === c.category && x.address === c.address).length;
     const arr: any = [
       c.id, c.username, c.category, c.priority, c.address,
-      c.status, c.image_path, area_reports, c.created_at, c.sla_deadline, c.escalated || 0
+      c.status, c.image_path || '', area_reports, c.created_at || '', c.sla_deadline || '', c.escalated || 0
     ];
     arr.id = c.id;
     arr.username = c.username;
@@ -1177,25 +1216,25 @@ app.get('/admin', (req: any, res) => {
     arr.priority = c.priority;
     arr.address = c.address;
     arr.status = c.status;
-    arr.image_path = c.image_path;
+    arr.image_path = c.image_path || '';
     arr.area_reports = area_reports;
-    arr.created_at = c.created_at;
-    arr.sla_deadline = c.sla_deadline;
+    arr.created_at = c.created_at || '';
+    arr.sla_deadline = c.sla_deadline || '';
     arr.escalated = c.escalated || 0;
     return arr;
   });
 
-  const total = db.complaints.length;
-  const active = db.complaints.filter(c => c.status === 'Pending' || c.status === 'In Progress').length;
-  const pending = db.complaints.filter(c => c.status === 'Pending').length;
-  const in_progress = db.complaints.filter(c => c.status === 'In Progress').length;
-  const resolved = db.complaints.filter(c => c.status === 'Resolved').length;
-  const rejected = db.complaints.filter(c => c.status === 'Rejected').length;
+  const total = allComplaints.length;
+  const active = allComplaints.filter(c => c && (c.status === 'Pending' || c.status === 'In Progress')).length;
+  const pending = allComplaints.filter(c => c && c.status === 'Pending').length;
+  const in_progress = allComplaints.filter(c => c && c.status === 'In Progress').length;
+  const resolved = allComplaints.filter(c => c && c.status === 'Resolved').length;
+  const rejected = allComplaints.filter(c => c && c.status === 'Rejected').length;
 
   const now = new Date();
   const nowStr = `${String(now.getDate()).padStart(2, '0')}-${String(now.getMonth() + 1).padStart(2, '0')}-${now.getFullYear()}`;
 
-  const announcementsList = db.announcements.filter(a => a.is_active === 1);
+  const announcementsList = (db.announcements || []).filter(a => a && a.is_active === 1);
 
   const dept_defs = [
     { name: "Roads & Infrastructure", officer: "roads", icon: "fa-road", category: "Roads", color: "#f59e0b" },
@@ -1211,7 +1250,7 @@ app.get('/admin', (req: any, res) => {
   ];
 
   const dept_stats = dept_defs.map(d => {
-    const matching = db.complaints.filter(c => (c.category && c.category.includes(d.category)) || (c.department && c.department.includes(d.name)));
+    const matching = allComplaints.filter(c => c && ((c.category && c.category.includes(d.category)) || (c.department && c.department.includes(d.name))));
     const total_cnt = matching.length;
     const res_cnt = matching.filter(c => c.status === 'Resolved').length;
     const pen_cnt = matching.filter(c => c.status === 'Pending' || c.status === 'In Progress').length;
@@ -1231,19 +1270,24 @@ app.get('/admin', (req: any, res) => {
 
   const directivesList = (db.adminDirectives || []).slice().reverse().slice(0, 15);
 
-  res.render('admin_dashboard.html', {
-    complaints: complaintTuples,
-    total,
-    active,
-    pending,
-    in_progress,
-    resolved,
-    rejected,
-    dept_stats,
-    directives: directivesList,
-    announcements: announcementsList,
-    now: nowStr
-  });
+  try {
+    res.render('admin_dashboard.html', {
+      complaints: complaintTuples,
+      total,
+      active,
+      pending,
+      in_progress,
+      resolved,
+      rejected,
+      dept_stats,
+      directives: directivesList,
+      announcements: announcementsList,
+      now: nowStr
+    });
+  } catch (renderErr: any) {
+    console.error('Error rendering admin_dashboard.html:', renderErr);
+    res.status(500).send(`Error rendering admin dashboard: ${renderErr.message}`);
+  }
 });
 
 // Update Status Page (Admin)
@@ -2112,6 +2156,12 @@ app.get(['/api/export/csv', '/admin/export'], (req: any, res) => {
 // 404 Handler
 app.use((_req, res) => {
   res.status(404).render('home.html');
+});
+
+// Global Error Handler
+app.use((err: any, _req: any, res: any, _next: any) => {
+  console.error('Unhandled Application Error:', err);
+  res.status(500).send(`Internal Server Error: ${err?.message || err}`);
 });
 
 // Start Server

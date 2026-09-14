@@ -15,6 +15,12 @@ Set DATABASE_URL in .env for PostgreSQL:
 import os
 import re
 
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass
+
 DATABASE_URL = os.environ.get("DATABASE_URL", "")
 
 # Detect database backend

@@ -392,7 +392,7 @@
                         {% endif %}
                     </div>
                     <div>
-                        <span class="directive-status-pill status-{{ 'completed' if 'Completed' in dir.status else 'crew' if 'Crew' in dir.status else 'ack' if 'Acknowledged' in dir.status else 'sent' }}">
+                        <span class="directive-status-pill status-{{ 'completed' if dir.status == 'Completed' or dir.status == 'Action Completed' else 'crew' if dir.status == 'Crew Dispatched' else 'ack' if dir.status == 'Acknowledged' else 'sent' }}">
                             {{ dir.status }}
                         </span>
                     </div>
@@ -662,7 +662,7 @@
 
                         <button
                             class="view-btn"
-                            onclick="openImage('/static/uploads/{{ complaint[6].split('/')[-1] }}')">
+                            onclick="openImage('{{ complaint[6] }}')">
 
                             <i class="fa-solid fa-image"></i>
 
@@ -800,11 +800,14 @@ const modal = document.getElementById("imageModal");
 const popupImage = document.getElementById("popupImage");
 
 function openImage(image){
-
+    if (!image) return;
     modal.style.display="flex";
-
-    popupImage.src=image;
-
+    if (image.startsWith('http://') || image.startsWith('https://') || image.startsWith('/static/')) {
+        popupImage.src = image;
+    } else {
+        const cleanName = image.split('/').pop();
+        popupImage.src = '/static/uploads/' + cleanName;
+    }
 }
 
 function closeImage(){

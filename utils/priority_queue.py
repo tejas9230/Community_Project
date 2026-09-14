@@ -8,6 +8,7 @@ class PriorityQueueManager:
         # Lower value = Higher Priority
         self.priority_map = {
             "Critical": 1,
+            "Urgent": 1,
             "High": 2,
             "Medium": 3,
             "Low": 4
@@ -69,7 +70,7 @@ class PriorityQueueManager:
                 heap,
 
                 (
-                    self.priority_map[effective_priority],
+                    self.priority_map.get(effective_priority, 3),
                     complaint["id"],
                     complaint
                 )

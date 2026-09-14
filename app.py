@@ -415,12 +415,13 @@ def user_recent_duplicate(username, description, category, days=7):
     """Returns True if this user filed a very similar complaint recently."""
     conn = get_db()
     cur  = conn.cursor()
+    cutoff_date = (datetime.now() - timedelta(days=days)).strftime("%Y-%m-%d")
     cur.execute("""
         SELECT description FROM complaints
         WHERE username = ?
         AND category   = ?
-        AND created_at >= date('now', ?)
-    """, (username, category, f"-{days} days"))
+        AND created_at >= ?
+    """, (username, category, cutoff_date))
     rows = cur.fetchall()
     conn.close()
 
@@ -446,7 +447,8 @@ def run_auto_escalation():
     try:
         conn = get_db()
         cur  = conn.cursor()
-        if USE_POSTGRES:
+        is_pg = hasattr(conn, '_conn')
+        if is_pg:
             cur.execute("""
                 UPDATE complaints
                 SET priority = CASE
@@ -626,13 +628,16 @@ def login():
         session["department"] = u_dept
 
         # -----------------------------
-        # Redirect
+        # Redirect (Case-Insensitive)
         # -----------------------------
 
-        if u_role == "Admin":
+        role_lower = str(u_role).strip().lower() if u_role else ''
+        name_lower = str(u_name).strip().lower() if u_name else ''
+
+        if role_lower == "admin" or name_lower == "admin":
             return redirect("/admin")
 
-        elif u_role == "Officer":
+        elif role_lower == "officer":
             return redirect("/department_dashboard")
 
         else:
@@ -1693,14 +1698,13 @@ def department_dashboard():
             image_path
         FROM complaints
         WHERE (
-            department=?
+            department = ?
             OR department LIKE ?
             OR category LIKE ?
-            OR ? LIKE '%' || category || '%'
         )
         AND status IN ('Pending','In Progress')
         ORDER BY id DESC
-    """, (department, f"%{dept_prefix}%", f"%{dept_prefix}%", department))
+    """, (department, f"%{dept_prefix}%", f"%{dept_prefix}%"))
 
     rows = cur.fetchall()
 
@@ -2970,8 +2974,7 @@ def api_v1_complaints():
 # ============================
 @app.route('/api/directives/send', methods=['POST'])
 def api_directive_send():
-    """Admin dispatches a directive to a department or all departments."""
-    if 'username' not in session or (session.get('role') != 'Admin' and session.get('username') != 'admin'):
+    if not is_admin():
         return jsonify({"status": "error", "message": "Admin authorization required"}), 403
 
     data = request.get_json(silent=True) or request.form

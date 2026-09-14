@@ -443,10 +443,8 @@
     {% if complaint[6] %}
 
         <button
-
             class="view-btn"
-
-            onclick="openImage('/static/uploads/{{ complaint[6].split('/')[-1] }}')">
+            onclick="openImage('{{ complaint[6] }}')">
 
             <i class="fa-solid fa-image"></i>
 
@@ -560,11 +558,14 @@ const modal = document.getElementById("imageModal");
 const popupImage = document.getElementById("popupImage");
 
 function openImage(image){
-
-    popupImage.src = image;
-
+    if (!image) return;
     modal.style.display = "flex";
-
+    if (image.startsWith('http://') || image.startsWith('https://') || image.startsWith('/static/')) {
+        popupImage.src = image;
+    } else {
+        const cleanName = image.split('/').pop();
+        popupImage.src = '/static/uploads/' + cleanName;
+    }
 }
 
 function closeImage(){
