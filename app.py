@@ -640,6 +640,14 @@ def login():
 
     return render_template("login.html")
 
+def is_admin():
+    """Helper to verify if the currently logged-in user has Admin privileges."""
+    if 'username' not in session:
+        return False
+    u = str(session.get('username', '')).strip().lower()
+    r = str(session.get('role', '')).strip().lower()
+    return u == 'admin' or r == 'admin'
+
 # User Dashboard
 
 @app.route('/user_dashboard')
@@ -1448,12 +1456,8 @@ def thank_resolution(complaint_id):
 
 @app.route('/admin')
 def admin():
-
-    if 'username' not in session:
+    if not is_admin():
         return redirect('/login')
-
-    if session['username'] != 'admin':
-        return "Access Denied"
 
     # Run auto-escalation every time admin opens dashboard
     run_auto_escalation()
@@ -1816,6 +1820,8 @@ def department_dashboard():
 
 @app.route('/update_status/<int:id>', methods=['GET', 'POST'])
 def update_status(id):
+    if not is_admin() and str(session.get('role', '')).strip().lower() != 'officer':
+        return redirect('/login')
 
     conn = get_db()
     cur = conn.cursor()
@@ -2215,7 +2221,7 @@ def count_related_active_complaints(
 @app.route('/admin_settings', methods=['GET', 'POST'])
 def admin_settings():
 
-    if 'username' not in session or session.get('role') != 'Admin':
+    if not is_admin():
         return redirect('/login')
 
     conn = get_db()
@@ -2265,11 +2271,8 @@ def analytics():
     # Authentication
     # -------------------------------------
 
-    if 'username' not in session:
+    if not is_admin():
         return redirect('/login')
-
-    if session.get("role") != "Admin":
-        return "Access Denied"
 
     # -------------------------------------
     # Database Connection
@@ -2550,11 +2553,8 @@ def complaint_map():
 @app.route("/complaint_history")
 def complaint_history():
 
-    if 'username' not in session:
+    if not is_admin():
         return redirect('/login')
-
-    if session['username'] != 'admin':
-        return "Access Denied"
 
     search = request.args.get("search", "").strip()
     category = request.args.get("category")
@@ -2769,7 +2769,7 @@ def api_timeline(complaint_id):
 
 @app.route('/officer_performance')
 def officer_performance():
-    if 'username' not in session or session.get('username') != 'admin':
+    if not is_admin():
         return redirect('/login')
 
     conn = get_db()
@@ -2858,8 +2858,9 @@ def api_heatmap():
 
 
 @app.route('/admin/heatmap')
+@app.route('/admin_heatmap')
 def admin_heatmap():
-    if 'username' not in session or session.get('username') != 'admin':
+    if not is_admin():
         return redirect('/login')
 
     conn = get_db()
@@ -3082,9 +3083,10 @@ def api_directive_respond(directive_id):
 # ============================
 
 @app.route('/admin/export')
+@app.route('/api/export/csv')
 def admin_export():
     """Download all complaints as a CSV file."""
-    if 'username' not in session or session.get('username') != 'admin':
+    if not is_admin():
         return redirect('/login')
 
     conn = get_db()

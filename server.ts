@@ -1129,11 +1129,15 @@ app.post('/feedback/:id', async (req: any, res) => {
 // -------------------------------------------------------------
 // Admin Portal & Management
 // -------------------------------------------------------------
+function isAdmin(req: any): boolean {
+  if (!req.session || !req.session.username) return false;
+  const u = String(req.session.username || '').trim().toLowerCase();
+  const r = String(req.session.role || '').trim().toLowerCase();
+  return u === 'admin' || r === 'admin';
+}
+
 app.get('/admin', (req: any, res) => {
-  if (!req.session.username) return res.redirect('/login');
-  if (req.session.role !== 'Admin' && req.session.username !== 'admin') {
-    return res.status(403).send('Access Denied. Administrator role required.');
-  }
+  if (!isAdmin(req)) return res.redirect('/login');
 
   const { search, category, priority, status, escalated } = req.query;
 
@@ -1580,8 +1584,8 @@ app.get('/complaint_map', (req: any, res) => {
   });
 });
 
-app.get('/admin_heatmap', (req: any, res) => {
-  if (!req.session.username) return res.redirect('/login');
+app.get(['/admin_heatmap', '/admin/heatmap'], (req: any, res) => {
+  if (!isAdmin(req)) return res.redirect('/login');
   res.render('admin_heatmap.html', {
     center_lat: db.communitySettings.latitude,
     center_lon: db.communitySettings.longitude
@@ -1589,7 +1593,7 @@ app.get('/admin_heatmap', (req: any, res) => {
 });
 
 app.get('/analytics', (req: any, res) => {
-  if (!req.session.username) return res.redirect('/login');
+  if (!isAdmin(req)) return res.redirect('/login');
 
   const total = db.complaints.length;
   const pending = db.complaints.filter(c => c.status === 'Pending').length;
@@ -1661,7 +1665,7 @@ app.get('/analytics', (req: any, res) => {
 });
 
 app.get('/officer_performance', (req: any, res) => {
-  if (!req.session.username) return res.redirect('/login');
+  if (!isAdmin(req)) return res.redirect('/login');
 
   const officers = db.users.filter(u => u.role === 'Officer');
   const stats = officers.map(o => {
@@ -1687,10 +1691,7 @@ app.get('/officer_performance', (req: any, res) => {
 });
 
 app.get('/admin_settings', (req: any, res) => {
-  if (!req.session.username) return res.redirect('/login');
-  if (req.session.role !== 'Admin' && req.session.username !== 'admin') {
-    return res.status(403).send('Access Denied');
-  }
+  if (!isAdmin(req)) return res.redirect('/login');
 
   res.render('admin_settings.html', {
     settings: [
@@ -1704,7 +1705,7 @@ app.get('/admin_settings', (req: any, res) => {
 });
 
 app.post('/admin_settings', (req: any, res) => {
-  if (!req.session.username) return res.redirect('/login');
+  if (!isAdmin(req)) return res.redirect('/login');
   const { community_name, latitude, longitude, radius } = req.body;
 
   db.communitySettings.name = community_name || db.communitySettings.name;
@@ -2083,8 +2084,8 @@ app.post('/add_announcement', (req: any, res) => {
 });
 
 // CSV Export
-app.get('/api/export/csv', (req: any, res) => {
-  if (!req.session.username) return res.redirect('/login');
+app.get(['/api/export/csv', '/admin/export'], (req: any, res) => {
+  if (!isAdmin(req)) return res.redirect('/login');
 
   const headers = ['ID', 'Citizen', 'Category', 'Priority', 'Department', 'Status', 'Address', 'Created At', 'SLA Deadline', 'Rating', 'Feedback'];
   const rows = db.complaints.map(c => [

@@ -72,16 +72,15 @@
 
             </div>
 
-            <a href="/logout">
+            <!-- Theme Toggle Pill -->
+            <button type="button" id="themeToggleBtn" onclick="toggleCivicTheme()" class="theme-toggle-btn" title="Toggle Dark/Light Mode">
+                <i class="fa-solid fa-moon"></i>
+                <span>Dark Mode</span>
+            </button>
 
-                <button class="logout-btn">
-
-                    <i class="fa-solid fa-right-from-bracket"></i>
-
-                    Logout
-
-                </button>
-
+            <a href="/logout" class="logout-btn" style="text-decoration:none; display:inline-flex; align-items:center; gap:8px;">
+                <i class="fa-solid fa-right-from-bracket"></i>
+                Logout
             </a>
 
         </div>
@@ -101,27 +100,27 @@
       {% endif %}
     {% endwith %}
 
-    <!-- Quick Links Bar (Heatmap & Settings removed from top as they exist as large cards below) -->
-    <div style="display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap;align-items:center;">
-        <a href="/officer_performance" style="text-decoration:none;">
-            <button style="background:rgba(99,102,241,0.2);border:1px solid #6366f1;color:#a5b4fc;
-                    padding:8px 18px;border-radius:8px;cursor:pointer;font-size:13px;display:flex;align-items:center;gap:6px;">
-                <i class="fa-solid fa-chart-bar"></i> Officer Performance
-            </button>
+    <!-- Quick Links Navigation Bar -->
+    <div class="quick-nav-bar">
+        <a href="/officer_performance" class="quick-chip chip-indigo">
+            <i class="fa-solid fa-chart-line"></i>
+            <span>Officer Performance</span>
         </a>
-        <button type="button" onclick="openApiExplorerModal()" style="background:rgba(14,165,233,0.2);border:1px solid #0ea5e9;color:#7dd3fc;
-                padding:8px 18px;border-radius:8px;cursor:pointer;font-size:13px;display:flex;align-items:center;gap:6px;">
-            <i class="fa-solid fa-code"></i> Open Data REST API
+        <button type="button" onclick="openApiExplorerModal()" class="quick-chip chip-sky">
+            <i class="fa-solid fa-code"></i>
+            <span>Open Data REST API</span>
         </button>
-        <button type="button" onclick="openDirectiveModal()" style="background:rgba(234,179,8,0.2);border:1px solid #eab308;color:#fde047;
-                padding:8px 18px;border-radius:8px;cursor:pointer;font-size:13px;display:flex;align-items:center;gap:6px;">
-            <i class="fa-solid fa-bullhorn"></i> Dispatch Directive
+        <button type="button" onclick="openDirectiveModal()" class="quick-chip chip-amber">
+            <i class="fa-solid fa-bullhorn"></i>
+            <span>Dispatch Directive</span>
         </button>
-        <a href="/admin/export" style="text-decoration:none;">
-            <button style="background:rgba(34,197,94,0.2);border:1px solid #22c55e;color:#86efac;
-                    padding:8px 18px;border-radius:8px;cursor:pointer;font-size:13px;display:flex;align-items:center;gap:6px;">
-                <i class="fa-solid fa-file-csv"></i> Export CSV
-            </button>
+        <a href="/admin/export" class="quick-chip chip-emerald">
+            <i class="fa-solid fa-file-csv"></i>
+            <span>Export CSV</span>
+        </a>
+        <a href="/complaint_map" class="quick-chip chip-purple">
+            <i class="fa-solid fa-map-location-dot"></i>
+            <span>Live Map</span>
         </a>
     </div>
 
@@ -287,130 +286,121 @@
 
         </a>
 
-    </section>
-
-    <!-- ================= CIVIC COMMAND CENTER: OFFICER DISPATCH & DIRECTIVES (DESIGN OPTION 1) ================= -->
-    <section class="command-center-section" style="margin-bottom:30px;">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:18px; flex-wrap:wrap; gap:12px;">
+    </sect    <!-- ================= CIVIC COMMAND CENTER: OFFICER DISPATCH & DIRECTIVES ================= -->
+    <section class="command-center-section">
+        <div class="command-center-header">
             <div>
-                <h2 style="font-size:20px; font-weight:700; color:#f8fafc; margin:0; display:flex; align-items:center; gap:10px;">
-                    <i class="fa-solid fa-tower-broadcast" style="color:#60a5fa;"></i>
+                <h2 class="command-center-title">
+                    <span class="beacon-pulse"><i class="fa-solid fa-tower-broadcast"></i></span>
                     Civic Command Center: Departmental Operations
                 </h2>
-                <p style="color:#94a3b8; font-size:13px; margin:4px 0 0 0;">
+                <p class="command-center-subtitle">
                     Real-time officer readiness, resolution efficiency telemetry, and direct two-way dispatch memos.
                 </p>
             </div>
-            <div style="display:flex; gap:10px;">
-                <button type="button" onclick="openDirectiveModal()" style="background:linear-gradient(135deg,#3b82f6,#2563eb); border:none; color:#fff; padding:9px 18px; border-radius:10px; font-weight:700; font-size:13px; cursor:pointer; display:flex; align-items:center; gap:8px; box-shadow:0 4px 14px rgba(37,99,235,0.35);">
+            <div class="command-center-actions">
+                <button type="button" onclick="openDirectiveModal()" class="btn-command-primary">
                     <i class="fa-solid fa-bullhorn"></i> Dispatch Directive
                 </button>
-                <a href="/officer_performance" style="text-decoration:none;">
-                    <button type="button" style="background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.2); color:#e2e8f0; padding:9px 16px; border-radius:10px; font-weight:600; font-size:13px; cursor:pointer; display:flex; align-items:center; gap:6px;">
-                        <i class="fa-solid fa-chart-pie"></i> Detailed Analytics
-                    </button>
+                <a href="/officer_performance" class="btn-command-secondary">
+                    <i class="fa-solid fa-chart-pie"></i> Detailed Analytics
                 </a>
             </div>
         </div>
 
         <!-- Department Command Cards Grid -->
-        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:16px; margin-bottom:22px;">
+        <div class="dept-grid">
             {% for d in dept_stats %}
-            <div style="background:rgba(30,41,59,0.7); border:1px solid rgba(255,255,255,0.1); border-radius:14px; padding:16px 18px; backdrop-filter:blur(8px); position:relative; overflow:hidden; transition:transform .2s ease, border-color .2s ease;"
-                 onmouseover="this.style.transform='translateY(-3px)'; this.style.borderColor='{{ d.color }}';"
-                 onmouseout="this.style.transform='translateY(0)'; this.style.borderColor='rgba(255,255,255,0.1)';">
+            <div class="dept-card" style="--dept-color: {{ d.color }};">
                 
                 <!-- Top Status Bar -->
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-                    <div style="display:flex; align-items:center; gap:10px;">
-                        <div style="width:36px; height:36px; border-radius:10px; background:rgba(255,255,255,0.06); display:flex; align-items:center; justify-content:center; color:{{ d.color }}; font-size:16px; border:1px solid rgba(255,255,255,0.1);">
+                <div class="dept-card-top">
+                    <div class="dept-info">
+                        <div class="dept-icon-box" style="color: {{ d.color }}; background: {{ d.color }}18;">
                             <i class="fa-solid {{ d.icon }}"></i>
                         </div>
                         <div>
-                            <h4 style="margin:0; font-size:14px; font-weight:700; color:#f1f5f9; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:140px;" title="{{ d.name }}">{{ d.name }}</h4>
-                            <span style="font-size:11px; color:#94a3b8;"><i class="fa-solid fa-user-shield" style="margin-right:3px;"></i>@{{ d.officer }}</span>
+                            <h4 class="dept-name" title="{{ d.name }}">{{ d.name }}</h4>
+                            <span class="dept-officer"><i class="fa-solid fa-user-shield"></i> @{{ d.officer }}</span>
                         </div>
                     </div>
-                    <span style="display:inline-flex; align-items:center; gap:5px; background:rgba(34,197,94,0.15); border:1px solid rgba(34,197,94,0.35); color:#86efac; padding:3px 8px; border-radius:12px; font-size:11px; font-weight:700;">
-                        <span style="width:6px; height:6px; border-radius:50%; background:#22c55e;"></span>
-                        On Duty
+                    <span class="dept-duty-pill">
+                        <span class="duty-dot"></span> On Duty
                     </span>
                 </div>
 
                 <!-- Resolution Rate Bar -->
-                <div style="margin-bottom:12px;">
-                    <div style="display:flex; justify-content:space-between; font-size:11px; color:#94a3b8; margin-bottom:5px;">
+                <div class="dept-rate-block">
+                    <div class="dept-rate-label">
                         <span>Resolution Efficiency</span>
-                        <strong style="color:{% if d.rate >= 75 %}#4ade80{% elif d.rate >= 45 %}#facc15{% else %}#f87171{% endif %};">{{ d.rate }}%</strong>
+                        <strong class="rate-val {% if d.rate >= 75 %}rate-high{% elif d.rate >= 45 %}rate-med{% else %}rate-low{% endif %}">{{ d.rate }}%</strong>
                     </div>
-                    <div style="height:6px; background:rgba(255,255,255,0.08); border-radius:3px; overflow:hidden;">
-                        <div style="height:100%; width:{{ d.rate }}%; background:{% if d.rate >= 75 %}#22c55e{% elif d.rate >= 45 %}#eab308{% else %}#ef4444{% endif %}; border-radius:3px; transition:width .6s ease;"></div>
+                    <div class="rate-track">
+                        <div class="rate-fill {% if d.rate >= 75 %}fill-high{% elif d.rate >= 45 %}fill-med{% else %}fill-low{% endif %}" style="width: {{ d.rate }}%;"></div>
                     </div>
                 </div>
 
                 <!-- Counts Matrix -->
-                <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:6px; background:rgba(15,23,42,0.5); padding:8px 10px; border-radius:8px; text-align:center; font-size:11px; margin-bottom:12px;">
-                    <div>
-                        <span style="color:#94a3b8; display:block;">Total</span>
-                        <strong style="color:#f8fafc; font-size:13px;">{{ d.total }}</strong>
+                <div class="dept-counts-box">
+                    <div class="count-col">
+                        <span class="count-lbl">Total</span>
+                        <strong class="count-num num-total">{{ d.total }}</strong>
                     </div>
-                    <div>
-                        <span style="color:#94a3b8; display:block;">Resolved</span>
-                        <strong style="color:#4ade80; font-size:13px;">{{ d.resolved }}</strong>
+                    <div class="count-col">
+                        <span class="count-lbl">Resolved</span>
+                        <strong class="count-num num-resolved">{{ d.resolved }}</strong>
                     </div>
-                    <div>
-                        <span style="color:#94a3b8; display:block;">Pending</span>
-                        <strong style="color:#f87171; font-size:13px;">{{ d.pending }}</strong>
+                    <div class="count-col">
+                        <span class="count-lbl">Pending</span>
+                        <strong class="count-num num-pending">{{ d.pending }}</strong>
                     </div>
                 </div>
 
                 <!-- Direct Action Button -->
-                <button type="button" onclick="openDirectiveModal('{{ d.name }}')" style="width:100%; background:rgba(59,130,246,0.12); border:1px solid rgba(59,130,246,0.3); color:#93c5fd; padding:6px 12px; border-radius:8px; font-size:11px; font-weight:700; cursor:pointer; transition:.2s ease; display:flex; align-items:center; justify-content:center; gap:6px;"
-                        onmouseover="this.style.background='rgba(59,130,246,0.25)';"
-                        onmouseout="this.style.background='rgba(59,130,246,0.12)';">
+                <button type="button" onclick="openDirectiveModal('{{ d.name }}')" class="dept-action-btn">
                     <i class="fa-solid fa-paper-plane"></i> Dispatch Directive
                 </button>
             </div>
             {% endfor %}
         </div>
 
-        <!-- Live Directive Stream / Recent Directives -->
-        <div style="background:rgba(30,41,59,0.7); border:1px solid rgba(255,255,255,0.1); border-radius:14px; padding:18px 20px;">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; flex-wrap:wrap; gap:8px;">
-                <h3 style="font-size:15px; font-weight:700; color:#f8fafc; margin:0; display:flex; align-items:center; gap:8px;">
+        <!-- Live Tactical Directive Stream -->
+        <div class="directive-stream-card">
+            <div class="stream-header">
+                <h3 class="stream-title">
                     <i class="fa-solid fa-comments" style="color:#38bdf8;"></i>
                     Tactical Directive Stream (Two-Way Comms)
                 </h3>
-                <span style="font-size:12px; color:#94a3b8;">Real-time field response logs</span>
+                <span class="stream-badge">Real-time field response logs</span>
             </div>
 
-            <div id="directiveStreamContainer" style="display:flex; flex-direction:column; gap:10px; max-height:260px; overflow-y:auto; padding-right:4px;">
+            <div id="directiveStreamContainer" class="stream-container">
                 {% if directives %}
                 {% for dir in directives %}
-                <div style="background:rgba(15,23,42,0.6); border-left:4px solid {% if dir.priority == 'Critical' %}#ef4444{% elif dir.priority == 'Urgent' %}#f59e0b{% else %}#3b82f6{% endif %}; border-radius:8px; padding:12px 14px; display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:10px;">
-                    <div style="flex:1; min-width:260px;">
-                        <div style="display:flex; align-items:center; gap:8px; margin-bottom:4px;">
-                            <span style="font-weight:700; color:#f1f5f9; font-size:13px;">To: {{ dir.to_department }}</span>
-                            <span style="background:{% if dir.priority == 'Critical' %}rgba(239,68,68,0.2){% elif dir.priority == 'Urgent' %}rgba(245,158,11,0.2){% else %}rgba(59,130,246,0.2){% endif %}; color:{% if dir.priority == 'Critical' %}#fca5a5{% elif dir.priority == 'Urgent' %}#fde047{% else %}#93c5fd{% endif %}; border:1px solid currentColor; padding:1px 8px; border-radius:10px; font-size:10px; font-weight:700;">{{ dir.priority }}</span>
-                            <span style="font-size:11px; color:#64748b;">{{ dir.created_at }}</span>
+                <div class="directive-item priority-{{ dir.priority|lower }}">
+                    <div class="directive-main">
+                        <div class="directive-meta">
+                            <span class="directive-target">To: {{ dir.to_department }}</span>
+                            <span class="directive-priority-badge badge-{{ dir.priority|lower }}">{{ dir.priority }}</span>
+                            <span class="directive-time">{{ dir.created_at }}</span>
                         </div>
-                        <p style="margin:0; font-size:12px; color:#cbd5e1; line-height:1.4;">{{ dir.message }}</p>
+                        <p class="directive-msg">{{ dir.message }}</p>
                         {% if dir.response_note %}
-                        <div style="margin-top:6px; font-size:11px; color:#86efac; background:rgba(34,197,94,0.1); padding:4px 8px; border-radius:6px; display:inline-block;">
+                        <div class="directive-reply">
                             <i class="fa-solid fa-reply me-1"></i> {{ dir.response_note }}
                         </div>
                         {% endif %}
                     </div>
                     <div>
-                        <span style="background:{% if 'Completed' in dir.status %}#22c55e{% elif 'Crew' in dir.status %}#6366f1{% elif 'Acknowledged' in dir.status %}#f59e0b{% else %}#3b82f6{% endif %}; color:#fff; padding:3px 10px; border-radius:12px; font-size:11px; font-weight:700;">
+                        <span class="directive-status-pill status-{{ 'completed' if 'Completed' in dir.status else 'crew' if 'Crew' in dir.status else 'ack' if 'Acknowledged' in dir.status else 'sent' }}">
                             {{ dir.status }}
                         </span>
                     </div>
                 </div>
                 {% endfor %}
                 {% else %}
-                <div style="text-align:center; padding:25px; color:#64748b; font-size:13px;">
-                    <i class="fa-solid fa-inbox" style="font-size:24px; margin-bottom:8px; display:block; opacity:0.4;"></i>
+                <div class="stream-empty">
+                    <i class="fa-solid fa-inbox"></i>
                     No tactical directives dispatched yet. Use "Dispatch Directive" to communicate with department teams.
                 </div>
                 {% endif %}
@@ -696,16 +686,9 @@
 
                 <td>
 
-                    <a href="/update_status/{{ complaint[0] }}">
-
-                        <button class="manage-btn">
-
-                            <i class="fa-solid fa-pen-to-square"></i>
-
-                            Manage
-
-                        </button>
-
+                    <a href="/update_status/{{ complaint[0] }}" class="manage-btn" style="text-decoration:none; display:inline-flex; align-items:center; gap:6px;">
+                        <i class="fa-solid fa-pen-to-square"></i>
+                        Manage
                     </a>
 
                 </td>
@@ -766,16 +749,9 @@
 
             </div>
 
-            <a href="/complaint_history">
-
-                <button class="history-btn">
-
-                    <i class="fa-solid fa-clock-rotate-left"></i>
-
-                    View Complaint History
-
-                </button>
-
+            <a href="/complaint_history" class="history-btn" style="text-decoration:none; display:inline-flex; align-items:center; gap:6px;">
+                <i class="fa-solid fa-clock-rotate-left"></i>
+                View Complaint History
             </a>
 
         </div>
@@ -981,19 +957,19 @@ function showToast(message){
 </script>
 
 <!-- ================= DIRECTIVE DISPATCH MODAL ================= -->
-<div id="directiveModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.78); z-index:9999; backdrop-filter:blur(6px); align-items:center; justify-content:center; padding:20px;">
-    <div style="background:#1e293b; border:1px solid rgba(255,255,255,0.15); border-radius:16px; width:100%; max-width:540px; box-shadow:0 25px 50px -12px rgba(0,0,0,0.6); overflow:hidden;">
-        <div style="background:rgba(255,255,255,0.04); padding:16px 22px; border-bottom:1px solid rgba(255,255,255,0.1); display:flex; justify-content:space-between; align-items:center;">
-            <h3 style="margin:0; font-size:16px; font-weight:700; color:#f8fafc; display:flex; align-items:center; gap:8px;">
+<div id="directiveModal" class="modal-overlay">
+    <div class="modal-dialog-box">
+        <div class="modal-header-bar">
+            <h3>
                 <i class="fa-solid fa-bullhorn" style="color:#60a5fa;"></i>
                 Dispatch Command Directive
             </h3>
-            <button type="button" onclick="closeDirectiveModal()" style="background:none; border:none; color:#94a3b8; font-size:22px; cursor:pointer; line-height:1;">&times;</button>
+            <button type="button" onclick="closeDirectiveModal()" class="modal-close-btn">&times;</button>
         </div>
-        <form id="directiveForm" onsubmit="submitDirective(event)" style="padding:20px 22px;">
+        <form id="directiveForm" onsubmit="submitDirective(event)" class="modal-body-content">
             <div style="margin-bottom:14px;">
-                <label style="display:block; font-size:12px; font-weight:700; color:#cbd5e1; margin-bottom:6px;">Target Department</label>
-                <select id="dirTargetDept" style="width:100%; background:#0f172a; border:1px solid #334155; color:#f8fafc; padding:9px 12px; border-radius:8px; font-size:13px;">
+                <label class="modal-field-label">Target Department</label>
+                <select id="dirTargetDept" class="modal-input-ctrl">
                     <option value="All Departments">📢 All Departments (Broadcast)</option>
                     <option value="Roads & Infrastructure">Roads & Infrastructure</option>
                     <option value="Water Supply">Water Supply</option>
@@ -1007,8 +983,8 @@ function showToast(message){
                 </select>
             </div>
             <div style="margin-bottom:14px;">
-                <label style="display:block; font-size:12px; font-weight:700; color:#cbd5e1; margin-bottom:6px;">Priority Level</label>
-                <select id="dirPriority" style="width:100%; background:#0f172a; border:1px solid #334155; color:#f8fafc; padding:9px 12px; border-radius:8px; font-size:13px;">
+                <label class="modal-field-label">Priority Level</label>
+                <select id="dirPriority" class="modal-input-ctrl">
                     <option value="Critical">🚨 Critical (Urgent Emergency / 6h SLA)</option>
                     <option value="Urgent" selected>⚡ Urgent (High Priority)</option>
                     <option value="Routine">📋 Routine (Standard Inspection)</option>
@@ -1016,21 +992,21 @@ function showToast(message){
             </div>
             <!-- Quick Preset Chips -->
             <div style="margin-bottom:12px;">
-                <label style="display:block; font-size:11px; color:#94a3b8; margin-bottom:6px;">Quick Presets:</label>
+                <label class="modal-field-label" style="font-size:11px;">Quick Presets:</label>
                 <div style="display:flex; gap:6px; flex-wrap:wrap;">
-                    <button type="button" onclick="setPresetMsg('🚨 Emergency pothole repair required along main arterial road immediately.')" style="background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.15); color:#cbd5e1; padding:4px 8px; border-radius:6px; font-size:11px; cursor:pointer;">Pothole SOS</button>
-                    <button type="button" onclick="setPresetMsg('💧 Water pipeline rupture reported by multiple residents. Immediate shutoff & repair required.')" style="background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.15); color:#cbd5e1; padding:4px 8px; border-radius:6px; font-size:11px; cursor:pointer;">Water Rupture</button>
-                    <button type="button" onclick="setPresetMsg('⚡ Multiple streetlight outage detected. Inspect transformer and restore line.')" style="background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.15); color:#cbd5e1; padding:4px 8px; border-radius:6px; font-size:11px; cursor:pointer;">Lighting Outage</button>
-                    <button type="button" onclick="setPresetMsg('🧹 Overflowing garbage dump reported near residential cluster. Dispatch clearance van.')" style="background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.15); color:#cbd5e1; padding:4px 8px; border-radius:6px; font-size:11px; cursor:pointer;">Waste Clear</button>
+                    <button type="button" onclick="setPresetMsg('🚨 Emergency pothole repair required along main arterial road immediately.')" class="modal-preset-btn">Pothole SOS</button>
+                    <button type="button" onclick="setPresetMsg('💧 Water pipeline rupture reported by multiple residents. Immediate shutoff & repair required.')" class="modal-preset-btn">Water Rupture</button>
+                    <button type="button" onclick="setPresetMsg('⚡ Multiple streetlight outage detected. Inspect transformer and restore line.')" class="modal-preset-btn">Lighting Outage</button>
+                    <button type="button" onclick="setPresetMsg('🧹 Overflowing garbage dump reported near residential cluster. Dispatch clearance van.')" class="modal-preset-btn">Waste Clear</button>
                 </div>
             </div>
             <div style="margin-bottom:18px;">
-                <label style="display:block; font-size:12px; font-weight:700; color:#cbd5e1; margin-bottom:6px;">Directive Instructions</label>
-                <textarea id="dirMessage" rows="4" style="width:100%; background:#0f172a; border:1px solid #334155; color:#f8fafc; padding:10px 12px; border-radius:8px; font-size:13px; line-height:1.4;" placeholder="Type tactical directive instructions for the officer team..." required></textarea>
+                <label class="modal-field-label">Directive Instructions</label>
+                <textarea id="dirMessage" rows="4" class="modal-input-ctrl" placeholder="Type tactical directive instructions for the officer team..." required></textarea>
             </div>
             <div style="display:flex; justify-content:flex-end; gap:10px;">
-                <button type="button" onclick="closeDirectiveModal()" style="background:rgba(255,255,255,0.1); border:none; color:#cbd5e1; padding:9px 18px; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer;">Cancel</button>
-                <button type="submit" style="background:linear-gradient(135deg,#3b82f6,#2563eb); border:none; color:#fff; padding:9px 20px; border-radius:8px; font-size:13px; font-weight:700; cursor:pointer; display:flex; align-items:center; gap:6px;">
+                <button type="button" onclick="closeDirectiveModal()" class="modal-preset-btn" style="padding:9px 18px; font-weight:600;">Cancel</button>
+                <button type="submit" class="btn-command-primary">
                     <i class="fa-solid fa-paper-plane"></i> Dispatch Directive
                 </button>
             </div>
@@ -1039,25 +1015,25 @@ function showToast(message){
 </div>
 
 <!-- ================= OPEN DATA REST API EXPLORER MODAL ================= -->
-<div id="apiExplorerModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.78); z-index:9999; backdrop-filter:blur(6px); align-items:center; justify-content:center; padding:20px;">
-    <div style="background:#1e293b; border:1px solid rgba(255,255,255,0.15); border-radius:16px; width:100%; max-width:700px; max-height:90vh; display:flex; flex-direction:column; box-shadow:0 25px 50px -12px rgba(0,0,0,0.6); overflow:hidden;">
-        <div style="background:rgba(255,255,255,0.04); padding:16px 22px; border-bottom:1px solid rgba(255,255,255,0.1); display:flex; justify-content:space-between; align-items:center;">
+<div id="apiExplorerModal" class="modal-overlay">
+    <div class="modal-dialog-box large">
+        <div class="modal-header-bar">
             <div>
-                <h3 style="margin:0; font-size:16px; font-weight:700; color:#f8fafc; display:flex; align-items:center; gap:8px;">
+                <h3>
                     <i class="fa-solid fa-code" style="color:#38bdf8;"></i>
                     Open Data REST API Explorer
                 </h3>
-                <span style="font-size:11px; color:#94a3b8;">Citizen Portal Public API (v1.0)</span>
+                <span style="font-size:11px; color:var(--text-muted);">Citizen Portal Public API (v1.0)</span>
             </div>
-            <button type="button" onclick="closeApiExplorerModal()" style="background:none; border:none; color:#94a3b8; font-size:22px; cursor:pointer; line-height:1;">&times;</button>
+            <button type="button" onclick="closeApiExplorerModal()" class="modal-close-btn">&times;</button>
         </div>
-        <div style="padding:18px 22px; overflow-y:auto; flex:1;">
+        <div class="modal-body-content" style="overflow-y:auto; flex:1;">
             <div style="display:flex; gap:8px; margin-bottom:14px;">
-                <input type="text" id="apiEndpointUrl" value="/api/v1/complaints?limit=25" readonly style="flex:1; background:#0f172a; border:1px solid #334155; color:#38bdf8; padding:8px 12px; border-radius:8px; font-family:monospace; font-size:13px;">
-                <button type="button" onclick="copyApiUrl()" style="background:rgba(56,189,248,0.15); border:1px solid #38bdf8; color:#7dd3fc; padding:8px 14px; border-radius:8px; font-size:12px; font-weight:700; cursor:pointer;">
+                <input type="text" id="apiEndpointUrl" value="/api/v1/complaints?limit=25" readonly class="modal-input-ctrl" style="flex:1; font-family:monospace; font-weight:600; color:#0284c7;">
+                <button type="button" onclick="copyApiUrl()" class="modal-preset-btn" style="padding:8px 14px; font-weight:700;">
                     <i class="fa-solid fa-copy"></i> Copy
                 </button>
-                <button type="button" onclick="fetchApiPreview()" style="background:#0284c7; border:none; color:#fff; padding:8px 16px; border-radius:8px; font-size:12px; font-weight:700; cursor:pointer;">
+                <button type="button" onclick="fetchApiPreview()" class="btn-command-primary" style="padding:8px 16px;">
                     <i class="fa-solid fa-play"></i> Send Request
                 </button>
             </div>
@@ -1065,8 +1041,8 @@ function showToast(message){
             <!-- Parameters Filter -->
             <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; margin-bottom:14px;">
                 <div>
-                    <label style="font-size:11px; color:#94a3b8; display:block; margin-bottom:4px;">Filter Category</label>
-                    <select id="apiParamCategory" onchange="buildApiUrl()" style="width:100%; background:#0f172a; border:1px solid #334155; color:#cbd5e1; padding:6px 8px; border-radius:6px; font-size:12px;">
+                    <label class="modal-field-label">Filter Category</label>
+                    <select id="apiParamCategory" onchange="buildApiUrl()" class="modal-input-ctrl" style="padding:7px 10px; font-size:12.5px;">
                         <option value="">All Categories</option>
                         <option value="Roads">Roads</option>
                         <option value="Water">Water</option>
@@ -1078,8 +1054,8 @@ function showToast(message){
                     </select>
                 </div>
                 <div>
-                    <label style="font-size:11px; color:#94a3b8; display:block; margin-bottom:4px;">Filter Status</label>
-                    <select id="apiParamStatus" onchange="buildApiUrl()" style="width:100%; background:#0f172a; border:1px solid #334155; color:#cbd5e1; padding:6px 8px; border-radius:6px; font-size:12px;">
+                    <label class="modal-field-label">Filter Status</label>
+                    <select id="apiParamStatus" onchange="buildApiUrl()" class="modal-input-ctrl" style="padding:7px 10px; font-size:12.5px;">
                         <option value="">All Statuses</option>
                         <option value="Pending">Pending</option>
                         <option value="In Progress">In Progress</option>
@@ -1087,8 +1063,8 @@ function showToast(message){
                     </select>
                 </div>
                 <div>
-                    <label style="font-size:11px; color:#94a3b8; display:block; margin-bottom:4px;">Record Limit</label>
-                    <select id="apiParamLimit" onchange="buildApiUrl()" style="width:100%; background:#0f172a; border:1px solid #334155; color:#cbd5e1; padding:6px 8px; border-radius:6px; font-size:12px;">
+                    <label class="modal-field-label">Record Limit</label>
+                    <select id="apiParamLimit" onchange="buildApiUrl()" class="modal-input-ctrl" style="padding:7px 10px; font-size:12.5px;">
                         <option value="10">10 Records</option>
                         <option value="25" selected>25 Records</option>
                         <option value="50">50 Records</option>
@@ -1099,19 +1075,19 @@ function showToast(message){
 
             <!-- cURL snippet -->
             <div style="margin-bottom:12px;">
-                <span style="font-size:11px; color:#64748b; font-weight:700;">cURL Example:</span>
-                <pre id="apiCurlSnippet" style="background:#090d16; border:1px solid rgba(255,255,255,0.06); padding:8px 12px; border-radius:6px; color:#a5b4fc; font-size:11px; overflow-x:auto; margin:4px 0 0 0;">curl -X GET "http://localhost:5000/api/v1/complaints?limit=25"</pre>
+                <span style="font-size:11px; color:var(--text-muted); font-weight:700;">cURL Example:</span>
+                <pre id="apiCurlSnippet" style="background:var(--subbox-bg); border:1px solid var(--subbox-border); padding:9px 12px; border-radius:8px; color:#6366f1; font-size:11.5px; overflow-x:auto; margin:4px 0 0 0; font-family:monospace;">curl -X GET "http://localhost:5000/api/v1/complaints?limit=25"</pre>
             </div>
 
             <!-- Response Preview Block -->
             <div>
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
-                    <span style="font-size:11px; color:#94a3b8; font-weight:700;">Live JSON Response (<span id="apiStatusBadge" style="color:#4ade80;">Ready</span>)</span>
-                    <a id="apiDownloadLink" href="/api/v1/complaints?limit=25" target="_blank" download style="color:#38bdf8; font-size:11px; text-decoration:none;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                    <span style="font-size:11.5px; color:var(--text-muted); font-weight:700;">Live JSON Response (<span id="apiStatusBadge" style="color:#16a34a;">Ready</span>)</span>
+                    <a id="apiDownloadLink" href="/api/v1/complaints?limit=25" target="_blank" download style="color:#0284c7; font-size:11.5px; text-decoration:none; font-weight:600;">
                         <i class="fa-solid fa-arrow-up-right-from-square me-1"></i> Open Raw JSON
                     </a>
                 </div>
-                <pre id="apiJsonPreview" style="background:#090d16; border:1px solid rgba(255,255,255,0.08); padding:12px; border-radius:8px; color:#e2e8f0; font-size:12px; font-family:monospace; max-height:220px; overflow:auto; margin:0;">Click "Send Request" to test live endpoint...</pre>
+                <pre id="apiJsonPreview" style="background:var(--subbox-bg); border:1px solid var(--subbox-border); padding:12px; border-radius:10px; color:var(--text-primary); font-size:12px; font-family:monospace; max-height:220px; overflow:auto; margin:0;">Click "Send Request" to test live endpoint...</pre>
             </div>
         </div>
     </div>
@@ -1252,6 +1228,31 @@ function copyApiUrl() {
         showToast('Failed to copy URL.');
     });
 }
+
+// ================= THEME TOGGLE (Dark / Light) =================
+function applyTheme(theme) {
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('civic_theme', theme);
+    const btn = document.getElementById('themeToggleBtn');
+    if (btn) {
+        if (theme === 'dark') {
+            btn.innerHTML = '<i class="fa-solid fa-sun" style="color:#f59e0b;"></i> <span>Light Mode</span>';
+        } else {
+            btn.innerHTML = '<i class="fa-solid fa-moon" style="color:#6366f1;"></i> <span>Dark Mode</span>';
+        }
+    }
+}
+
+function toggleCivicTheme() {
+    const current = localStorage.getItem('civic_theme') || 'light';
+    applyTheme(current === 'dark' ? 'light' : 'dark');
+}
+
+// Initialize Theme on Page Load immediately
+(function() {
+    const saved = localStorage.getItem('civic_theme') || 'light';
+    applyTheme(saved);
+})();
 </script>
 
 </body>
