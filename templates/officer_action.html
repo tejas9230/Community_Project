@@ -213,11 +213,7 @@
                 <div class="card-body text-center">
 
                     {% if complaint.image_path %}
-                        {% if complaint.image_path.startswith('http') %}
-                            <img src="{{ complaint.image_path }}" class="img-fluid rounded shadow-sm" style="max-height: 250px; object-fit: cover;">
-                        {% else %}
-                            <img src="{{ url_for('static', filename='uploads/' + complaint.image_path.split('/')[-1]) }}" class="img-fluid rounded shadow-sm" style="max-height: 250px; object-fit: cover;">
-                        {% endif %}
+                        <img src="{{ complaint.image_path | image_url }}" class="img-fluid rounded shadow-sm" style="max-height: 250px; object-fit: cover;" onerror="this.src='/static/placeholder.jpg'">
                     {% else %}
 
                     <div class="text-muted">
@@ -340,7 +336,7 @@
 
                         </div>
 
-                        <a href="{{ url_for('department_dashboard') }}"
+                        <a href="/department_dashboard"
                            class="btn btn-outline-secondary mt-3 w-100">
 
                             Back

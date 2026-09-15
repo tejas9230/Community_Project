@@ -65,6 +65,16 @@ SLA_DAYS = {
     "Others":            7,
 }
 
+@app.template_filter('image_url')
+def image_url_filter(path):
+    if not path:
+        return ''
+    path_str = str(path).strip()
+    if path_str.startswith('http://') or path_str.startswith('https://'):
+        return path_str
+    filename = path_str.replace('\\', '/').split('/')[-1]
+    return f"/static/uploads/{filename}"
+
 # PostgreSQL column migration helper (adds missing columns safely)
 def _pg_migrate(cur, conn):
     """Add any new columns to existing Supabase tables without breaking anything."""
@@ -102,6 +112,20 @@ def _pg_migrate(cur, conn):
             response_note TEXT DEFAULT '',
             created_at TEXT,
             updated_at TEXT
+        )
+        """)
+    except Exception:
+        pass
+    try:
+        cur.execute("""
+        CREATE TABLE IF NOT EXISTS complaint_history(
+            id SERIAL PRIMARY KEY,
+            complaint_id INTEGER,
+            officer_username TEXT,
+            old_status TEXT,
+            new_status TEXT,
+            remarks TEXT,
+            action_time TEXT DEFAULT (to_char(CURRENT_TIMESTAMP, 'YYYY-MM-DD HH24:MI:SS'))
         )
         """)
     except Exception:
@@ -261,6 +285,18 @@ def create_db():
         response_note TEXT DEFAULT '',
         created_at TEXT,
         updated_at TEXT
+    )
+    """)
+
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS complaint_history(
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        complaint_id INTEGER,
+        officer_username TEXT,
+        old_status TEXT,
+        new_status TEXT,
+        remarks TEXT,
+        action_time TEXT DEFAULT CURRENT_TIMESTAMP
     )
     """)
 

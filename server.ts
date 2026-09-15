@@ -61,8 +61,15 @@ app.use(session({
   cookie: { maxAge: 24 * 60 * 60 * 1000 }
 }));
 
-// Flash messages middleware
+// Flash messages & session compatibility middleware
 app.use((req: any, res: Response, next: NextFunction) => {
+  if (req.session) {
+    if (typeof req.session.get !== 'function') {
+      req.session.get = function (key: string, defaultVal: any = undefined) {
+        return this[key] !== undefined ? this[key] : defaultVal;
+      };
+    }
+  }
   res.locals.session = req.session;
   res.locals.req = req;
   if (!req.session.flash) req.session.flash = [];
@@ -135,9 +142,28 @@ env.addFilter('int', (val: any) => {
   return parseInt(val, 10) || 0;
 });
 
-// Attach req & Jinja request.args compat to template rendering context
+env.addFilter('image_url', (path: any) => {
+  if (!path) return '';
+  const pathStr = String(path).trim();
+  if (pathStr.startsWith('http://') || pathStr.startsWith('https://')) {
+    return pathStr;
+  }
+  const parts = pathStr.replace(/\\/g, '/').split('/');
+  const filename = parts[parts.length - 1];
+  return `/static/uploads/${filename}`;
+});
+
+// Attach req, session & Jinja request.args compat to template rendering context
 app.use((req: any, res: Response, next: NextFunction) => {
   res.locals.req = req;
+  if (req.session) {
+    if (typeof req.session.get !== 'function') {
+      req.session.get = function (key: string, defaultVal: any = undefined) {
+        return this[key] !== undefined ? this[key] : defaultVal;
+      };
+    }
+  }
+  res.locals.session = req.session;
   res.locals.request = {
     args: {
       get: (key: string, defaultVal: string = '') => (req.query[key] !== undefined ? req.query[key] : defaultVal)

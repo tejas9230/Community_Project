@@ -98,9 +98,10 @@
         {% if complaint[7] %}
 
         <img
-            src="/static/uploads/{{ complaint[7].split('/')[-1] }}"
+            src="{{ complaint[7] | image_url }}"
             class="evidence-image"
-            onclick="openImage('/static/uploads/{{ complaint[7].split('/')[-1] }}')">
+            onclick="openImage('{{ complaint[7] | image_url }}')"
+            onerror="this.src='/static/placeholder.jpg'">
 
         {% else %}
 

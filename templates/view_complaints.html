@@ -419,7 +419,7 @@
 
                 class="view-btn"
 
-                onclick="openImage('/static/uploads/{{ complaint[8].split('/')[-1] }}')">
+                onclick="openImage('{{ complaint[8] | image_url }}')">
 
                 <i class="fa-solid fa-image"></i>
 
@@ -526,7 +526,7 @@
 
             {% if complaint[13] %}
                 <button type="button" class="view-btn" style="font-size:10px; margin-bottom:4px; background:#2563eb; border-color:#2563eb;"
-                    onclick="openImage('/static/uploads/{{ complaint[13].split('/')[-1] }}')">
+                    onclick="openImage('{{ complaint[13] | image_url }}')">
                     📸 Repair Photo (CV: {{ complaint[14] or 85 }}%)
                 </button>
             {% endif %}

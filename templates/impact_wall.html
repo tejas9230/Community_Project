@@ -169,12 +169,12 @@
                         <!-- Side-by-Side Comparison Container -->
                         <div class="comparison-container">
                             <div class="comp-half">
-                                <img src="/static/uploads/{{ item.image_path.split('/')[-1] }}" alt="Before repair" onerror="this.src='/static/placeholder.jpg'">
+                                <img src="{{ item.image_path | image_url }}" alt="Before repair" onerror="this.src='/static/placeholder.jpg'">
                                 <span class="comp-label before">Before</span>
                             </div>
                             <div class="comp-divider"></div>
                             <div class="comp-half">
-                                <img src="/static/uploads/{{ item.resolution_image.split('/')[-1] }}" alt="After repair" onerror="this.src='/static/placeholder.jpg'">
+                                <img src="{{ item.resolution_image | image_url }}" alt="After repair" onerror="this.src='/static/placeholder.jpg'">
                                 <span class="comp-label after">Repaired</span>
                             </div>
                         </div>

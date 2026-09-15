@@ -117,6 +117,34 @@ tables = [
         UNIQUE(complaint_id, username)
     )
     """,
+
+    # complaint_history
+    """
+    CREATE TABLE IF NOT EXISTS complaint_history (
+        id               SERIAL PRIMARY KEY,
+        complaint_id     INTEGER,
+        officer_username TEXT,
+        old_status       TEXT,
+        new_status       TEXT,
+        remarks          TEXT,
+        action_time      TEXT DEFAULT (to_char(CURRENT_TIMESTAMP, 'YYYY-MM-DD HH24:MI:SS'))
+    )
+    """,
+
+    # admin_directives
+    """
+    CREATE TABLE IF NOT EXISTS admin_directives (
+        id            SERIAL PRIMARY KEY,
+        from_user     TEXT,
+        to_department TEXT,
+        priority      TEXT DEFAULT 'High',
+        message       TEXT,
+        status        TEXT DEFAULT 'Dispatched',
+        response_note TEXT DEFAULT '',
+        created_at    TEXT,
+        updated_at    TEXT
+    )
+    """,
 ]
 
 for sql in tables:
