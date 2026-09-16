@@ -197,12 +197,12 @@
 
                             <h5 class="fs-6 fw-bold mb-1">{{ item.category }}</h5>
                             <p class="text-muted small mb-2" style="font-size:12px; line-height:1.4;">
-                                {{ item.description[:110] }}{% if item.description|length > 110 %}...{% endif %}
+                                {{ item.description | truncate(110) }}
                             </p>
 
                             <div class="small text-secondary mb-3 mt-auto" style="font-size:11px;">
                                 <i class="fa-solid fa-location-dot me-1 text-danger"></i>
-                                {{ item.address[:45] }}{% if item.address|length > 45 %}...{% endif %}
+                                {{ item.address | truncate(45) }}
                             </div>
 
                             <div class="border-top pt-2 d-flex justify-content-between align-items-center">

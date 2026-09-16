@@ -142,6 +142,11 @@ env.addFilter('int', (val: any) => {
   return parseInt(val, 10) || 0;
 });
 
+env.addFilter('truncate', (val: any, length: number = 100) => {
+  const str = String(val || '');
+  return str.length > length ? str.substring(0, length) + '...' : str;
+});
+
 env.addFilter('image_url', (path: any) => {
   if (!path) return '';
   const pathStr = String(path).trim();
