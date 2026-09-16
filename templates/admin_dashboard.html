@@ -392,7 +392,16 @@
                         {% endif %}
                     </div>
                     <div>
-                        <span class="directive-status-pill status-{{ 'completed' if dir.status == 'Completed' or dir.status == 'Action Completed' else 'crew' if dir.status == 'Crew Dispatched' else 'ack' if dir.status == 'Acknowledged' else 'sent' }}">
+                        {% if dir.status == 'Completed' or dir.status == 'Action Completed' %}
+                        {% set dPill = 'completed' %}
+                        {% elif dir.status == 'Crew Dispatched' %}
+                        {% set dPill = 'crew' %}
+                        {% elif dir.status == 'Acknowledged' %}
+                        {% set dPill = 'ack' %}
+                        {% else %}
+                        {% set dPill = 'sent' %}
+                        {% endif %}
+                        <span class="directive-status-pill status-{{ dPill }}">
                             {{ dir.status }}
                         </span>
                     </div>
