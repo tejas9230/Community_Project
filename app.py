@@ -2534,7 +2534,19 @@ def complaint_map():
     """)
 
     complaints = cur.fetchall()
-    
+
+    # Convert PostgresRow / sqlite3.Row objects to plain dicts for JSON serialisation
+    complaint_list = []
+    for c in complaints:
+        try:
+            d = dict(c)
+        except Exception:
+            d = {
+                'id': c[0], 'username': c[1], 'category': c[2],
+                'priority': c[3], 'address': c[4],
+                'latitude': c[5], 'longitude': c[6], 'status': c[7]
+            }
+        complaint_list.append(d)
 
     # -------------------------------
     # Dashboard Statistics
@@ -2576,13 +2588,25 @@ def complaint_map():
     WHERE id=1
     """)
 
-    community = cur.fetchone()
+    community_row = cur.fetchone()
+    if community_row:
+        try:
+            community = dict(community_row)
+        except Exception:
+            community = {
+                'community_name': community_row[0],
+                'latitude': community_row[1],
+                'longitude': community_row[2],
+                'radius': community_row[3]
+            }
+    else:
+        community = None
 
     conn.close()
 
     return render_template(
         "complaint_map.html",
-        complaints=complaints,
+        complaints=complaint_list,
         total=total,
         pending=pending,
         in_progress=in_progress,

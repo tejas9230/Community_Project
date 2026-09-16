@@ -107,10 +107,10 @@ var complaints = {{ complaints|tojson }};
 // Community Data
 //=========================
 
-var communityName = {{ community[0]|tojson }};
-var communityLat = {{ community[1] }};
-var communityLon = {{ community[2] }};
-var communityRadius = {{ community[3] }} * 1000;
+var communityName = {{ community.community_name|tojson if community else "\"Community\"|tojson" }};
+var communityLat = {{ community.latitude if community else 17.6868 }};
+var communityLon = {{ community.longitude if community else 83.2185 }};
+var communityRadius = {{ (community.radius if community else 5) }} * 1000;
 
 
 //=========================
