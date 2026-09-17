@@ -78,7 +78,7 @@
 
     <div class="map-card">
 
-        <div id="map"></div>
+        <div id="map" style="height:600px; width:100%; border-radius:16px; min-height:500px;"></div>
 
     </div>
 
@@ -405,6 +405,9 @@ if(bounds.isValid()){
     });
 
 }
+
+// Force Leaflet to recalculate size after full DOM render
+setTimeout(function(){ map.invalidateSize(); }, 400);
 
 </script>
 

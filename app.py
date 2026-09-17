@@ -92,6 +92,10 @@ def _pg_migrate(cur, conn):
         "ALTER TABLE complaints ADD COLUMN IF NOT EXISTS officer_remark      TEXT",
         "ALTER TABLE complaints ADD COLUMN IF NOT EXISTS is_emergency        INTEGER DEFAULT 0",
         "ALTER TABLE complaints ADD COLUMN IF NOT EXISTS upvotes             INTEGER DEFAULT 0",
+        "ALTER TABLE complaints ADD COLUMN IF NOT EXISTS image_confidence    INTEGER DEFAULT 100",
+        "ALTER TABLE complaints ADD COLUMN IF NOT EXISTS mismatch_reason     TEXT",
+        "ALTER TABLE complaints ADD COLUMN IF NOT EXISTS is_cross_department INTEGER DEFAULT 0",
+        "ALTER TABLE complaints ADD COLUMN IF NOT EXISTS secondary_department TEXT",
         "ALTER TABLE users      ADD COLUMN IF NOT EXISTS email               TEXT",
         "ALTER TABLE users      ADD COLUMN IF NOT EXISTS phone               TEXT",
     ]
@@ -214,6 +218,10 @@ def create_db():
         "ALTER TABLE complaints ADD COLUMN officer_remark      TEXT",
         "ALTER TABLE complaints ADD COLUMN is_emergency        INTEGER DEFAULT 0",
         "ALTER TABLE complaints ADD COLUMN upvotes             INTEGER DEFAULT 0",
+        "ALTER TABLE complaints ADD COLUMN image_confidence    INTEGER DEFAULT 100",
+        "ALTER TABLE complaints ADD COLUMN mismatch_reason     TEXT",
+        "ALTER TABLE complaints ADD COLUMN is_cross_department INTEGER DEFAULT 0",
+        "ALTER TABLE complaints ADD COLUMN secondary_department TEXT",
         "ALTER TABLE users      ADD COLUMN email               TEXT",
         "ALTER TABLE users      ADD COLUMN phone               TEXT",
     ]:
@@ -1015,14 +1023,74 @@ def submit_complaint():
             full_image_path = os.path.join(app.root_path, "static", image_path)
 
         # ------------------------------------
-        # CV — Image Consistency Check
+        # CV — Image Consistency Check + Confidence Scoring
         # ------------------------------------
+        CROSS_DEPT_KEYWORDS = {
+            'water': ['Water Supply', 'Drainage & Sewage'],
+            'pipe': ['Water Supply', 'Drainage & Sewage'],
+            'drain': ['Drainage & Sewage'],
+            'road': ['Roads & Infrastructure'],
+            'pothole': ['Roads & Infrastructure'],
+            'light': ['Electricity & Street Lighting'],
+            'electric': ['Electricity & Street Lighting'],
+            'garbage': ['Sanitation & Waste Management'],
+            'tree': ['Parks & Green Spaces'],
+            'dog': ['Animal Control'],
+            'traffic': ['Traffic & Public Safety'],
+        }
+
+        image_confidence  = 100
+        mismatch_reason   = None
+        is_cross_dept     = 0
+        secondary_dept    = None
+
         if full_image_path:
             cv_check = check_image_consistency(full_image_path, category)
             needs_verification = 1 if cv_check.get("needs_flag") else 0
+            # Derive a confidence score from CV result
+            if cv_check.get("needs_flag"):
+                image_confidence = 22   # clear mismatch
+                mismatch_reason  = cv_check.get("message", "Image content does not match selected category")
+            elif cv_check.get("consistent") and cv_check.get("detected_objects"):
+                image_confidence = 94   # high confidence verified
+            else:
+                image_confidence = 72   # no YOLO objects but not flagged
         else:
             cv_check = {}
             needs_verification = 0
+            image_confidence   = 100
+
+        # Cross-department detection from description text
+        desc_lower = description.lower() if description else ''
+        matched_depts = set()
+        for kw, depts in CROSS_DEPT_KEYWORDS.items():
+            if kw in desc_lower:
+                for d in depts:
+                    if d != department:
+                        matched_depts.add(d)
+        if matched_depts:
+            is_cross_dept  = 1
+            secondary_dept = list(matched_depts)[0]
+            needs_verification = 1
+            if not mismatch_reason:
+                mismatch_reason = f"Multi-department issue detected: {department} + {secondary_dept}"
+
+        # Route to Admin Quarantine if mismatch
+        initial_status = "Pending"
+        assigned_officer = None
+        if needs_verification and image_confidence < 50:
+            initial_status   = "Under Admin Triage"
+            assigned_officer = "admin"
+        else:
+            # Auto-assign to department officer
+            conn_tmp = get_db(); cur_tmp = conn_tmp.cursor()
+            if USE_POSTGRES:
+                cur_tmp.execute("SELECT username FROM users WHERE department=%s AND role='Officer' LIMIT 1", (department,))
+            else:
+                cur_tmp.execute("SELECT username FROM users WHERE department=? AND role='Officer' LIMIT 1", (department,))
+            off_row = cur_tmp.fetchone()
+            conn_tmp.close()
+            assigned_officer = off_row[0] if off_row else None
 
         # ------------------------------------
         # SLA Deadline
@@ -1047,15 +1115,19 @@ def submit_complaint():
                 username, category, priority, department,
                 address, latitude, longitude, description,
                 status, image_path, created_at, needs_verification,
-                sla_deadline, updated_at, is_emergency
+                sla_deadline, updated_at, is_emergency,
+                image_confidence, mismatch_reason,
+                is_cross_department, secondary_department, assigned_to
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
             RETURNING id
             """, (
                 session['username'], category, priority, department,
                 address, latitude, longitude, description,
-                "Pending", image_path, created_at, needs_verification,
-                sla_deadline, created_at, is_emergency
+                initial_status, image_path, created_at, needs_verification,
+                sla_deadline, created_at, is_emergency,
+                image_confidence, mismatch_reason,
+                is_cross_dept, secondary_dept, assigned_officer
             ))
             row = cur.fetchone()
             complaint_id = row[0] if row else None
@@ -1066,14 +1138,18 @@ def submit_complaint():
                 username, category, priority, department,
                 address, latitude, longitude, description,
                 status, image_path, created_at, needs_verification,
-                sla_deadline, updated_at, is_emergency
+                sla_deadline, updated_at, is_emergency,
+                image_confidence, mismatch_reason,
+                is_cross_department, secondary_department, assigned_to
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
             """, (
                 session['username'], category, priority, department,
                 address, latitude, longitude, description,
-                "Pending", image_path, created_at, needs_verification,
-                sla_deadline, created_at, is_emergency
+                initial_status, image_path, created_at, needs_verification,
+                sla_deadline, created_at, is_emergency,
+                image_confidence, mismatch_reason,
+                is_cross_dept, secondary_dept, assigned_officer
             ))
             complaint_id = cur.lastrowid
 
@@ -1694,6 +1770,106 @@ def admin():
         directives=directives,
         now=datetime.now().strftime("%d-%m-%Y")
     )
+
+# ============================
+# Admin Special Attention Desk
+# ============================
+@app.route('/admin/quarantine')
+def admin_quarantine():
+    if not is_admin():
+        return redirect('/login')
+    conn = get_db()
+    cur  = conn.cursor()
+    if USE_POSTGRES:
+        cur.execute("""
+            SELECT id, username, category, priority, department, address,
+                   description, image_path, status, created_at,
+                   image_confidence, mismatch_reason,
+                   is_cross_department, secondary_department
+            FROM complaints
+            WHERE needs_verification = 1
+            ORDER BY id DESC
+        """)
+    else:
+        cur.execute("""
+            SELECT id, username, category, priority, department, address,
+                   description, image_path, status, created_at,
+                   image_confidence, mismatch_reason,
+                   is_cross_department, secondary_department
+            FROM complaints
+            WHERE needs_verification = 1
+            ORDER BY id DESC
+        """)
+    rows = cur.fetchall()
+    conn.close()
+    flagged = []
+    for r in rows:
+        flagged.append({
+            "id": r[0], "username": r[1], "category": r[2],
+            "priority": r[3], "department": r[4], "address": r[5],
+            "description": r[6], "image_path": r[7], "status": r[8],
+            "created_at": r[9],
+            "image_confidence": r[10] if r[10] is not None else 100,
+            "mismatch_reason": r[11] or "",
+            "is_cross_department": r[12] or 0,
+            "secondary_department": r[13] or ""
+        })
+    return render_template("admin_quarantine.html", flagged=flagged, total=len(flagged))
+
+@app.route('/admin/resolve_mismatch', methods=['POST'])
+def admin_resolve_mismatch():
+    if not is_admin():
+        return redirect('/login')
+    complaint_id = request.form.get('complaint_id', type=int)
+    action       = request.form.get('action')
+    department   = request.form.get('department', '')
+    conn = get_db()
+    cur  = conn.cursor()
+    now  = datetime.now().strftime("%d-%m-%Y %H:%M")
+
+    if action == 'approve':
+        # Find officer for the department
+        if USE_POSTGRES:
+            cur.execute("SELECT username FROM users WHERE department=%s AND role='Officer' LIMIT 1", (department,))
+        else:
+            cur.execute("SELECT username FROM users WHERE department=? AND role='Officer' LIMIT 1", (department,))
+        off = cur.fetchone()
+        officer = off[0] if off else None
+        if USE_POSTGRES:
+            cur.execute("""UPDATE complaints SET status='Pending', needs_verification=0,
+                           assigned_to=%s, updated_at=%s WHERE id=%s""",
+                        (officer, now, complaint_id))
+        else:
+            cur.execute("""UPDATE complaints SET status='Pending', needs_verification=0,
+                           assigned_to=?, updated_at=? WHERE id=?""",
+                        (officer, now, complaint_id))
+        flash(f"Complaint SCS-{complaint_id:04d} approved and forwarded to {department}.", "success")
+        add_notification(session['username'], f"Complaint SCS-{complaint_id:04d} has been verified and forwarded to the {department} team.", complaint_id)
+
+    elif action == 'reject':
+        reason = request.form.get('reason', 'Image does not match reported civic issue (AI mismatch detected)')
+        if USE_POSTGRES:
+            cur.execute("""UPDATE complaints SET status='Rejected', needs_verification=0,
+                           rejection_reason=%s, updated_at=%s WHERE id=%s""",
+                        (reason, now, complaint_id))
+        else:
+            cur.execute("""UPDATE complaints SET status='Rejected', needs_verification=0,
+                           rejection_reason=?, updated_at=? WHERE id=?""",
+                        (reason, now, complaint_id))
+        # Notify citizen
+        if USE_POSTGRES:
+            cur.execute("SELECT username FROM complaints WHERE id=%s", (complaint_id,))
+        else:
+            cur.execute("SELECT username FROM complaints WHERE id=?", (complaint_id,))
+        cit = cur.fetchone()
+        if cit:
+            add_notification(cit[0], f"Your complaint SCS-{complaint_id:04d} was rejected: {reason}", complaint_id)
+        flash(f"Complaint SCS-{complaint_id:04d} rejected as spam/invalid image.", "warning")
+
+    conn.commit()
+    conn.close()
+    return redirect('/admin/quarantine')
+
 @app.route("/department_dashboard")
 def department_dashboard():
 

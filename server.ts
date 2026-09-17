@@ -147,6 +147,14 @@ env.addFilter('truncate', (val: any, length: number = 100) => {
   return str.length > length ? str.substring(0, length) + '...' : str;
 });
 
+env.addFilter('selectattr', (arr: any[], attr: string, op: string, val: any) => {
+  if (!Array.isArray(arr)) return [];
+  if (op === 'eq') return arr.filter((x: any) => x[attr] == val);
+  if (op === 'lt') return arr.filter((x: any) => x[attr] < val);
+  if (op === 'gt') return arr.filter((x: any) => x[attr] > val);
+  return arr;
+});
+
 env.addFilter('image_url', (path: any) => {
   if (!path) return '';
   const pathStr = String(path).trim();
@@ -1319,6 +1327,71 @@ app.get('/admin', (req: any, res) => {
     console.error('Error rendering admin_dashboard.html:', renderErr);
     res.status(500).send(`Error rendering admin dashboard: ${renderErr.message}`);
   }
+});
+
+// Admin Special Attention / Quarantine Desk
+app.get('/admin/quarantine', (req: any, res) => {
+  if (!isAdmin(req)) return res.redirect('/login');
+  const flagged = (db.complaints || []).filter((c: any) => c.needs_verification == 1);
+  res.render('admin_quarantine.html', {
+    flagged: flagged.map((c: any) => ({
+      id: c.id,
+      username: c.username,
+      category: c.category,
+      priority: c.priority,
+      department: c.department,
+      address: c.address,
+      description: c.description,
+      image_path: c.image_path,
+      status: c.status,
+      created_at: c.created_at,
+      image_confidence: c.image_confidence != null ? c.image_confidence : 100,
+      mismatch_reason: c.mismatch_reason || '',
+      is_cross_department: c.is_cross_department || 0,
+      secondary_department: c.secondary_department || ''
+    })),
+    total: flagged.length
+  });
+});
+
+app.post('/admin/resolve_mismatch', async (req: any, res) => {
+  if (!isAdmin(req)) return res.redirect('/login');
+  const complaintId = parseInt(req.body.complaint_id, 10);
+  const action      = req.body.action;
+  const department  = req.body.department || '';
+  const now         = new Date().toLocaleString('en-IN');
+
+  const c = db.complaints.find((x: any) => x.id === complaintId);
+  if (!c) return res.redirect('/admin/quarantine');
+
+  if (action === 'approve') {
+    const officer = db.users.find((u: any) => u.department === department && u.role === 'Officer');
+    c.status = 'Pending';
+    c.needs_verification = 0;
+    c.assigned_to = officer ? officer.username : '';
+    c.updated_at = now;
+  } else if (action === 'reject') {
+    const reason = req.body.reason || 'Image does not match reported civic issue (AI mismatch detected)';
+    c.status = 'Rejected';
+    c.needs_verification = 0;
+    c.rejection_reason = reason;
+    c.updated_at = now;
+  }
+
+  // Persist to Supabase if available
+  if (pool) {
+    try {
+      const client = await pool.connect();
+      await client.query(
+        `UPDATE complaints SET status=$1, needs_verification=$2, assigned_to=$3,
+         rejection_reason=$4, updated_at=$5 WHERE id=$6`,
+        [c.status, c.needs_verification, c.assigned_to || null, c.rejection_reason || null, now, complaintId]
+      );
+      client.release();
+    } catch (e) { console.error('Quarantine DB update error:', e); }
+  }
+
+  res.redirect('/admin/quarantine');
 });
 
 // Update Status Page (Admin)
