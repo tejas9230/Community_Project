@@ -1814,7 +1814,20 @@ def admin_quarantine():
             "is_cross_department": r[12] or 0,
             "secondary_department": r[13] or ""
         })
-    return render_template("admin_quarantine.html", flagged=flagged, total=len(flagged))
+    mismatch_count  = sum(1 for f in flagged if (f["image_confidence"] or 100) < 50)
+    cross_dept_count = sum(1 for f in flagged if f["is_cross_department"] == 1)
+    # Pass flash via template var for Nunjucks compat
+    from flask import get_flashed_messages as gfm
+    flash_msgs = gfm(with_categories=True)
+    flash_message  = flash_msgs[-1][1] if flash_msgs else None
+    flash_category = flash_msgs[-1][0] if flash_msgs else "success"
+    return render_template("admin_quarantine.html",
+        flagged=flagged, total=len(flagged),
+        mismatch_count=mismatch_count,
+        cross_dept_count=cross_dept_count,
+        flash_message=flash_message,
+        flash_category=flash_category
+    )
 
 @app.route('/admin/resolve_mismatch', methods=['POST'])
 def admin_resolve_mismatch():

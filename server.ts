@@ -1333,24 +1333,34 @@ app.get('/admin', (req: any, res) => {
 app.get('/admin/quarantine', (req: any, res) => {
   if (!isAdmin(req)) return res.redirect('/login');
   const flagged = (db.complaints || []).filter((c: any) => c.needs_verification == 1);
+  const flaggedMapped = flagged.map((c: any) => ({
+    id: c.id,
+    username: c.username,
+    category: c.category,
+    priority: c.priority,
+    department: c.department,
+    address: c.address,
+    description: c.description,
+    image_path: c.image_path,
+    status: c.status,
+    created_at: c.created_at,
+    image_confidence: c.image_confidence != null ? c.image_confidence : 100,
+    mismatch_reason: c.mismatch_reason || '',
+    is_cross_department: c.is_cross_department || 0,
+    secondary_department: c.secondary_department || ''
+  }));
+  const mismatch_count   = flaggedMapped.filter((f: any) => (f.image_confidence || 100) < 50).length;
+  const cross_dept_count = flaggedMapped.filter((f: any) => f.is_cross_department == 1).length;
+  const flash_message  = (req.session as any).qFlash || null;
+  const flash_category = (req.session as any).qFlashCat || 'success';
+  if ((req.session as any).qFlash) { delete (req.session as any).qFlash; delete (req.session as any).qFlashCat; }
   res.render('admin_quarantine.html', {
-    flagged: flagged.map((c: any) => ({
-      id: c.id,
-      username: c.username,
-      category: c.category,
-      priority: c.priority,
-      department: c.department,
-      address: c.address,
-      description: c.description,
-      image_path: c.image_path,
-      status: c.status,
-      created_at: c.created_at,
-      image_confidence: c.image_confidence != null ? c.image_confidence : 100,
-      mismatch_reason: c.mismatch_reason || '',
-      is_cross_department: c.is_cross_department || 0,
-      secondary_department: c.secondary_department || ''
-    })),
-    total: flagged.length
+    flagged: flaggedMapped,
+    total: flagged.length,
+    mismatch_count,
+    cross_dept_count,
+    flash_message,
+    flash_category
   });
 });
 
@@ -1389,6 +1399,15 @@ app.post('/admin/resolve_mismatch', async (req: any, res) => {
       );
       client.release();
     } catch (e) { console.error('Quarantine DB update error:', e); }
+  }
+
+  // Store flash in session for next render
+  if (action === 'approve') {
+    (req.session as any).qFlash = `Complaint SCS-${String(complaintId).padStart(4,'0')} approved and forwarded to ${department}.`;
+    (req.session as any).qFlashCat = 'success';
+  } else if (action === 'reject') {
+    (req.session as any).qFlash = `Complaint SCS-${String(complaintId).padStart(4,'0')} rejected as spam/invalid image.`;
+    (req.session as any).qFlashCat = 'warning';
   }
 
   res.redirect('/admin/quarantine');

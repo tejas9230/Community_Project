@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -86,16 +86,14 @@
         <a href="/admin" class="back-btn"><i class="fa-solid fa-arrow-left"></i> Back to Dashboard</a>
     </div>
 
-    {% with messages = get_flashed_messages(with_categories=true) %}
-    {% if messages %}{% for cat, msg in messages %}
-    <div class="flash-bar flash-{{ cat }}">{{ msg }}</div>
-    {% endfor %}{% endif %}
-    {% endwith %}
+    {% if flash_message %}
+    <div class="flash-bar flash-{{ flash_category or 'success' }}">{{ flash_message }}</div>
+    {% endif %}
 
     <div class="stat-banner">
         <div class="stat-pill"><div class="num num-red">{{ total }}</div><div class="lbl">Total Flagged</div></div>
-        <div class="stat-pill"><div class="num num-amber">{{ flagged | selectattr("image_confidence", "lt", 50) | list | length }}</div><div class="lbl">Image Mismatch (&lt;50%)</div></div>
-        <div class="stat-pill"><div class="num num-blue">{{ flagged | selectattr("is_cross_department", "eq", 1) | list | length }}</div><div class="lbl">Cross-Department Issues</div></div>
+        <div class="stat-pill"><div class="num num-amber">{{ mismatch_count }}</div><div class="lbl">Image Mismatch (&lt;50%)</div></div>
+        <div class="stat-pill"><div class="num num-blue">{{ cross_dept_count }}</div><div class="lbl">Cross-Department Issues</div></div>
     </div>
 
     {% if flagged and flagged | length > 0 %}

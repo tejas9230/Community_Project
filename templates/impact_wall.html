@@ -35,13 +35,14 @@
         .comparison-container {
             display: flex;
             position: relative;
-            background: #0f172a;
+            background: #e2e8f0;
             height: 220px;
         }
         .comp-half {
             flex: 1;
             position: relative;
             overflow: hidden;
+            background: #f1f5f9;
         }
         .comp-half img {
             width: 100%;
@@ -117,12 +118,28 @@
                     <button type="button" class="btn btn-outline-light btn-sm" id="themeToggleBtn" onclick="toggleCivicTheme()">
                         🌙 Dark
                     </button>
-                    <a href="/view_complaints" class="btn btn-outline-light btn-sm">
-                        <i class="fa-solid fa-list-check me-1"></i> My Complaints
-                    </a>
-                    <a href="/user_dashboard" class="btn btn-light btn-sm fw-semibold">
-                        <i class="fa-solid fa-house me-1"></i> Dashboard
-                    </a>
+                    {% if session.role == 'Officer' or session.role == 'officer' %}
+                        <a href="/department_dashboard" class="btn btn-outline-light btn-sm">
+                            <i class="fa-solid fa-list-check me-1"></i> My Department
+                        </a>
+                        <a href="/department_dashboard" class="btn btn-light btn-sm fw-semibold">
+                            <i class="fa-solid fa-house me-1"></i> Dashboard
+                        </a>
+                    {% elif session.role == 'Admin' or session.username == 'admin' %}
+                        <a href="/admin" class="btn btn-outline-light btn-sm">
+                            <i class="fa-solid fa-shield-halved me-1"></i> Admin Panel
+                        </a>
+                        <a href="/admin" class="btn btn-light btn-sm fw-semibold">
+                            <i class="fa-solid fa-house me-1"></i> Dashboard
+                        </a>
+                    {% else %}
+                        <a href="/view_complaints" class="btn btn-outline-light btn-sm">
+                            <i class="fa-solid fa-list-check me-1"></i> My Complaints
+                        </a>
+                        <a href="/user_dashboard" class="btn btn-light btn-sm fw-semibold">
+                            <i class="fa-solid fa-house me-1"></i> Dashboard
+                        </a>
+                    {% endif %}
                 </div>
             </div>
 

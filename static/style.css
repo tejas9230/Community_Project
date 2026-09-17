@@ -904,7 +904,7 @@ transform:scale(1.05);
 }
 .status{
 
-padding:8px 14px;
+padding:6px 12px;
 
 border-radius:20px;
 
@@ -912,7 +912,15 @@ font-weight:bold;
 
 display:inline-block;
 
-font-size:14px;
+font-size:12px;
+
+white-space:nowrap;
+
+max-width:160px;
+
+overflow:hidden;
+
+text-overflow:ellipsis;
 
 }
 

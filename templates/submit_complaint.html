@@ -810,16 +810,22 @@ function startVoiceRecording() {
     try {
         speechRecognizer = new SpeechRecognition();
         speechRecognizer.lang = currentLangCode;
-        speechRecognizer.continuous = true;
-        speechRecognizer.interimResults = true;
+
+        // On mobile (iOS/Android), continuous mode causes word repetition — use single-shot
+        const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+        speechRecognizer.continuous     = !isMobile;
+        speechRecognizer.interimResults = !isMobile;  // only show interim on desktop
 
         const waveBox = document.getElementById('voiceWaveBox');
         const voiceBtn = document.getElementById('voiceRecordBtn');
         const voiceStatus = document.getElementById('voiceStatusText');
         const cfg = langConfigs[currentLangCode] || langConfigs['en-IN'];
 
+        let lastAppended = '';  // guard against double-append on mobile
+
         speechRecognizer.onstart = function() {
             isRecording = true;
+            lastAppended = '';
             if (waveBox) waveBox.style.display = 'flex';
             if (voiceBtn) {
                 voiceBtn.classList.add('recording');
@@ -835,11 +841,13 @@ function startVoiceRecording() {
                     finalTranscript += event.results[i][0].transcript + ' ';
                 }
             }
-            if (finalTranscript) {
+            finalTranscript = finalTranscript.trim();
+            // Guard: don't append the same transcript twice (mobile fires onresult + onend)
+            if (finalTranscript && finalTranscript !== lastAppended) {
+                lastAppended = finalTranscript;
                 const desc = document.getElementById('description');
                 if (desc) {
-                    desc.value = (desc.value.trim() ? desc.value.trim() + ' ' : '') + finalTranscript.trim();
-                    // Auto-trigger XAI classification & keyword extraction
+                    desc.value = (desc.value.trim() ? desc.value.trim() + ' ' : '') + finalTranscript;
                     desc.dispatchEvent(new Event('input'));
                 }
             }
@@ -854,6 +862,7 @@ function startVoiceRecording() {
         };
 
         speechRecognizer.onend = function() {
+            // On mobile single-shot mode, don't try to restart — just stop cleanly
             stopVoiceRecording();
         };
 

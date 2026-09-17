@@ -86,6 +86,22 @@
                 </li>
 
                 <li class="nav-item">
+                    {% if session.role == 'Officer' or session.role == 'officer' %}
+                        <a href="/department_dashboard" class="btn btn-outline-light btn-sm px-3 me-1">
+                            <i class="bi bi-speedometer2"></i> My Dashboard
+                        </a>
+                    {% elif session.role == 'Admin' or session.username == 'admin' %}
+                        <a href="/admin" class="btn btn-outline-light btn-sm px-3 me-1">
+                            <i class="bi bi-shield-check"></i> Admin Panel
+                        </a>
+                    {% else %}
+                        <a href="/user_dashboard" class="btn btn-outline-light btn-sm px-3 me-1">
+                            <i class="bi bi-speedometer2"></i> My Dashboard
+                        </a>
+                    {% endif %}
+                </li>
+
+                <li class="nav-item">
 
                     <a href="/logout"
                        class="btn btn-light btn-sm px-3">

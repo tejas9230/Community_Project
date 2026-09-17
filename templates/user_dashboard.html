@@ -11,10 +11,29 @@
     <title>User Dashboard</title>
 
     <link rel="stylesheet"
+          href="{{ url_for('static', filename='global.css') }}">
+
+    <link rel="stylesheet"
           href="{{ url_for('static', filename='user_dashboard.css') }}">
 
     <link rel="stylesheet"
           href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+
+    <style>
+        [data-theme="dark"] body,
+        [data-theme="dark"] .dashboard-wrapper,
+        [data-theme="dark"] .page-wrapper { background: #0b0f19 !important; }
+        [data-theme="dark"] .stat-card { background: linear-gradient(135deg,#1e3a8a,#1e40af) !important; color:#e2e8f0 !important; }
+        [data-theme="dark"] .action-card,
+        [data-theme="dark"] .notification-card,
+        [data-theme="dark"] .activity-card,
+        [data-theme="dark"] .card { background: #131d2e !important; color:#e2e8f0 !important; border-color:#1e293b !important; }
+        [data-theme="dark"] .card h3,
+        [data-theme="dark"] .card h4,
+        [data-theme="dark"] .card p,
+        [data-theme="dark"] .card label { color:#cbd5e1 !important; }
+        [data-theme="dark"] .card .text-muted { color:#94a3b8 !important; }
+    </style>
 
 </head>
 
@@ -455,6 +474,24 @@ window.addEventListener("load", function(){
 
 });
 
+</script>
+
+<script>
+// Apply saved theme on load
+(function(){
+    const t = localStorage.getItem('civic_theme') || 'light';
+    document.documentElement.setAttribute('data-theme', t);
+    const btn = document.getElementById('themeToggleBtn');
+    if(btn) btn.innerHTML = t === 'dark' ? '☀️ Light' : '🌙 Dark';
+})();
+function toggleCivicTheme(){
+    const cur = localStorage.getItem('civic_theme') || 'light';
+    const next = cur === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    localStorage.setItem('civic_theme', next);
+    const btn = document.getElementById('themeToggleBtn');
+    if(btn) btn.innerHTML = next === 'dark' ? '☀️ Light' : '🌙 Dark';
+}
 </script>
 
 </body>
