@@ -68,8 +68,10 @@ SLA_DAYS = {
 @app.template_filter('image_url')
 def image_url_filter(path):
     if not path:
-        return ''
+        return '/static/placeholder.jpg'
     path_str = str(path).strip()
+    if not path_str:
+        return '/static/placeholder.jpg'
     if path_str.startswith('http://') or path_str.startswith('https://'):
         return path_str
     filename = path_str.replace('\\', '/').split('/')[-1]

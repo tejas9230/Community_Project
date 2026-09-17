@@ -28,6 +28,7 @@
         .card-band{padding:14px 20px;display:flex;justify-content:space-between;align-items:center;}
         .band-mismatch{background:linear-gradient(135deg,#dc2626,#b91c1c);}
         .band-cross{background:linear-gradient(135deg,#d97706,#b45309);}
+        .band-review{background:linear-gradient(135deg,#2563eb,#1d4ed8);}
         .band-label{color:#fff;font-weight:700;font-size:14px;display:flex;align-items:center;gap:8px;}
         .complaint-id-badge{background:rgba(255,255,255,.22);color:#fff;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:700;}
         .confidence-block{padding:16px 20px;border-bottom:1px solid #f1f5f9;}
@@ -102,10 +103,11 @@
         {% set conf = c.image_confidence %}
         {% set is_cross = c.is_cross_department == 1 %}
         <div class="flag-card">
-            <div class="card-band {% if is_cross %}band-cross{% else %}band-mismatch{% endif %}">
+            <div class="card-band {% if conf < 50 %}band-mismatch{% elif is_cross %}band-cross{% else %}band-review{% endif %}">
                 <span class="band-label">
-                    {% if is_cross %}<i class="fa-solid fa-code-branch"></i> Cross-Department Issue
-                    {% else %}<i class="fa-solid fa-triangle-exclamation"></i> Image Mismatch{% endif %}
+                    {% if conf < 50 %}<i class="fa-solid fa-triangle-exclamation"></i> Image Mismatch
+                    {% elif is_cross %}<i class="fa-solid fa-code-branch"></i> Cross-Department Issue
+                    {% else %}<i class="fa-solid fa-shield-halved"></i> Admin Quality Review{% endif %}
                 </span>
                 <span class="complaint-id-badge">SCS-{{ "%04d" | format(c.id) }}</span>
             </div>

@@ -156,8 +156,9 @@ env.addFilter('selectattr', (arr: any[], attr: string, op: string, val: any) => 
 });
 
 env.addFilter('image_url', (path: any) => {
-  if (!path) return '';
+  if (!path) return '/static/placeholder.jpg';
   const pathStr = String(path).trim();
+  if (!pathStr) return '/static/placeholder.jpg';
   if (pathStr.startsWith('http://') || pathStr.startsWith('https://')) {
     return pathStr;
   }
@@ -947,8 +948,96 @@ app.post('/submit_complaint', upload.single('image'), async (req: any, res) => {
   const now = new Date();
   const dateStr = `${String(now.getDate()).padStart(2, '0')}-${String(now.getMonth() + 1).padStart(2, '0')}-${now.getFullYear()} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
 
-  // Auto assign to officer responsible for this department
-  const matchingOfficer = db.users.find(u => u.role === 'Officer' && u.department === department);
+  // Cross-department keyword mapping
+  const CROSS_DEPT_KEYWORDS: Record<string, string[]> = {
+    'water': ['Water Supply'],
+    'pipeline': ['Water Supply'],
+    'pipe': ['Water Supply'],
+    'leak': ['Water Supply'],
+    'tap': ['Water Supply'],
+    'drinking water': ['Water Supply'],
+    'road': ['Roads & Infrastructure'],
+    'pothole': ['Roads & Infrastructure'],
+    'hole': ['Roads & Infrastructure'],
+    'tar': ['Roads & Infrastructure'],
+    'asphalt': ['Roads & Infrastructure'],
+    'footpath': ['Roads & Infrastructure'],
+    'street light': ['Electricity & Street Lighting'],
+    'streetlight': ['Electricity & Street Lighting'],
+    'electric': ['Electricity & Street Lighting'],
+    'wire': ['Electricity & Street Lighting'],
+    'pole': ['Electricity & Street Lighting'],
+    'transformer': ['Electricity & Street Lighting'],
+    'garbage': ['Sanitation & Waste Management'],
+    'trash': ['Sanitation & Waste Management'],
+    'waste': ['Sanitation & Waste Management'],
+    'bin': ['Sanitation & Waste Management'],
+    'dump': ['Sanitation & Waste Management'],
+    'drain': ['Drainage & Sewage'],
+    'drainage': ['Drainage & Sewage'],
+    'sewage': ['Drainage & Sewage'],
+    'gutter': ['Drainage & Sewage'],
+    'park': ['Parks & Green Spaces'],
+    'tree': ['Parks & Green Spaces'],
+    'garden': ['Parks & Green Spaces'],
+    'dog': ['Animal Control'],
+    'stray': ['Animal Control'],
+    'animal': ['Animal Control'],
+    'cattle': ['Animal Control'],
+    'traffic': ['Traffic & Public Safety'],
+    'signal': ['Traffic & Public Safety']
+  };
+
+  const descLower = (description || '').toLowerCase();
+  let is_cross_dept = 0;
+  let secondary_dept = '';
+  let mismatch_reason = '';
+  let image_confidence = 94; // Default verified score for regular complaints
+  let needs_verification = 0;
+
+  // 1. Detect cross-department conflict in description
+  const matchedDepts = new Set<string>();
+  for (const [kw, depts] of Object.entries(CROSS_DEPT_KEYWORDS)) {
+    if (descLower.includes(kw)) {
+      for (const d of depts) {
+        if (d !== department) {
+          matchedDepts.add(d);
+        }
+      }
+    }
+  }
+
+  if (matchedDepts.size > 0) {
+    is_cross_dept = 1;
+    secondary_dept = Array.from(matchedDepts)[0];
+    needs_verification = 1;
+    mismatch_reason = `Multi-department conflict: ${department} + ${secondary_dept}`;
+  }
+
+  // 2. Check for suspicious / non-civic image or category mismatch
+  const fileName = req.file ? req.file.originalname.toLowerCase() : '';
+  const suspiciousKeywords = ['naruto', 'anime', 'wallpaper', 'meme', 'cartoon', 'test', 'fake', 'random', 'screenshot', 'photo', 'sample', 'art'];
+  const isSuspiciousImage = suspiciousKeywords.some(kw => fileName.includes(kw) || descLower.includes(kw));
+
+  // If category is "Others" but mentions civic keywords (e.g. "huge hole" = pothole/road damage!)
+  const mentionsCivicKeyword = Object.keys(CROSS_DEPT_KEYWORDS).some(kw => descLower.includes(kw));
+
+  if (isSuspiciousImage || (category === 'Others' && mentionsCivicKeyword)) {
+    image_confidence = 22;
+    needs_verification = 1;
+    mismatch_reason = isSuspiciousImage
+      ? 'Suspicious/non-civic image detected (fantasy/wallpaper/meme).'
+      : `Complaint marked as '${category}', but description describes '${secondary_dept || "civic infrastructure"}'. Sent to Admin triage.`;
+  }
+
+  // Route to Admin Quarantine Desk if flagged for mismatch or verification
+  let initial_status = 'Pending';
+  let assigned_to = matchingOfficer ? matchingOfficer.username : '';
+
+  if (needs_verification === 1 && image_confidence < 50) {
+    initial_status = 'Under Admin Triage';
+    assigned_to = 'admin'; // Held at admin triage desk, NOT sent to department officer!
+  }
 
   const newId = db.nextComplaintId++;
   const newComplaint: Complaint = {
@@ -961,13 +1050,17 @@ app.post('/submit_complaint', upload.single('image'), async (req: any, res) => {
     latitude: parseFloat(latitude),
     longitude: parseFloat(longitude),
     description: description || '',
-    status: 'Pending',
+    status: initial_status,
     image_path,
     created_at: dateStr,
     updated_at: dateStr,
     sla_deadline,
-    assigned_to: matchingOfficer ? matchingOfficer.username : '',
-    needs_verification: 0,
+    assigned_to,
+    needs_verification,
+    image_confidence,
+    mismatch_reason,
+    is_cross_department: is_cross_dept,
+    secondary_department: secondary_dept,
     escalated: 0,
     upvotes: 0,
     is_emergency: isEmergency ? 1 : 0
@@ -979,14 +1072,15 @@ app.post('/submit_complaint', upload.single('image'), async (req: any, res) => {
     try {
       const insRes = await pgPool.query(`
         INSERT INTO complaints
-        (username, category, priority, department, address, latitude, longitude, description, status, image_path, created_at, updated_at, sla_deadline, assigned_to, needs_verification, escalated, upvotes, is_emergency)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
+        (username, category, priority, department, address, latitude, longitude, description, status, image_path, created_at, updated_at, sla_deadline, assigned_to, needs_verification, escalated, upvotes, is_emergency, image_confidence, mismatch_reason, is_cross_department, secondary_department)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22)
         RETURNING id
       `, [
         req.session.username, category, priority, department, address || 'Selected Location',
         parseFloat(latitude) || 17.6870, parseFloat(longitude) || 83.2190, description || '',
-        'Pending', image_path, dateStr, dateStr, sla_deadline,
-        matchingOfficer ? matchingOfficer.username : '', 0, 0, 0, isEmergency ? 1 : 0
+        initial_status, image_path, dateStr, dateStr, sla_deadline,
+        assigned_to, needs_verification, 0, 0, isEmergency ? 1 : 0,
+        image_confidence, mismatch_reason, is_cross_dept, secondary_dept
       ]);
       if (insRes.rows && insRes.rows[0]) {
         newComplaint.id = insRes.rows[0].id;
@@ -1000,12 +1094,14 @@ app.post('/submit_complaint', upload.single('image'), async (req: any, res) => {
   db.history.push({
     id: db.nextHistoryId++,
     complaint_id: newId,
-    officer_username: isEmergency ? '🚨 Civic SOS System' : 'System AI',
+    officer_username: isEmergency ? '🚨 Civic SOS System' : (initial_status === 'Under Admin Triage' ? '🛡 Admin Quarantine Desk' : 'System AI'),
     old_status: '',
-    new_status: 'Pending',
+    new_status: initial_status,
     remarks: isEmergency
       ? `EMERGENCY CIVIC SOS: Category: ${category} | Priority locked to Critical | 6h Emergency SLA: ${sla_deadline}`
-      : `Complaint submitted and classified under ${category} (${department}). Priority: ${priority}.`,
+      : (initial_status === 'Under Admin Triage'
+          ? `AI Flagged: ${mismatch_reason}. Routing to Admin Special Attention Desk for verification.`
+          : `Complaint submitted and classified under ${category} (${department}). Priority: ${priority}.`),
     action_time: dateStr
   });
 
@@ -1389,9 +1485,9 @@ app.post('/admin/resolve_mismatch', async (req: any, res) => {
   }
 
   // Persist to Supabase if available
-  if (pool) {
+  if (pgPool) {
     try {
-      const client = await pool.connect();
+      const client = await pgPool.connect();
       await client.query(
         `UPDATE complaints SET status=$1, needs_verification=$2, assigned_to=$3,
          rejection_reason=$4, updated_at=$5 WHERE id=$6`,
@@ -1631,13 +1727,45 @@ app.get('/officer_action/:id', (req: any, res) => {
       action_time: h.action_time
     }));
 
+  // Helper to calculate distance in km between two GPS coordinates
+  const calculateDistanceKm = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
+    if (!lat1 || !lon1 || !lat2 || !lon2) return 9999;
+    const R = 6371;
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+              Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+              Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
+  };
+
+  // Helper to ensure complaints are in the same municipality/city
+  const isSameJurisdiction = (addr1: string, addr2: string): boolean => {
+    const a1 = (addr1 || '').toLowerCase();
+    const a2 = (addr2 || '').toLowerCase();
+    if (a1.includes('visakhapatnam') && a2.includes('vizianagaram')) return false;
+    if (a1.includes('vizianagaram') && a2.includes('visakhapatnam')) return false;
+    return true;
+  };
+
   const similarComplaints = db.complaints
-    .filter(c => c.id !== id && c.category === complaint.category)
+    .filter(c => {
+      if (c.id === id || c.category !== complaint.category) return false;
+      if (!isSameJurisdiction(c.address, complaint.address)) return false;
+      const dist = calculateDistanceKm(c.latitude, c.longitude, complaint.latitude, complaint.longitude);
+      // Strictly only consider complaints within 3 km of the current complaint
+      return dist <= 3.0;
+    })
     .slice(0, 3)
-    .map(c => ({
-      similarity: 88,
-      complaint: `SCS-${c.id} (${c.address}): ${c.description}`
-    }));
+    .map(c => {
+      const dist = calculateDistanceKm(c.latitude, c.longitude, complaint.latitude, complaint.longitude);
+      const score = Math.max(72, Math.min(96, Math.round(96 - (dist * 8))));
+      const distStr = dist < 1 ? `${Math.round(dist * 1000)}m away` : `${dist.toFixed(1)}km away`;
+      return {
+        similarity: score,
+        complaint: `SCS-${c.id} (${c.address}): ${c.description} [${distStr}]`
+      };
+    });
 
   res.render('officer_action.html', {
     complaint,

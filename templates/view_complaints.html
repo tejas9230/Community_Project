@@ -19,6 +19,40 @@
     <link rel="stylesheet"
           href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 
+    <style>
+        /* ================= DARK MODE OVERRIDES ================= */
+        [data-theme="dark"] body { background: #0b0f19 !important; color: #e2e8f0 !important; }
+        [data-theme="dark"] .complaints-container { background: transparent !important; }
+        [data-theme="dark"] .dashboard-header { background: #131d2e !important; border-color: #1e293b !important; color: #fff !important; }
+        [data-theme="dark"] .dashboard-header h1 { color: #f8fafc !important; }
+        [data-theme="dark"] .header-subtitle { color: #94a3b8 !important; }
+        [data-theme="dark"] .stat-card { background: #131d2e !important; border-color: #1e293b !important; color: #f8fafc !important; }
+        [data-theme="dark"] .stat-card h3 { color: #94a3b8 !important; }
+        [data-theme="dark"] .stat-card .stat-number { color: #ffffff !important; }
+        [data-theme="dark"] .search-card,
+        [data-theme="dark"] .search-filter-section,
+        [data-theme="dark"] .filter-container { background: #131d2e !important; border: 1px solid #1e293b !important; }
+        [data-theme="dark"] .search-box input,
+        [data-theme="dark"] .filter-group select { background: #0f172a !important; color: #f8fafc !important; border-color: #334155 !important; }
+        [data-theme="dark"] .table-card,
+        [data-theme="dark"] .complaints-table-container,
+        [data-theme="dark"] .table-responsive { background: #131d2e !important; border-color: #1e293b !important; }
+        [data-theme="dark"] table { background: #131d2e !important; color: #e2e8f0 !important; }
+        [data-theme="dark"] thead { background: #1e293b !important; }
+        [data-theme="dark"] th { background: #1e293b !important; color: #93c5fd !important; border-bottom: 2px solid #334155 !important; }
+        [data-theme="dark"] tbody tr { background: #131d2e !important; border-bottom: 1px solid #1e293b !important; }
+        [data-theme="dark"] tbody tr:hover { background: #1e293b !important; }
+        [data-theme="dark"] td { color: #cbd5e1 !important; border-bottom: 1px solid #1e293b !important; }
+        [data-theme="dark"] .complaint-id { color: #60a5fa !important; }
+        [data-theme="dark"] .description { color: #cbd5e1 !important; }
+        [data-theme="dark"] .no-data { color: #64748b !important; }
+
+        /* Badge whitespace & formatting */
+        .priority, .status { white-space: nowrap !important; display: inline-flex !important; align-items: center !important; justify-content: center !important; gap: 4px !important; }
+        .priority { padding: 6px 14px !important; border-radius: 20px !important; font-weight: 600 !important; }
+        .status { padding: 6px 14px !important; border-radius: 20px !important; font-weight: 600 !important; }
+    </style>
+
 </head>
 
 <body>
