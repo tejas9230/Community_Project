@@ -331,6 +331,35 @@ async function loadOrSeedDatabase() {
   if (pgPool) {
     try {
       console.log('Connecting to Supabase PostgreSQL database...');
+
+      // Run safe schema migrations first (adds any missing columns without breaking existing ones)
+      const migrations = [
+        "ALTER TABLE complaints ADD COLUMN IF NOT EXISTS feedback TEXT",
+        "ALTER TABLE complaints ADD COLUMN IF NOT EXISTS rating INTEGER",
+        "ALTER TABLE complaints ADD COLUMN IF NOT EXISTS rejection_reason TEXT",
+        "ALTER TABLE complaints ADD COLUMN IF NOT EXISTS resolution_score REAL DEFAULT 0",
+        "ALTER TABLE complaints ADD COLUMN IF NOT EXISTS verification_status TEXT DEFAULT 'Pending'",
+        "ALTER TABLE complaints ADD COLUMN IF NOT EXISTS needs_verification INTEGER DEFAULT 0",
+        "ALTER TABLE complaints ADD COLUMN IF NOT EXISTS updated_at TEXT",
+        "ALTER TABLE complaints ADD COLUMN IF NOT EXISTS sla_deadline TEXT",
+        "ALTER TABLE complaints ADD COLUMN IF NOT EXISTS escalated INTEGER DEFAULT 0",
+        "ALTER TABLE complaints ADD COLUMN IF NOT EXISTS assigned_to TEXT",
+        "ALTER TABLE complaints ADD COLUMN IF NOT EXISTS officer_remark TEXT",
+        "ALTER TABLE complaints ADD COLUMN IF NOT EXISTS is_emergency INTEGER DEFAULT 0",
+        "ALTER TABLE complaints ADD COLUMN IF NOT EXISTS upvotes INTEGER DEFAULT 0",
+        "ALTER TABLE complaints ADD COLUMN IF NOT EXISTS image_confidence INTEGER DEFAULT 94",
+        "ALTER TABLE complaints ADD COLUMN IF NOT EXISTS mismatch_reason TEXT",
+        "ALTER TABLE complaints ADD COLUMN IF NOT EXISTS is_cross_department INTEGER DEFAULT 0",
+        "ALTER TABLE complaints ADD COLUMN IF NOT EXISTS secondary_department TEXT",
+        "ALTER TABLE complaints ADD COLUMN IF NOT EXISTS resolution_image TEXT",
+        "ALTER TABLE users ADD COLUMN IF NOT EXISTS email TEXT",
+        "ALTER TABLE users ADD COLUMN IF NOT EXISTS phone TEXT",
+      ];
+      for (const sql of migrations) {
+        try { await pgPool.query(sql); } catch (_) {}
+      }
+      console.log('Schema migrations applied successfully.');
+
       const userRes = await pgPool.query('SELECT username, password, role, department, email, phone FROM users');
       if (userRes.rows && userRes.rows.length > 0) {
         db.users = userRes.rows.map(r => ({
