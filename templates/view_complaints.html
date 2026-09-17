@@ -957,6 +957,25 @@ window.addEventListener("load",()=>{
 
 });
 
+// ================ DARK MODE ================
+function toggleCivicTheme() {
+    const cur = localStorage.getItem('civic_theme') || 'light';
+    const next = cur === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    localStorage.setItem('civic_theme', next);
+    const btn = document.getElementById('themeToggleBtn');
+    if (btn) btn.innerHTML = next === 'dark' ? '☀️ Light' : '🌙 Dark';
+}
+// Apply theme on page load
+(function () {
+    const t = localStorage.getItem('civic_theme') || 'light';
+    document.documentElement.setAttribute('data-theme', t);
+    window.addEventListener('load', function () {
+        const btn = document.getElementById('themeToggleBtn');
+        if (btn) btn.innerHTML = t === 'dark' ? '☀️ Light' : '🌙 Dark';
+    });
+})();
+
 </script>
 
 </body>

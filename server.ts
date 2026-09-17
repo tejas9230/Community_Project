@@ -222,7 +222,7 @@ interface Complaint {
   latitude: number;
   longitude: number;
   description: string;
-  status: string; // Pending, In Progress, Resolved, Rejected
+  status: string; // Pending, In Progress, Resolved, Rejected, Under Admin Triage
   image_path: string;
   resolution_image?: string;
   feedback?: string;
@@ -231,6 +231,10 @@ interface Complaint {
   resolution_score?: number;
   verification_status?: string;
   needs_verification?: number;
+  image_confidence?: number;
+  mismatch_reason?: string;
+  is_cross_department?: number;
+  secondary_department?: string;
   created_at: string;
   updated_at: string;
   sla_deadline: string;
@@ -359,6 +363,10 @@ async function loadOrSeedDatabase() {
           sla_deadline: r.sla_deadline,
           assigned_to: r.assigned_to,
           needs_verification: r.needs_verification || 0,
+          image_confidence: r.image_confidence != null ? r.image_confidence : 94,
+          mismatch_reason: r.mismatch_reason || '',
+          is_cross_department: r.is_cross_department || 0,
+          secondary_department: r.secondary_department || '',
           escalated: r.escalated || 0,
           upvotes: r.upvotes || 0,
           is_emergency: r.is_emergency || 0,
@@ -1031,8 +1039,9 @@ app.post('/submit_complaint', upload.single('image'), async (req: any, res) => {
   }
 
   // Route to Admin Quarantine Desk if flagged for mismatch or verification
+  const deptOfficer = db.users.find((u: any) => u.role === 'Officer' && u.department === department);
   let initial_status = 'Pending';
-  let assigned_to = matchingOfficer ? matchingOfficer.username : '';
+  let assigned_to = deptOfficer ? deptOfficer.username : '';
 
   if (needs_verification === 1 && image_confidence < 50) {
     initial_status = 'Under Admin Triage';
