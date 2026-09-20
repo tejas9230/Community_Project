@@ -1222,7 +1222,8 @@ app.post('/submit_complaint', upload.single('image'), async (req: any, res) => {
     'stray': ['Animal Control'],
     'animal': ['Animal Control'],
     'cattle': ['Animal Control'],
-    'traffic': ['Traffic & Public Safety'],
+    'traffic signal': ['Traffic & Public Safety'],
+    'traffic light': ['Traffic & Public Safety'],
     'signal': ['Traffic & Public Safety']
   };
 
