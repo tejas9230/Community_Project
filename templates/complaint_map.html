@@ -108,23 +108,21 @@ var complaints = {{ complaints|tojson }};
 
 
 //=========================
-// Community Data
+// Community & Complaint Data
 //=========================
+var complaints = {{ complaints|tojson if complaints else "[]" }};
 
-var communityName = {{ community.community_name|tojson if community else "\"Community\"|tojson" }};
-var communityLat = {{ community.latitude if community else 17.6868 }};
-var communityLon = {{ community.longitude if community else 83.2185 }};
-var communityRadius = {{ (community.radius if community else 5) }} * 1000;
-
+var rawCommunity = {{ community|tojson if community else "{}" }};
+var communityName = (rawCommunity && (rawCommunity.community_name || rawCommunity.name || rawCommunity[0])) || "Community Monitoring Area";
+var communityLat = (rawCommunity && (Number(rawCommunity.latitude) || Number(rawCommunity[1]))) || 17.6868;
+var communityLon = (rawCommunity && (Number(rawCommunity.longitude) || Number(rawCommunity[2]))) || 83.2185;
+var communityRadius = (rawCommunity && (Number(rawCommunity.radius) || Number(rawCommunity[3]))) || 5000;
+if (communityRadius < 100) communityRadius = communityRadius * 1000;
 
 //=========================
 // Create Map
 //=========================
-
-var map = L.map('map').setView(
-    [communityLat, communityLon],
-    13
-);
+var map = L.map('map').setView([communityLat, communityLon], 13);
 
 
 //=========================

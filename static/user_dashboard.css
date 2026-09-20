@@ -305,9 +305,14 @@ body{
 
 }
 
-.progress{
+.progress,
+.in-progress{
 
-    background:linear-gradient(135deg,#0ea5e9,#0284c7);
+    background:linear-gradient(135deg,#0ea5e9,#0284c7) !important;
+    height: auto !important;
+    min-height: 160px !important;
+    overflow: visible !important;
+    display: block !important;
 
 }
 

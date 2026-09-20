@@ -7,8 +7,48 @@
 
     <link rel="stylesheet"
           href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='global.css') }}">
 
     <style>
+        [data-theme="dark"] body {
+            background: #0f172a !important;
+            color: #f8fafc !important;
+        }
+        [data-theme="dark"] .settings-container {
+            background: transparent !important;
+        }
+        [data-theme="dark"] .settings-card {
+            background: #1e293b !important;
+            color: #f8fafc !important;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.5) !important;
+            border: 1px solid #334155 !important;
+        }
+        [data-theme="dark"] .settings-card h1 {
+            color: #f8fafc !important;
+        }
+        [data-theme="dark"] .settings-card p {
+            color: #94a3b8 !important;
+        }
+        [data-theme="dark"] .settings-card label {
+            color: #cbd5e1 !important;
+        }
+        [data-theme="dark"] .settings-card input {
+            background: #0f172a !important;
+            color: #f8fafc !important;
+            border-color: #334155 !important;
+        }
+        [data-theme="dark"] .radius-preview {
+            background: #0f172a !important;
+            color: #cbd5e1 !important;
+            border: 1px solid #334155 !important;
+        }
+        [data-theme="dark"] .back-btn {
+            background: #334155 !important;
+            color: #f8fafc !important;
+            border: 1px solid #475569 !important;
+        }
+
         .flash-success {
             background: linear-gradient(90deg, #059669, #10b981);
             color: #fff;
@@ -235,6 +275,12 @@ function getLocation() {
     }
 
 }
+
+// Dark Mode Initialization
+(function() {
+    var theme = localStorage.getItem('civic_theme') || 'light';
+    document.documentElement.setAttribute('data-theme', theme);
+})();
 
 </script>
 

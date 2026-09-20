@@ -132,7 +132,7 @@
 
 <!-- Flash Messages (global) -->
 {% with messages = get_flashed_messages(with_categories=true) %}
-  {% if messages %}
+  {% if messages and messages.length %}
     <div class="container mt-2">
       {% for cat, msg in messages %}
         <div class="alert alert-{{ 'danger' if cat == 'error' else 'success' }} alert-dismissible fade show" role="alert">

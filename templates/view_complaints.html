@@ -483,6 +483,8 @@
 
     <td>
 
+        {% if complaint[10] %}
+
             <span style="color:#f59e0b; letter-spacing:2px;">
                 {% if complaint[10] >= 5 %}⭐⭐⭐⭐⭐
                 {% elif complaint[10] >= 4 %}⭐⭐⭐⭐
@@ -703,7 +705,9 @@
 
         <img
             id="popupImage"
-            class="popup-image">
+            class="popup-image"
+            alt="Complaint Evidence"
+            onerror="this.src='/static/placeholder.jpg'">
 
     </div>
 
