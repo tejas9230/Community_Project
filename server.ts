@@ -97,7 +97,10 @@ env.addExtension('WithExtension', new (function (this: any) {
     parser.advanceAfterBlockEnd();
     return new nodes.CallExtension(this, 'run', args, [body]);
   };
-  this.run = function (_context: any, _args: any, body: any) {
+  this.run = function (context: any, args: any, body: any) {
+    if (args && typeof args === 'object') {
+      Object.assign(context.ctx, args);
+    }
     return body();
   };
 })());

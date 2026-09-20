@@ -483,9 +483,13 @@
 
     <td>
 
-        {% if complaint[10] %}
-
-            {{ "⭐" * complaint[10] }}
+            <span style="color:#f59e0b; letter-spacing:2px;">
+                {% if complaint[10] >= 5 %}⭐⭐⭐⭐⭐
+                {% elif complaint[10] >= 4 %}⭐⭐⭐⭐
+                {% elif complaint[10] >= 3 %}⭐⭐⭐
+                {% elif complaint[10] >= 2 %}⭐⭐
+                {% else %}⭐{% endif %}
+            </span>
 
             <br>
 
