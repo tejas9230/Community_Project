@@ -16,6 +16,22 @@
     <link rel="stylesheet"
           href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 
+    <script>
+    (function(){
+        var t = localStorage.getItem('civic_theme') || 'light';
+        document.documentElement.setAttribute('data-theme', t);
+    })();
+    </script>
+    <style>
+        [data-theme="dark"] body { background: #070d18 !important; color: #f1f5f9 !important; }
+        [data-theme="dark"] .history-header { background: #131d2e !important; border: 1px solid #1e293b !important; }
+        [data-theme="dark"] .history-header h1 { color: #f1f5f9 !important; }
+        [data-theme="dark"] .history-header p { color: #94a3b8 !important; }
+        [data-theme="dark"] .filter-card, [data-theme="dark"] .table-card { background: #131d2e !important; border: 1px solid #1e293b !important; }
+        [data-theme="dark"] table th { background: #1a2538 !important; color: #cbd5e1 !important; border-bottom: 1px solid #1e293b !important; }
+        [data-theme="dark"] table td { background: #131d2e !important; color: #f1f5f9 !important; border-bottom: 1px solid #1e293b !important; }
+        [data-theme="dark"] #themeToggleBtn { background: rgba(255,255,255,0.08) !important; color: #f1f5f9 !important; border: 1px solid #334155 !important; }
+    </style>
 </head>
 
 <body>
@@ -61,7 +77,11 @@
 
         </div>
 
-        <div class="header-right">
+        <div class="header-right" style="display:flex; align-items:center; gap:10px;">
+
+            <button type="button" id="themeToggleBtn" onclick="toggleCivicTheme()" style="padding:10px 18px; border-radius:12px; font-weight:600; cursor:pointer; display:inline-flex; align-items:center; gap:6px; background:rgba(0,0,0,0.06); border:1px solid rgba(0,0,0,0.12); color:inherit;">
+                🌙 Dark
+            </button>
 
             <a href="/admin" class="back-btn" style="text-decoration:none; display:inline-flex; align-items:center; gap:8px;">
                 <i class="fa-solid fa-arrow-left"></i>
@@ -608,6 +628,23 @@ window.addEventListener("load",()=>{
 
 });
 
+// ================ DARK MODE ================
+function toggleCivicTheme() {
+    const cur = localStorage.getItem('civic_theme') || 'light';
+    const next = cur === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    localStorage.setItem('civic_theme', next);
+    const btn = document.getElementById('themeToggleBtn');
+    if (btn) btn.innerHTML = next === 'dark' ? '☀️ Light' : '🌙 Dark';
+}
+(function () {
+    const t = localStorage.getItem('civic_theme') || 'light';
+    document.documentElement.setAttribute('data-theme', t);
+    window.addEventListener('load', function () {
+        const btn = document.getElementById('themeToggleBtn');
+        if (btn) btn.innerHTML = t === 'dark' ? '☀️ Light' : '🌙 Dark';
+    });
+})();
 </script>
 
 </body>

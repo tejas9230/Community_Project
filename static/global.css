@@ -763,3 +763,41 @@ font-size:16px;
     background-color: #131d2e !important;
     border-color: #1e293b !important;
 }
+
+[data-theme="dark"] h1, 
+[data-theme="dark"] h2, 
+[data-theme="dark"] h3, 
+[data-theme="dark"] h4, 
+[data-theme="dark"] h5, 
+[data-theme="dark"] h6 {
+    color: #f1f5f9 !important;
+}
+
+[data-theme="dark"] p, 
+[data-theme="dark"] label {
+    color: #cbd5e1;
+}
+
+[data-theme="dark"] .text-muted {
+    color: #94a3b8 !important;
+}
+
+[data-theme="dark"] .modal-content {
+    background-color: #131d2e !important;
+    color: #f1f5f9 !important;
+    border: 1px solid #1e293b !important;
+}
+
+[data-theme="dark"] .bg-white {
+    background-color: #131d2e !important;
+}
+
+[data-theme="dark"] .border {
+    border-color: #1e293b !important;
+}
+
+[data-theme="dark"] .list-group-item {
+    background-color: #131d2e !important;
+    color: #e2e8f0 !important;
+    border-color: #1e293b !important;
+}

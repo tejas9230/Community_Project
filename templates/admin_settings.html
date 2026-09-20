@@ -209,13 +209,14 @@
 
             </button>
 
-            <br><br>
-
-            <a href="/admin" class="cancel-btn">
-
-                ← Back to Dashboard
-
-            </a>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-top:20px;">
+                <a href="/admin" class="cancel-btn">
+                    ← Back to Dashboard
+                </a>
+                <button type="button" id="themeToggleBtn" onclick="toggleCivicTheme()" style="background:rgba(255,255,255,0.08); border:1px solid #cbd5e1; padding:8px 16px; border-radius:20px; font-weight:600; cursor:pointer; font-size:13px; display:inline-flex; align-items:center; gap:6px; color:inherit;">
+                    🌙 Dark
+                </button>
+            </div>
 
         </form>
 
@@ -276,10 +277,22 @@ function getLocation() {
 
 }
 
-// Dark Mode Initialization
+// Dark Mode Functionality
+function toggleCivicTheme() {
+    var cur = localStorage.getItem('civic_theme') || 'light';
+    var next = cur === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    localStorage.setItem('civic_theme', next);
+    var btn = document.getElementById('themeToggleBtn');
+    if (btn) btn.innerHTML = next === 'dark' ? '☀️ Light' : '🌙 Dark';
+}
 (function() {
     var theme = localStorage.getItem('civic_theme') || 'light';
     document.documentElement.setAttribute('data-theme', theme);
+    window.addEventListener('load', function() {
+        var btn = document.getElementById('themeToggleBtn');
+        if (btn) btn.innerHTML = theme === 'dark' ? '☀️ Light' : '🌙 Dark';
+    });
 })();
 
 </script>

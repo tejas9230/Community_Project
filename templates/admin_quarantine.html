@@ -75,7 +75,25 @@
         .img-modal.open{display:flex;}
         .img-modal img{max-width:90vw;max-height:88vh;border-radius:12px;}
         .img-modal-close{position:absolute;top:20px;right:24px;color:#fff;font-size:32px;cursor:pointer;}
+
+        /* Dark Mode Overrides */
+        [data-theme="dark"] body { background: #070d18 !important; color: #f1f5f9 !important; }
+        [data-theme="dark"] .page-header { background: #131d2e !important; border: 1px solid #1e293b !important; color: #f1f5f9 !important; }
+        [data-theme="dark"] .page-header h1 { color: #f1f5f9 !important; }
+        [data-theme="dark"] .page-header p { color: #94a3b8 !important; }
+        [data-theme="dark"] .stat-pill { background: #131d2e !important; border: 1px solid #1e293b !important; }
+        [data-theme="dark"] .stat-pill .lbl { color: #94a3b8 !important; }
+        [data-theme="dark"] .flag-card { background: #131d2e !important; border: 1px solid #1e293b !important; color: #f1f5f9 !important; }
+        [data-theme="dark"] .card-actions { background: #0b111e !important; border-color: #1e293b !important; }
+        [data-theme="dark"] .complaint-desc { color: #cbd5e1 !important; }
+        [data-theme="dark"] #themeToggleBtn { background: #1e293b !important; color: #f1f5f9 !important; border-color: #334155 !important; }
     </style>
+    <script>
+    (function(){
+        var t = localStorage.getItem('civic_theme') || 'light';
+        document.documentElement.setAttribute('data-theme', t);
+    })();
+    </script>
 </head>
 <body>
 <div class="container">
@@ -84,7 +102,12 @@
             <h1><i class="fa-solid fa-shield-halved" style="color:#dc2626;"></i> Special Attention Desk</h1>
             <p>AI-flagged complaints with image-category mismatch or multi-department conflicts. Review and action required.</p>
         </div>
-        <a href="/admin" class="back-btn"><i class="fa-solid fa-arrow-left"></i> Back to Dashboard</a>
+        <div style="display:flex; align-items:center; gap:10px;">
+            <button type="button" id="themeToggleBtn" onclick="toggleCivicTheme()" style="padding:10px 18px; border-radius:12px; font-weight:600; cursor:pointer; display:inline-flex; align-items:center; gap:6px; background:rgba(0,0,0,0.06); border:1px solid rgba(0,0,0,0.12);">
+                🌙 Dark
+            </button>
+            <a href="/admin" class="back-btn"><i class="fa-solid fa-arrow-left"></i> Back to Dashboard</a>
+        </div>
     </div>
 
     {% if flash_message %}
@@ -195,6 +218,24 @@ function showReject(id){document.getElementById("btns-"+id).style.display="none"
 function hideAll(id){document.getElementById("btns-"+id).style.display="flex";document.getElementById("approve-"+id).classList.remove("open");document.getElementById("reject-"+id).classList.remove("open");}
 function openImg(src){document.getElementById("modalImg").src=src;document.getElementById("imgModal").classList.add("open");}
 function closeImg(){document.getElementById("imgModal").classList.remove("open");}
+
+// ================ DARK MODE ================
+function toggleCivicTheme() {
+    const cur = localStorage.getItem('civic_theme') || 'light';
+    const next = cur === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    localStorage.setItem('civic_theme', next);
+    const btn = document.getElementById('themeToggleBtn');
+    if (btn) btn.innerHTML = next === 'dark' ? '☀️ Light' : '🌙 Dark';
+}
+(function () {
+    const t = localStorage.getItem('civic_theme') || 'light';
+    document.documentElement.setAttribute('data-theme', t);
+    window.addEventListener('load', function () {
+        const btn = document.getElementById('themeToggleBtn');
+        if (btn) btn.innerHTML = t === 'dark' ? '☀️ Light' : '🌙 Dark';
+    });
+})();
 </script>
 </body>
 </html>

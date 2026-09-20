@@ -690,9 +690,57 @@ body{
 
     color:#1d4ed8;
 
-    color:#1d4ed8;
-
     transform:translateX(-4px);
 
+}
 
+/* ===========================================
+        DARK MODE OVERRIDES
+=========================================== */
+
+[data-theme="dark"] body {
+    background: #070d18 !important;
+    color: #f1f5f9 !important;
+}
+
+[data-theme="dark"] .form-card {
+    background: #131d2e !important;
+    border: 1px solid #1e293b !important;
+    color: #f1f5f9 !important;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.35) !important;
+}
+
+[data-theme="dark"] .form-card h2 {
+    color: #f1f5f9 !important;
+    border-bottom: 1px solid #1e293b !important;
+}
+
+[data-theme="dark"] .form-card label {
+    color: #cbd5e1 !important;
+}
+
+[data-theme="dark"] .form-card input[type="text"],
+[data-theme="dark"] .form-card select,
+[data-theme="dark"] .form-card textarea {
+    background: #0b111e !important;
+    border-color: #334155 !important;
+    color: #f1f5f9 !important;
+}
+
+[data-theme="dark"] .form-card input[readonly] {
+    background: #0f172a !important;
+    color: #94a3b8 !important;
+}
+
+[data-theme="dark"] .upload-box {
+    border-color: #334155 !important;
+    background: #0b111e !important;
+}
+
+[data-theme="dark"] .upload-box p {
+    color: #94a3b8 !important;
+}
+
+[data-theme="dark"] .back-btn {
+    color: #60a5fa !important;
 }

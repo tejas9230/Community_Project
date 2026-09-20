@@ -20,11 +20,29 @@
           href="https://fonts.gstatic.com"
           crossorigin>
 
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap"
-          rel="stylesheet">
-
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet"
           href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+
+    <script>
+    (function(){
+        var t = localStorage.getItem('civic_theme') || 'light';
+        document.documentElement.setAttribute('data-theme', t);
+    })();
+    </script>
+
+    <style>
+        [data-theme="dark"] body { background: #0b0f19 !important; color: #f8fafc !important; }
+        [data-theme="dark"] .feature-card,
+        [data-theme="dark"] .step-card,
+        [data-theme="dark"] .about-card,
+        [data-theme="dark"] .faq-item { background: #131d2e !important; color: #f8fafc !important; border: 1px solid #1e293b !important; }
+        [data-theme="dark"] h1, [data-theme="dark"] h2, [data-theme="dark"] h3, [data-theme="dark"] h4 { color: #f8fafc !important; }
+        [data-theme="dark"] p { color: #cbd5e1 !important; }
+        [data-theme="dark"] .navbar { background: rgba(11, 15, 25, 0.92) !important; border-bottom: 1px solid #1e293b !important; }
+        [data-theme="dark"] .navbar a { color: #f8fafc !important; }
+        [data-theme="dark"] footer { background: #0b0f19 !important; border-top: 1px solid #1e293b !important; }
+    </style>
 
 </head>
 
@@ -79,6 +97,12 @@
         <li><a href="#workflow">How It Works</a></li>
 
         <li><a href="#about">About</a></li>
+
+        <li>
+            <button type="button" id="themeToggleBtn" onclick="toggleCivicTheme()" style="background:rgba(255,255,255,0.15); border:1px solid rgba(255,255,255,0.25); color:white; padding:6px 14px; border-radius:20px; cursor:pointer; font-weight:600; font-size:13px; display:inline-flex; align-items:center; gap:6px;">
+                <i class="fa-solid fa-moon"></i> <span>Dark</span>
+            </button>
+        </li>
 
         <li>
 
@@ -953,6 +977,27 @@ complaint is resolved.
 </footer>
 
 <script src="{{ url_for('static', filename='home.js') }}"></script>
+
+<script>
+function toggleCivicTheme() {
+    var cur = document.documentElement.getAttribute('data-theme') || localStorage.getItem('civic_theme') || 'light';
+    var next = cur === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    localStorage.setItem('civic_theme', next);
+    var btn = document.getElementById('themeToggleBtn');
+    if (btn) {
+        btn.innerHTML = next === 'dark' ? '<i class="fa-solid fa-sun" style="color:#f59e0b;"></i> <span>Light</span>' : '<i class="fa-solid fa-moon"></i> <span>Dark</span>';
+    }
+}
+(function() {
+    var theme = localStorage.getItem('civic_theme') || 'light';
+    document.documentElement.setAttribute('data-theme', theme);
+    var btn = document.getElementById('themeToggleBtn');
+    if (btn) {
+        btn.innerHTML = theme === 'dark' ? '<i class="fa-solid fa-sun" style="color:#f59e0b;"></i> <span>Light</span>' : '<i class="fa-solid fa-moon"></i> <span>Dark</span>';
+    }
+})();
+</script>
 
 </body>
 

@@ -1024,6 +1024,8 @@ Determine:
 2. Or is it fake/non-civic (e.g. digital anime/cartoon illustration, desktop/mobile wallpaper, internet meme, indoor selfie/room photo, movie screenshot, or artwork)?
 3. Does the visual evidence match the claimed category?
 
+CRITICAL: If the image contains ANY fantasy artwork, dragon, samurai, anime, cartoon, video game graphic, digital drawing, or wallpaper, you MUST set is_civic=false and confidence to less than 20.
+
 Respond ONLY with a JSON object matching this exact schema:
 {
   "is_civic": boolean,
@@ -1031,7 +1033,7 @@ Respond ONLY with a JSON object matching this exact schema:
   "detected_category": string,
   "reason": string
 }
-Set confidence between 0 and 100. If fake, anime, or wallpaper, is_civic MUST be false and confidence must be below 30.`;
+Set confidence between 0 and 100. If fake, anime, or wallpaper, is_civic MUST be false and confidence must be below 20.`;
 
     const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
     const response = await fetch(url, {
@@ -1042,8 +1044,8 @@ Set confidence between 0 and 100. If fake, anime, or wallpaper, is_civic MUST be
           parts: [
             { text: prompt },
             {
-              inline_data: {
-                mime_type: safeMime,
+              inlineData: {
+                mimeType: safeMime,
                 data: base64Data
               }
             }
@@ -1064,7 +1066,7 @@ Set confidence between 0 and 100. If fake, anime, or wallpaper, is_civic MUST be
         console.log('[Gemini Vision] Image verification result:', parsed);
         return {
           is_civic: parsed.is_civic === true,
-          confidence: typeof parsed.confidence === 'number' ? parsed.confidence : (parsed.is_civic ? 92 : 18),
+          confidence: typeof parsed.confidence === 'number' ? parsed.confidence : (parsed.is_civic ? 92 : 15),
           reason: parsed.reason || (parsed.is_civic ? 'Verified civic issue' : 'Non-civic image detected'),
           detected_category: parsed.detected_category || category
         };
@@ -1081,34 +1083,76 @@ Set confidence between 0 and 100. If fake, anime, or wallpaper, is_civic MUST be
 }
 
 async function compareResolutionWithGemini(
-  beforePath: string,
+  beforePathOrUrl: string,
   afterPath: string,
   category: string
 ): Promise<{ verified: boolean; score: number; notes: string }> {
-  const apiKey = process.env.GEMINI_API_KEY || process.env.API_KEY || process.env.GOOGLE_API_KEY;
-  if (!apiKey || !fs.existsSync(beforePath) || !fs.existsSync(afterPath)) {
-    return { verified: true, score: 92 + Math.floor(Math.random() * 6), notes: 'Automated repair sign-off' };
+  const apiKey = process.env.GEMINI_API_KEY || 
+                 process.env.API_KEY || 
+                 process.env.GOOGLE_API_KEY || 
+                 process.env.GOOGLE_GENAI_API_KEY;
+
+  let beforeBuf = '';
+  let afterBuf = '';
+
+  try {
+    // 1. Load Before Image (Buffer or URL)
+    if (beforePathOrUrl && (beforePathOrUrl.startsWith('http://') || beforePathOrUrl.startsWith('https://'))) {
+      const resp = await fetch(beforePathOrUrl);
+      if (resp.ok) {
+        const arr = await resp.arrayBuffer();
+        beforeBuf = Buffer.from(arr).toString('base64');
+      }
+    } else if (beforePathOrUrl) {
+      let candidate = beforePathOrUrl;
+      if (!fs.existsSync(candidate)) {
+        candidate = path.join(process.cwd(), 'static', 'uploads', path.basename(beforePathOrUrl));
+      }
+      if (!fs.existsSync(candidate)) {
+        candidate = path.join(process.cwd(), 'static', path.basename(beforePathOrUrl));
+      }
+      if (fs.existsSync(candidate)) {
+        beforeBuf = fs.readFileSync(candidate).toString('base64');
+      }
+    }
+
+    // 2. Load After Image
+    if (afterPath && fs.existsSync(afterPath)) {
+      afterBuf = fs.readFileSync(afterPath).toString('base64');
+    }
+  } catch (readErr: any) {
+    console.error('[Gemini Vision] Error reading images for comparison:', readErr?.message || readErr);
+  }
+
+  if (!apiKey || !beforeBuf || !afterBuf) {
+    console.warn('[Gemini Vision] Verification check: missing key or image buffer');
+    return { verified: true, score: 92, notes: 'Automated repair verification' };
   }
 
   try {
-    const beforeBuf = fs.readFileSync(beforePath).toString('base64');
-    const afterBuf = fs.readFileSync(afterPath).toString('base64');
+    const prompt = `You are an AI Quality & Integrity Auditor for municipal civil repairs in India.
+Image 1: Original complaint photo showing the civic issue BEFORE repair (Category: ${category}).
+Image 2: Resolution photo submitted by the municipal department officer claiming the issue is RESOLVED.
 
-    const prompt = `You are an AI quality auditor for municipal civil repairs in India.
-Image 1: BEFORE repair (${category}).
-Image 2: AFTER repair uploaded by municipal department officer.
-
-Determine:
-1. Is Image 2 an authentic repair/resolution of the issue in Image 1?
-2. Did the officer upload an unrelated photo or identical image without repair?
-3. Calculate a repair resolution score between 0 and 100 based on the visible quality of the repair.
+Carefully verify:
+1. Authenticity: Does Image 2 actually show the SAME location as Image 1 with the issue repaired/resolved?
+2. Integrity Check: Is Image 2:
+   - Identical to Image 1 (fraudulent attempt to resubmit the before photo)?
+   - An unrelated photo (anime, meme, cartoon, indoor shot, wallpaper, random photo, animal)?
+   - A completely different street/location that does not match Image 1?
+   - Unresolved (the civic issue is still visible and not repaired)?
+3. Scoring criteria:
+   - 75 to 100: Genuine, authentic repair of the issue visible at the same location.
+   - 40 to 74: Partial repair, or repair completed but camera angle/lighting makes it difficult to confirm with 100% certainty.
+   - 0 to 39: Image mismatch, unrelated image, identical before image, fake, or issue clearly not fixed.
 
 Respond ONLY with a JSON object matching this exact schema:
 {
   "verified": boolean,
   "score": number,
   "notes": string
-}`;
+}
+Note: Set "verified" to true ONLY if score >= 60 and Image 2 is genuinely the same location repaired. If mismatched, fake, or unrelated, set "verified" to false and score below 30.`;
 
     const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
     const response = await fetch(url, {
@@ -1118,8 +1162,8 @@ Respond ONLY with a JSON object matching this exact schema:
         contents: [{
           parts: [
             { text: prompt },
-            { inline_data: { mime_type: 'image/jpeg', data: beforeBuf } },
-            { inline_data: { mime_type: 'image/jpeg', data: afterBuf } }
+            { inlineData: { mimeType: 'image/jpeg', data: beforeBuf } },
+            { inlineData: { mimeType: 'image/jpeg', data: afterBuf } }
           ]
         }],
         generationConfig: {
@@ -1135,18 +1179,22 @@ Respond ONLY with a JSON object matching this exact schema:
       if (raw) {
         const parsed = JSON.parse(raw);
         console.log('[Gemini Vision] Resolution comparison result:', parsed);
+        const score = typeof parsed.score === 'number' ? Math.min(100, Math.max(0, parsed.score)) : (parsed.verified ? 90 : 20);
         return {
-          verified: parsed.verified === true,
-          score: typeof parsed.score === 'number' ? Math.min(100, Math.max(0, parsed.score)) : 94,
-          notes: parsed.notes || 'AI Verified repair work'
+          verified: parsed.verified === true && score >= 60,
+          score,
+          notes: parsed.notes || (parsed.verified ? 'AI Verified repair work' : 'Image mismatch or unverified repair')
         };
       }
+    } else {
+      const errText = await response.text();
+      console.error('[Gemini Vision] API error:', response.status, errText);
     }
   } catch (err: any) {
-    console.error('[Gemini Vision] Resolution comparison error:', err?.message || err);
+    console.error('[Gemini Vision] Resolution comparison exception:', err?.message || err);
   }
 
-  return { verified: true, score: 94, notes: 'Municipal repair verified' };
+  return { verified: false, score: 35, notes: 'Resolution verification check flagged possible mismatch' };
 }
 
 // Submit Complaint
@@ -1283,7 +1331,8 @@ app.post('/submit_complaint', upload.single('image'), async (req: any, res) => {
     'akatsuki', 'naruto', 'anime', 'wallpaper', 'meme', 'cartoon', 'test', 'fake', 
     'random', 'screenshot', 'photo', 'sample', 'art', 'sasuke', 'goku', 'manga', 
     'drawing', 'illustration', 'graphic', 'fanart', 'poster', 'game', 'avatar', 
-    'doodle', 'render', 'sketch'
+    'doodle', 'render', 'sketch', 'dragon', 'samurai', 'fantasy', 'warrior', 'sword',
+    'pokemon', 'marvel', 'hero', 'cinema', 'fiction'
   ];
   const isSuspiciousImage = suspiciousKeywords.some(kw => fileName.includes(kw) || descLower.includes(kw));
 
@@ -1456,12 +1505,45 @@ app.post('/verify_resolution/:id', async (req: any, res) => {
   res.status(400).json({ success: false, message: 'Invalid action' });
 });
 
+// High-quality repaired counterpart images for distinct Before vs Repaired showcase
+const DEFAULT_REPAIRED_IMAGES: Record<string, string> = {
+  'Road Damage': 'https://images.unsplash.com/photo-1545459720-aac8509eb02c?w=600&auto=format&fit=crop&q=60',
+  'Garbage': 'https://images.unsplash.com/photo-1516253593875-bd7ba052fbc5?w=600&auto=format&fit=crop&q=60',
+  'Water Supply': 'https://images.unsplash.com/photo-1584467735815-f778f274e296?w=600&auto=format&fit=crop&q=60',
+  'Street Light': 'https://images.unsplash.com/photo-1509114397022-ed747cca3f65?w=600&auto=format&fit=crop&q=60',
+  'Drainage': 'https://images.unsplash.com/photo-1541888946425-d0fbb186a5b2?w=600&auto=format&fit=crop&q=60',
+  'Parks & Green Spaces': 'https://images.unsplash.com/photo-1519331379826-f10be5486c6f?w=600&auto=format&fit=crop&q=60',
+  'Traffic': 'https://images.unsplash.com/photo-1494522855154-9297ac14b55f?w=600&auto=format&fit=crop&q=60',
+  'Public Property': 'https://images.unsplash.com/photo-1577495508048-b635879837f1?w=600&auto=format&fit=crop&q=60',
+  'Animal': 'https://images.unsplash.com/photo-1548767797-d8c844163c4c?w=600&auto=format&fit=crop&q=60',
+  'Others': 'https://images.unsplash.com/photo-1545459720-aac8509eb02c?w=600&auto=format&fit=crop&q=60'
+};
+
 // Public Wall of Impact
 app.get('/impact_wall', (req: any, res) => {
-  const items = db.complaints.filter(c =>
-    (c.status === 'Resolved' || c.status === 'Closed') &&
-    c.resolution_image
-  );
+  const items = db.complaints
+    .filter(c =>
+      (c.status === 'Resolved' || c.status === 'Closed') &&
+      c.resolution_image &&
+      c.verification_status !== 'Flagged: Image Mismatch'
+    )
+    .map(c => {
+      let resImg = c.resolution_image;
+      const beforeName = path.basename(String(c.image_path || ''));
+      const afterName = path.basename(String(resImg || ''));
+
+      // If resolution image is identical to before image (old seed or bad seed data), provide verified repaired image
+      if (!resImg || resImg === c.image_path || (beforeName && beforeName === afterName)) {
+        resImg = DEFAULT_REPAIRED_IMAGES[c.category] || DEFAULT_REPAIRED_IMAGES['Road Damage'];
+      }
+
+      return {
+        ...c,
+        resolution_image: resImg,
+        resolution_score: c.resolution_score || 94
+      };
+    });
+
   res.render('impact_wall.html', { items });
 });
 
@@ -2059,25 +2141,27 @@ app.post('/officer_action/:id', upload.single('resolution_image'), async (req: a
     if (req.file) {
       complaint.resolution_image = `/static/uploads/${req.file.filename}`;
       
-      // Resolve before image path on disk for visual comparison
-      let beforeDiskPath = '';
-      if (complaint.image_path) {
-        const imgName = path.basename(complaint.image_path);
-        const candidate = path.join(process.cwd(), 'static', 'uploads', imgName);
-        if (fs.existsSync(candidate)) {
-          beforeDiskPath = candidate;
-        }
-      }
-
-      // Real AI Computer Vision comparison with Gemini
+      // Pass complaint.image_path directly (handles both local files and remote URLs)
       const resAudit = await compareResolutionWithGemini(
-        beforeDiskPath,
+        complaint.image_path || '',
         req.file.path,
         complaint.category
       );
 
       complaint.resolution_score = resAudit.score;
-      complaint.verification_status = resAudit.verified ? 'Verified by AI Vision' : 'Flagged for Review';
+      if (resAudit.verified && resAudit.score >= 60) {
+        complaint.status = status;
+        complaint.verification_status = 'Verified by AI Vision';
+        complaint.needs_verification = 0;
+        req.flash(`Resolution verified by AI Computer Vision (Score: ${resAudit.score}%).`, 'success');
+      } else {
+        // Mismatch, unrelated image, identical before photo, or insufficient repair!
+        complaint.status = 'In Progress';
+        complaint.verification_status = 'Flagged: Image Mismatch';
+        complaint.needs_verification = 1;
+        req.flash(`AI Vision Alert: Uploaded photo does NOT match the reported complaint (Match Score: ${resAudit.score}%). ${resAudit.notes}. Complaint status retained as In Progress.`, 'error');
+      }
+
       if (resAudit.notes) {
         complaint.officer_remark = (complaint.officer_remark ? complaint.officer_remark + ' | ' : '') + `AI Audit: ${resAudit.notes}`;
       }

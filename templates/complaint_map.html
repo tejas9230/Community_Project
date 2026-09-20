@@ -17,20 +17,48 @@
     <style>
         .map-card { min-height: 640px; overflow: visible !important; }
         #map { height: 600px !important; min-height: 500px !important; width: 100% !important; border-radius: 16px; }
+
+        /* Dark Mode Overrides */
+        [data-theme="dark"] body { background: #070d18 !important; color: #f1f5f9 !important; }
+        [data-theme="dark"] .page-container { background: transparent !important; }
+        [data-theme="dark"] .dashboard-title { color: #f1f5f9 !important; }
+        [data-theme="dark"] .dashboard-subtitle { color: #94a3b8 !important; }
+        [data-theme="dark"] .map-card, [data-theme="dark"] .map-legend { background: #131d2e !important; border: 1px solid #1e293b !important; color: #f1f5f9 !important; }
+        [data-theme="dark"] .map-legend h3 { color: #f1f5f9 !important; }
     </style>
+    <script>
+    (function(){
+        var t = localStorage.getItem('civic_theme') || 'light';
+        document.documentElement.setAttribute('data-theme', t);
+    })();
+    </script>
 </head>
 
 <body>
 
 <div class="page-container">
 
-    <h1 class="dashboard-title">
-        🗺 Community Complaint Map
-    </h1>
-
-    <p class="dashboard-subtitle">
-        Monitor complaint locations across your community.
-    </p>
+    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:20px;">
+        <div>
+            <h1 class="dashboard-title" style="margin-bottom:4px;">
+                🗺 Community Complaint Map
+            </h1>
+            <p class="dashboard-subtitle" style="margin-bottom:0;">
+                Monitor complaint locations across your community.
+            </p>
+        </div>
+        <div style="display:flex; align-items:center; gap:10px;">
+            <button type="button" id="themeToggleBtn" onclick="toggleCivicTheme()" style="background:rgba(255,255,255,0.85); border:1px solid #cbd5e1; padding:8px 16px; border-radius:20px; font-weight:600; cursor:pointer; font-size:13px; display:inline-flex; align-items:center; gap:6px;">
+                🌙 Dark
+            </button>
+            <a href="/impact_wall" style="text-decoration:none; padding:8px 16px; border-radius:20px; background:#2563eb; color:#fff; font-weight:600; font-size:13px; display:inline-flex; align-items:center; gap:6px;">
+                ⭐ Wall of Impact
+            </a>
+            <a href="/user_dashboard" style="text-decoration:none; padding:8px 16px; border-radius:20px; background:rgba(0,0,0,0.06); color:inherit; border:1px solid #cbd5e1; font-weight:600; font-size:13px; display:inline-flex; align-items:center; gap:6px;">
+                Dashboard
+            </a>
+        </div>
+    </div>
 
     <!-- Statistics Cards -->
 
@@ -415,6 +443,23 @@ setTimeout(function(){
 }, 300);
 setTimeout(function(){ map.invalidateSize(true); }, 900);
 
+// ================ DARK MODE ================
+function toggleCivicTheme() {
+    const cur = localStorage.getItem('civic_theme') || 'light';
+    const next = cur === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    localStorage.setItem('civic_theme', next);
+    const btn = document.getElementById('themeToggleBtn');
+    if (btn) btn.innerHTML = next === 'dark' ? '☀️ Light' : '🌙 Dark';
+}
+(function () {
+    const t = localStorage.getItem('civic_theme') || 'light';
+    document.documentElement.setAttribute('data-theme', t);
+    window.addEventListener('load', function () {
+        const btn = document.getElementById('themeToggleBtn');
+        if (btn) btn.innerHTML = t === 'dark' ? '☀️ Light' : '🌙 Dark';
+    });
+})();
 </script>
 
 </body>

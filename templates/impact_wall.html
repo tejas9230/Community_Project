@@ -10,6 +10,13 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
     <link rel="stylesheet" href="/static/global.css">
 
+    <script>
+    (function(){
+        var t = localStorage.getItem('civic_theme') || 'light';
+        document.documentElement.setAttribute('data-theme', t);
+    })();
+    </script>
+
     <style>
         .impact-hero {
             background: linear-gradient(135deg, #1e3a8a, #2563eb);

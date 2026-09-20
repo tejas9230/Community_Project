@@ -17,7 +17,12 @@
           rel="stylesheet">
 
     <link rel="stylesheet" href="/static/global.css">
-
+    <script>
+    (function(){
+        var t = localStorage.getItem('civic_theme') || 'light';
+        document.documentElement.setAttribute('data-theme', t);
+    })();
+    </script>
 </head>
 
 <body class="bg-light">
@@ -507,6 +512,24 @@ function respondDirective(dirId, statusText) {
     })
     .catch(() => alert('Network error communicating with command center.'));
 }
+
+// ================ DARK MODE ================
+function toggleCivicTheme() {
+    const cur = localStorage.getItem('civic_theme') || 'light';
+    const next = cur === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    localStorage.setItem('civic_theme', next);
+    const btn = document.getElementById('themeToggleBtn');
+    if (btn) btn.innerHTML = next === 'dark' ? '☀️ Light' : '🌙 Dark';
+}
+(function () {
+    const t = localStorage.getItem('civic_theme') || 'light';
+    document.documentElement.setAttribute('data-theme', t);
+    window.addEventListener('load', function () {
+        const btn = document.getElementById('themeToggleBtn');
+        if (btn) btn.innerHTML = t === 'dark' ? '☀️ Light' : '🌙 Dark';
+    });
+})();
 </script>
 
 </body>

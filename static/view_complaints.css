@@ -1033,3 +1033,73 @@ tbody tr:hover{
     white-space:nowrap;
 
 }
+
+/* ===========================================
+        DARK MODE OVERRIDES
+=========================================== */
+
+[data-theme="dark"] body {
+    background: #070d18 !important;
+    color: #f1f5f9 !important;
+}
+
+[data-theme="dark"] .dashboard-header {
+    background: rgba(19, 29, 46, 0.9) !important;
+    border: 1px solid #1e293b !important;
+    box-shadow: 0 18px 45px rgba(0, 0, 0, 0.45) !important;
+}
+
+[data-theme="dark"] .dashboard-header h1 {
+    color: #60a5fa !important;
+}
+
+[data-theme="dark"] .dashboard-header p {
+    color: #94a3b8 !important;
+}
+
+[data-theme="dark"] .back-btn {
+    background: rgba(30, 41, 59, 0.8) !important;
+    border-color: #334155 !important;
+    color: #f1f5f9 !important;
+}
+
+[data-theme="dark"] .filter-section {
+    background: #131d2e !important;
+    border: 1px solid #1e293b !important;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.35) !important;
+}
+
+[data-theme="dark"] .filter-section input,
+[data-theme="dark"] .filter-section select {
+    background: #0b111e !important;
+    border-color: #334155 !important;
+    color: #f1f5f9 !important;
+}
+
+[data-theme="dark"] .table-card {
+    background: #131d2e !important;
+    border: 1px solid #1e293b !important;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.35) !important;
+}
+
+[data-theme="dark"] table th {
+    background: #1a2538 !important;
+    color: #cbd5e1 !important;
+    border-bottom: 1px solid #1e293b !important;
+}
+
+[data-theme="dark"] table td {
+    background: #131d2e !important;
+    color: #f1f5f9 !important;
+    border-bottom: 1px solid #1e293b !important;
+}
+
+[data-theme="dark"] table tbody tr:hover td {
+    background: #182338 !important;
+}
+
+[data-theme="dark"] .modal-content {
+    background: #131d2e !important;
+    border: 1px solid #1e293b !important;
+    color: #f1f5f9 !important;
+}

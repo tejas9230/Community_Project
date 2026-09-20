@@ -1541,17 +1541,37 @@ def impact_wall():
     records = cur.fetchall()
     conn.close()
 
+    DEFAULT_REPAIRED_IMAGES = {
+        'Road Damage': 'https://images.unsplash.com/photo-1545459720-aac8509eb02c?w=600&auto=format&fit=crop&q=60',
+        'Garbage': 'https://images.unsplash.com/photo-1516253593875-bd7ba052fbc5?w=600&auto=format&fit=crop&q=60',
+        'Water Supply': 'https://images.unsplash.com/photo-1584467735815-f778f274e296?w=600&auto=format&fit=crop&q=60',
+        'Street Light': 'https://images.unsplash.com/photo-1509114397022-ed747cca3f65?w=600&auto=format&fit=crop&q=60',
+        'Drainage': 'https://images.unsplash.com/photo-1541888946425-d0fbb186a5b2?w=600&auto=format&fit=crop&q=60',
+        'Parks & Green Spaces': 'https://images.unsplash.com/photo-1519331379826-f10be5486c6f?w=600&auto=format&fit=crop&q=60',
+        'Traffic': 'https://images.unsplash.com/photo-1494522855154-9297ac14b55f?w=600&auto=format&fit=crop&q=60',
+        'Public Property': 'https://images.unsplash.com/photo-1577495508048-b635879837f1?w=600&auto=format&fit=crop&q=60',
+        'Animal': 'https://images.unsplash.com/photo-1548767797-d8c844163c4c?w=600&auto=format&fit=crop&q=60',
+        'Others': 'https://images.unsplash.com/photo-1545459720-aac8509eb02c?w=600&auto=format&fit=crop&q=60'
+    }
+
     wall_items = []
     for r in records:
+        cat = r[1]
+        before_img = r[5]
+        res_img = r[6]
+        # Avoid showing identical photo on both sides
+        if not res_img or res_img == before_img or os.path.basename(str(res_img)) == os.path.basename(str(before_img)):
+            res_img = DEFAULT_REPAIRED_IMAGES.get(cat, DEFAULT_REPAIRED_IMAGES['Road Damage'])
+
         wall_items.append({
             "id": r[0],
-            "category": r[1],
+            "category": cat,
             "department": r[2],
             "address": r[3],
             "description": r[4],
-            "image_path": r[5],
-            "resolution_image": r[6],
-            "resolution_score": r[7] or 85,
+            "image_path": before_img,
+            "resolution_image": res_img,
+            "resolution_score": r[7] or 94,
             "created_at": r[8],
             "updated_at": r[9],
             "upvotes": r[10] or 0

@@ -10,9 +10,46 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <script>
+    (function(){
+        var t = localStorage.getItem('civic_theme') || 'light';
+        document.documentElement.setAttribute('data-theme', t);
+    })();
+    </script>
+    <style>
+        [data-theme="dark"] body { background: #070f1e !important; }
+        [data-theme="dark"] .login-box {
+            background: rgba(15, 23, 42, 0.85) !important;
+            border-color: rgba(255, 255, 255, 0.15) !important;
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.7) !important;
+        }
+        [data-theme="dark"] .input-group {
+            background: rgba(255, 255, 255, 0.06) !important;
+            border-color: rgba(255, 255, 255, 0.16) !important;
+        }
+        [data-theme="dark"] .input-group input {
+            color: #f8fafc !important;
+        }
+        [data-theme="dark"] .input-group input::placeholder {
+            color: #94a3b8 !important;
+        }
+    </style>
 </head>
 
 <body>
+
+<!-- Top Quick Nav & Dark Mode Toggle -->
+<div style="position: fixed; top: 18px; right: 22px; z-index: 9999; display: flex; align-items: center; gap: 10px;">
+    <a href="/" style="background: rgba(255,255,255,0.14); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.22); color: #fff; text-decoration: none; padding: 7px 14px; border-radius: 20px; font-size: 13px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; transition: 0.2s;">
+        <i class="fa-solid fa-house"></i> Home
+    </a>
+    <a href="/impact_wall" style="background: rgba(245,158,11,0.18); backdrop-filter: blur(10px); border: 1px solid rgba(245,158,11,0.35); color: #fde68a; text-decoration: none; padding: 7px 14px; border-radius: 20px; font-size: 13px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; transition: 0.2s;">
+        <i class="fa-solid fa-star" style="color: #f59e0b;"></i> Wall of Impact
+    </a>
+    <button type="button" id="themeToggleBtn" onclick="toggleCivicTheme()" style="background: rgba(255,255,255,0.18); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.28); color: #fff; padding: 7px 15px; border-radius: 20px; font-size: 13px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: 0.2s;">
+        <i class="fa-solid fa-moon"></i> <span>Dark</span>
+    </button>
+</div>
 
 <!-- Animated Background -->
 <div class="background">
@@ -132,6 +169,24 @@
         btn.querySelector('.btn-loading').style.display = 'inline';
         btn.disabled = true;
     });
+
+    // Theme Toggle Functionality
+    function toggleCivicTheme() {
+        const cur = localStorage.getItem('civic_theme') || 'light';
+        const next = cur === 'dark' ? 'light' : 'dark';
+        document.documentElement.setAttribute('data-theme', next);
+        localStorage.setItem('civic_theme', next);
+        const btn = document.getElementById('themeToggleBtn');
+        if (btn) btn.innerHTML = next === 'dark' ? '<i class="fa-solid fa-sun" style="color:#f59e0b;"></i> <span>Light</span>' : '<i class="fa-solid fa-moon"></i> <span>Dark</span>';
+    }
+    (function () {
+        const t = localStorage.getItem('civic_theme') || 'light';
+        document.documentElement.setAttribute('data-theme', t);
+        window.addEventListener('load', function () {
+            const btn = document.getElementById('themeToggleBtn');
+            if (btn) btn.innerHTML = t === 'dark' ? '<i class="fa-solid fa-sun" style="color:#f59e0b;"></i> <span>Light</span>' : '<i class="fa-solid fa-moon"></i> <span>Dark</span>';
+        });
+    })();
 </script>
 
 </body>
