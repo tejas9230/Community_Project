@@ -133,7 +133,7 @@ env.addFilter('format', (str: string, val: any) => {
 });
 
 env.addFilter('tojson', (val: any) => {
-  return JSON.stringify(val);
+  return new nunjucks.runtime.SafeString(JSON.stringify(val !== undefined ? val : null));
 });
 
 env.addFilter('round', (val: any, decimals: number = 0) => {
@@ -1816,6 +1816,11 @@ app.get('/admin/quarantine', (req: any, res) => {
     address: c.address,
     description: c.description,
     image_path: c.image_path,
+    resolution_image: c.resolution_image || '',
+    resolution_score: c.resolution_score != null ? c.resolution_score : null,
+    verification_status: c.verification_status || '',
+    assigned_to: c.assigned_to || '',
+    is_resolution_flag: Boolean(c.resolution_image || (c.verification_status && c.verification_status.includes('Image Mismatch'))),
     status: c.status,
     created_at: c.created_at,
     image_confidence: c.image_confidence != null ? c.image_confidence : 100,
@@ -1823,7 +1828,8 @@ app.get('/admin/quarantine', (req: any, res) => {
     is_cross_department: c.is_cross_department || 0,
     secondary_department: c.secondary_department || ''
   }));
-  const mismatch_count   = flaggedMapped.filter((f: any) => (f.image_confidence || 100) < 50).length;
+  const resolution_mismatch_count = flaggedMapped.filter((f: any) => f.is_resolution_flag).length;
+  const mismatch_count   = flaggedMapped.filter((f: any) => !f.is_resolution_flag && (f.image_confidence || 100) < 50).length;
   const cross_dept_count = flaggedMapped.filter((f: any) => f.is_cross_department == 1).length;
   const flash_message  = (req.session as any).qFlash || null;
   const flash_category = (req.session as any).qFlashCat || 'success';
@@ -1831,6 +1837,7 @@ app.get('/admin/quarantine', (req: any, res) => {
   res.render('admin_quarantine.html', {
     flagged: flaggedMapped,
     total: flagged.length,
+    resolution_mismatch_count,
     mismatch_count,
     cross_dept_count,
     flash_message,
@@ -1844,23 +1851,145 @@ app.post('/admin/resolve_mismatch', async (req: any, res) => {
   const action      = req.body.action;
   const department  = req.body.department || '';
   const now         = new Date().toLocaleString('en-IN');
+  const { dateStr } = getISTDateTime();
 
   const c = db.complaints.find((x: any) => x.id === complaintId);
   if (!c) return res.redirect('/admin/quarantine');
 
-  if (action === 'approve') {
-    const officer = db.users.find((u: any) => u.department === department && u.role === 'Officer');
+  const isResolutionFlag = Boolean(c.resolution_image || (c.verification_status && c.verification_status.includes('Image Mismatch')));
+
+  if (action === 'reject_resolution' || (action === 'reject' && isResolutionFlag)) {
+    // -------------------------------------------------------------------------
+    // CRITICAL: Reject the OFFICER'S faulty resolution proof, NOT citizen complaint!
+    // Complaint MUST return to 'In Progress' and be assigned back to the officer.
+    // -------------------------------------------------------------------------
+    const targetDept = department || c.department || '';
+    const officer = db.users.find((u: any) =>
+      (targetDept && u.department && u.department.toLowerCase().trim() === targetDept.toLowerCase().trim()) && u.role === 'Officer'
+    ) || db.users.find((u: any) => u.username === c.assigned_to && u.role === 'Officer');
+
+    const assignedOfficer = officer ? officer.username : (c.assigned_to || 'Officer');
+    const rejectReason = req.body.reason || 'Admin rejected resolution proof: Photo does not demonstrate authentic repair or is identical to problem photo. Re-inspection required.';
+
+    c.status = 'In Progress';
+    c.needs_verification = 0;
+    c.resolution_image = null;
+    c.verification_status = 'Resolution Rejected by Admin: Proof Invalid';
+    c.officer_remark = rejectReason;
+    c.assigned_to = assignedOfficer;
+    c.updated_at = now;
+
+    db.history.push({
+      id: db.nextHistoryId++,
+      complaint_id: complaintId,
+      officer_username: 'Admin',
+      old_status: 'Under Admin Triage',
+      new_status: 'In Progress',
+      remarks: `Admin rejected resolution proof: ${rejectReason}`,
+      action_time: dateStr
+    });
+
+    db.notifications.push({
+      id: db.nextNotificationId++,
+      username: assignedOfficer,
+      message: `⚠️ Action Required: Admin rejected resolution proof for complaint SCS-${String(complaintId).padStart(4, '0')}. Please re-inspect and submit authentic repair photos.`,
+      is_read: 0,
+      created_at: dateStr
+    });
+
+    db.notifications.push({
+      id: db.nextNotificationId++,
+      username: c.username,
+      message: `📌 Update on complaint SCS-${String(complaintId).padStart(4, '0')}: Status is In Progress. Municipal department has been instructed to complete authentic repairs.`,
+      is_read: 0,
+      created_at: dateStr
+    });
+
+    (req.session as any).qFlash = `Complaint SCS-${String(complaintId).padStart(4,'0')} resolution rejected. Returned to In Progress and reassigned to officer ${assignedOfficer}.`;
+    (req.session as any).qFlashCat = 'warning';
+
+  } else if (action === 'approve_resolution') {
+    // Admin manually verifies and approves the officer's work
+    c.status = 'Resolved';
+    c.needs_verification = 0;
+    c.verification_status = 'Verified & Approved by Admin';
+    c.updated_at = now;
+
+    db.history.push({
+      id: db.nextHistoryId++,
+      complaint_id: complaintId,
+      officer_username: 'Admin',
+      old_status: 'Under Admin Triage',
+      new_status: 'Resolved',
+      remarks: 'Admin manually verified and approved resolution proof.',
+      action_time: dateStr
+    });
+
+    db.notifications.push({
+      id: db.nextNotificationId++,
+      username: c.username,
+      message: `✅ Great news! Your complaint SCS-${String(complaintId).padStart(4, '0')} has been verified and marked as Resolved by Admin.`,
+      is_read: 0,
+      created_at: dateStr
+    });
+
+    (req.session as any).qFlash = `Complaint SCS-${String(complaintId).padStart(4,'0')} resolution verified and approved. Marked as Resolved.`;
+    (req.session as any).qFlashCat = 'success';
+
+  } else if (action === 'approve') {
+    // Initial citizen upload was flagged, admin approves and forwards to department
+    const targetDept = department || c.department || '';
+    const officer = db.users.find((u: any) => u.department === targetDept && u.role === 'Officer');
     c.status = 'Pending';
     c.needs_verification = 0;
     c.assigned_to = officer ? officer.username : '';
+    if (department) c.department = department;
     c.updated_at = now;
+
+    db.history.push({
+      id: db.nextHistoryId++,
+      complaint_id: complaintId,
+      officer_username: 'Admin',
+      old_status: 'Under Admin Triage',
+      new_status: 'Pending',
+      remarks: `Admin approved complaint and assigned to ${targetDept}.`,
+      action_time: dateStr
+    });
+
+    (req.session as any).qFlash = `Complaint SCS-${String(complaintId).padStart(4,'0')} approved and forwarded to ${targetDept}.`;
+    (req.session as any).qFlashCat = 'success';
+
   } else if (action === 'reject') {
+    // Citizen complaint rejected as spam/invalid
     const reason = req.body.reason || 'Image does not match reported civic issue (AI mismatch detected)';
     c.status = 'Rejected';
     c.needs_verification = 0;
     c.rejection_reason = reason;
     c.updated_at = now;
+
+    db.history.push({
+      id: db.nextHistoryId++,
+      complaint_id: complaintId,
+      officer_username: 'Admin',
+      old_status: 'Under Admin Triage',
+      new_status: 'Rejected',
+      remarks: `Admin rejected complaint as spam: ${reason}`,
+      action_time: dateStr
+    });
+
+    db.notifications.push({
+      id: db.nextNotificationId++,
+      username: c.username,
+      message: `Your complaint SCS-${String(complaintId).padStart(4, '0')} was rejected: ${reason}`,
+      is_read: 0,
+      created_at: dateStr
+    });
+
+    (req.session as any).qFlash = `Complaint SCS-${String(complaintId).padStart(4,'0')} rejected as spam/invalid image.`;
+    (req.session as any).qFlashCat = 'warning';
   }
+
+  saveDatabase();
 
   // Persist to Supabase if available
   if (pgPool) {
@@ -1868,20 +1997,21 @@ app.post('/admin/resolve_mismatch', async (req: any, res) => {
       const client = await pgPool.connect();
       await client.query(
         `UPDATE complaints SET status=$1, needs_verification=$2, assigned_to=$3,
-         rejection_reason=$4, updated_at=$5 WHERE id=$6`,
-        [c.status, c.needs_verification, c.assigned_to || null, c.rejection_reason || null, now, complaintId]
+         rejection_reason=$4, resolution_image=$5, verification_status=$6, officer_remark=$7, updated_at=$8 WHERE id=$9`,
+        [
+          c.status,
+          c.needs_verification,
+          c.assigned_to || null,
+          c.rejection_reason || null,
+          c.resolution_image || null,
+          c.verification_status || null,
+          c.officer_remark || null,
+          now,
+          complaintId
+        ]
       );
       client.release();
     } catch (e) { console.error('Quarantine DB update error:', e); }
-  }
-
-  // Store flash in session for next render
-  if (action === 'approve') {
-    (req.session as any).qFlash = `Complaint SCS-${String(complaintId).padStart(4,'0')} approved and forwarded to ${department}.`;
-    (req.session as any).qFlashCat = 'success';
-  } else if (action === 'reject') {
-    (req.session as any).qFlash = `Complaint SCS-${String(complaintId).padStart(4,'0')} rejected as spam/invalid image.`;
-    (req.session as any).qFlashCat = 'warning';
   }
 
   res.redirect('/admin/quarantine');

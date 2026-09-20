@@ -12,7 +12,7 @@
           href="{{ url_for('static', filename='style.css') }}">
 
     <link rel="stylesheet"
-          href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+          href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 
     <style>
         .map-card { min-height: 640px; overflow: visible !important; }
@@ -124,23 +124,16 @@
 
 </div>
 
-<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
 <script>
 
 //=========================
-// Complaint Data
-//=========================
-
-var complaints = {{ complaints|tojson }};
-
-
-//=========================
 // Community & Complaint Data
 //=========================
-var complaints = {{ complaints|tojson if complaints else "[]" }};
+var complaints = {{ complaints|tojson|safe if complaints else "[]" }};
 
-var rawCommunity = {{ community|tojson if community else "{}" }};
+var rawCommunity = {{ community|tojson|safe if community else "{}" }};
 var communityName = (rawCommunity && (rawCommunity.community_name || rawCommunity.name || rawCommunity[0])) || "Community Monitoring Area";
 var communityLat = (rawCommunity && (Number(rawCommunity.latitude) || Number(rawCommunity[1]))) || 17.6868;
 var communityLon = (rawCommunity && (Number(rawCommunity.longitude) || Number(rawCommunity[2]))) || 83.2185;
@@ -157,10 +150,10 @@ var map = L.map('map').setView([communityLat, communityLon], 13);
 // Tile Layer
 //=========================
 
-L.tileLayer(
-'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-{
-    maxZoom:19
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19,
+    subdomains: ['a', 'b', 'c'],
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
 }).addTo(map);
 
 
@@ -308,16 +301,17 @@ bounds.extend([communityLat, communityLon]);
 
 for(let i=0;i<complaints.length;i++){
 
-    let id = complaints[i][0];
-    let username = complaints[i][1];
-    let category = complaints[i][2];
-    let priority = complaints[i][3];
-    let address = complaints[i][4];
-    let lat = complaints[i][5];
-    let lon = complaints[i][6];
-    let status = complaints[i][7];
+    let c = complaints[i];
+    let id = Array.isArray(c) ? c[0] : (c && c.id);
+    let username = Array.isArray(c) ? c[1] : (c && c.username);
+    let category = Array.isArray(c) ? c[2] : (c && c.category);
+    let priority = Array.isArray(c) ? c[3] : (c && c.priority);
+    let address = Array.isArray(c) ? c[4] : (c && c.address);
+    let lat = Array.isArray(c) ? Number(c[5]) : Number(c && c.latitude);
+    let lon = Array.isArray(c) ? Number(c[6]) : Number(c && c.longitude);
+    let status = Array.isArray(c) ? c[7] : (c && c.status);
 
-    if(lat && lon){
+    if(lat && lon && !isNaN(lat) && !isNaN(lon)){
 
         let markerIcon;
 
@@ -442,6 +436,7 @@ setTimeout(function(){
     window.dispatchEvent(new Event('resize'));
 }, 300);
 setTimeout(function(){ map.invalidateSize(true); }, 900);
+window.addEventListener('resize', function(){ map.invalidateSize(true); });
 
 // ================ DARK MODE ================
 function toggleCivicTheme() {
