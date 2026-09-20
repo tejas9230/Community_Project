@@ -982,31 +982,42 @@ async function analyzeImageWithGemini(
   const apiKey = process.env.GEMINI_API_KEY || 
                  process.env.API_KEY || 
                  process.env.GOOGLE_API_KEY || 
-                 process.env.GOOGLE_GENAI_API_KEY;
+                 process.env.GOOGLE_GENAI_API_KEY ||
+                 process.env.AI_STUDIO_KEY;
 
   if (!fs.existsSync(filePath)) {
-    return { is_civic: true, confidence: 90, reason: 'Image file not found on disk' };
+    return { is_civic: false, confidence: 10, reason: 'Image file not found on disk' };
   }
 
-  // Pre-check for digital art / anime / wallpaper keywords in filename
-  const baseName = path.basename(filePath).toLowerCase();
+  // Pre-check for digital art / anime / wallpaper / superhero / cinema keywords in filename
+  const checkNames = (String(originalFileName || '') + ' ' + path.basename(filePath)).toLowerCase();
   const suspiciousKeywords = [
     'akatsuki', 'naruto', 'anime', 'wallpaper', 'manga', 'sasuke', 'goku', 'drawing', 
     'illustration', 'graphic', 'cartoon', 'meme', 'art', 'game', 'fanart', 'poster', 
-    'character', 'doodle', 'render', 'sketch', 'screenshot', 'sample', 'test', 'fake'
+    'character', 'doodle', 'render', 'sketch', 'screenshot', 'sample', 'test', 'fake',
+    'spider', 'spiderman', 'spidey', 'batman', 'superman', 'marvel', 'dc', 'hero', 'superhero',
+    'ironman', 'avenger', 'cinema', 'movie', 'film', 'fiction', 'fantasy', 'warrior', 'sword',
+    'dragon', 'samurai', 'pokemon', 'disney', 'pixar', 'action', 'actor', 'cosplay', 'digital'
   ];
-  const hasSuspiciousName = suspiciousKeywords.some(kw => baseName.includes(kw));
+  const hasSuspiciousName = suspiciousKeywords.some(kw => checkNames.includes(kw));
+
+  if (hasSuspiciousName) {
+    console.warn(`[AI Vision Safety Guard] Non-civic entertainment/wallpaper detected: ${checkNames}`);
+    return { 
+      is_civic: false, 
+      confidence: 10, 
+      reason: `Non-civic synthetic/fictional media detected (${originalFileName || path.basename(filePath)}). Held for Admin Special Attention Desk.` 
+    };
+  }
 
   if (!apiKey) {
-    console.warn(`[Gemini Vision] No API key detected in environment. Running smart heuristic inspection on: ${baseName}`);
-    if (hasSuspiciousName) {
-      return { 
-        is_civic: false, 
-        confidence: 15, 
-        reason: `Non-civic/synthetic digital media detected (${baseName}). Flagged for Admin Special Attention Desk.` 
-      };
-    }
-    return { is_civic: true, confidence: 90, reason: 'AI Vision verified (heuristic inspection)' };
+    console.warn(`[Gemini Vision] No API key detected in environment for: ${checkNames}`);
+    // Do NOT blindly verify without API key! Flag for Admin triage
+    return { 
+      is_civic: false, 
+      confidence: 35, 
+      reason: 'AI Vision key pending. Quarantined to Admin Special Attention Desk for verification.' 
+    };
   }
 
   try {
@@ -1014,17 +1025,23 @@ async function analyzeImageWithGemini(
     const base64Data = fileBuffer.toString('base64');
     const safeMime = mimeType && mimeType.startsWith('image/') ? mimeType : 'image/jpeg';
 
-    const prompt = `You are an AI civic infrastructure inspector in India.
-Analyze this image submitted for a municipal civic complaint.
+    const prompt = `You are a strict AI municipal civil infrastructure auditor in India.
+Analyze this submitted complaint photo.
 Claimed Category: "${category}"
 Citizen Description: "${description}"
 
 Determine:
 1. Is this a legitimate real-world outdoor civic issue in India (e.g. damaged road, pothole, street garbage dump, pipeline water leak, open drain, stray animal hazard, broken streetlight, traffic jam)?
-2. Or is it fake/non-civic (e.g. digital anime/cartoon illustration, desktop/mobile wallpaper, internet meme, indoor selfie/room photo, movie screenshot, or artwork)?
-3. Does the visual evidence match the claimed category?
+2. Or is it non-civic / entertainment (e.g. superhero like Spider-Man, Batman, or Superman; movie screenshot; video game graphic; anime; cartoon; desktop/mobile wallpaper; digital drawing; meme; indoor selfie/pet; or artwork)?
+3. Does the visual evidence match the claimed category "${category}"?
 
-CRITICAL: If the image contains ANY fantasy artwork, dragon, samurai, anime, cartoon, video game graphic, digital drawing, or wallpaper, you MUST set is_civic=false and confidence to less than 20.
+CRITICAL SAFETY DIRECTIVE:
+If the image shows a superhero (Spider-Man, Batman, Marvel, DC), fictional character, movie scene, anime, cartoon, video game graphic, wallpaper, or non-civic scene:
+You MUST set:
+"is_civic": false
+"confidence": 5
+"detected_category": "Fictional / Wallpaper Media"
+"reason": "Non-civic fictional character / wallpaper detected"
 
 Respond ONLY with a JSON object matching this exact schema:
 {
@@ -1033,7 +1050,7 @@ Respond ONLY with a JSON object matching this exact schema:
   "detected_category": string,
   "reason": string
 }
-Set confidence between 0 and 100. If fake, anime, or wallpaper, is_civic MUST be false and confidence must be below 20.`;
+Set confidence between 0 and 100. If fake, anime, superhero, or wallpaper, is_civic MUST be false and confidence must be below 15.`;
 
     const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
     const response = await fetch(url, {
@@ -1064,10 +1081,11 @@ Set confidence between 0 and 100. If fake, anime, or wallpaper, is_civic MUST be
       if (rawText) {
         const parsed = JSON.parse(rawText);
         console.log('[Gemini Vision] Image verification result:', parsed);
+        const isCivic = parsed.is_civic === true && (typeof parsed.confidence !== 'number' || parsed.confidence >= 50);
         return {
-          is_civic: parsed.is_civic === true,
-          confidence: typeof parsed.confidence === 'number' ? parsed.confidence : (parsed.is_civic ? 92 : 15),
-          reason: parsed.reason || (parsed.is_civic ? 'Verified civic issue' : 'Non-civic image detected'),
+          is_civic: isCivic,
+          confidence: typeof parsed.confidence === 'number' ? parsed.confidence : (isCivic ? 92 : 10),
+          reason: parsed.reason || (isCivic ? 'Verified civic issue' : 'Non-civic image detected'),
           detected_category: parsed.detected_category || category
         };
       }
@@ -1079,7 +1097,12 @@ Set confidence between 0 and 100. If fake, anime, or wallpaper, is_civic MUST be
     console.error('[Gemini Vision] Verification error:', err?.message || err);
   }
 
-  return { is_civic: true, confidence: 90, reason: 'AI Vision fallback' };
+  // Safety fallback: NEVER mark unverified images as verified!
+  return { 
+    is_civic: false, 
+    confidence: 25, 
+    reason: 'AI Vision could not confirm civic issue. Held for Admin Special Attention triage.' 
+  };
 }
 
 async function compareResolutionWithGemini(
@@ -1305,13 +1328,14 @@ app.post('/submit_complaint', upload.single('image'), async (req: any, res) => {
   if (req.file) {
     const aiVision = await analyzeImageWithGemini(
       req.file.path,
-      req.file.mimetype,
       category,
-      description || ''
+      description || '',
+      req.file.mimetype,
+      req.file.originalname
     );
 
-    if (!aiVision.is_civic) {
-      image_confidence = aiVision.confidence < 50 ? aiVision.confidence : 18;
+    if (!aiVision.is_civic || aiVision.confidence < 50) {
+      image_confidence = aiVision.confidence < 50 ? aiVision.confidence : 15;
       needs_verification = 1;
       mismatch_reason = `AI Vision Flag: ${aiVision.reason}`;
     } else {
@@ -1326,23 +1350,24 @@ app.post('/submit_complaint', upload.single('image'), async (req: any, res) => {
   }
 
   // 3. Heuristic safety checks (expanded keyword & media inspection)
-  const fileName = req.file ? req.file.originalname.toLowerCase() : '';
+  const fileCheckName = (String(req.file?.originalname || '') + ' ' + String(req.file?.filename || '')).toLowerCase();
   const suspiciousKeywords = [
     'akatsuki', 'naruto', 'anime', 'wallpaper', 'meme', 'cartoon', 'test', 'fake', 
     'random', 'screenshot', 'photo', 'sample', 'art', 'sasuke', 'goku', 'manga', 
     'drawing', 'illustration', 'graphic', 'fanart', 'poster', 'game', 'avatar', 
     'doodle', 'render', 'sketch', 'dragon', 'samurai', 'fantasy', 'warrior', 'sword',
-    'pokemon', 'marvel', 'hero', 'cinema', 'fiction'
+    'pokemon', 'marvel', 'hero', 'cinema', 'fiction', 'spider', 'spiderman', 'spidey',
+    'batman', 'superman', 'ironman', 'avenger', 'cosplay', 'character', 'movie', 'film'
   ];
-  const isSuspiciousImage = suspiciousKeywords.some(kw => fileName.includes(kw) || descLower.includes(kw));
+  const isSuspiciousImage = suspiciousKeywords.some(kw => fileCheckName.includes(kw) || descLower.includes(kw));
 
   // If category is "Others" but mentions civic keywords (e.g. "huge hole" = pothole/road damage!)
   const mentionsCivicKeyword = Object.keys(CROSS_DEPT_KEYWORDS).some(kw => descLower.includes(kw));
 
   if (isSuspiciousImage) {
-    image_confidence = 18;
+    image_confidence = 10;
     needs_verification = 1;
-    mismatch_reason = `AI Safety Guard: Non-civic/synthetic digital media detected (${fileName || 'anime/graphic'}). Sent to Admin triage.`;
+    mismatch_reason = `AI Safety Guard: Non-civic/synthetic digital media detected (${req.file?.originalname || 'graphic'}). Sent to Admin triage.`;
   } else if (category === 'Others' && mentionsCivicKeyword) {
     image_confidence = 22;
     needs_verification = 1;
@@ -1354,7 +1379,7 @@ app.post('/submit_complaint', upload.single('image'), async (req: any, res) => {
   let initial_status = 'Pending';
   let assigned_to = deptOfficer ? deptOfficer.username : '';
 
-  if (needs_verification === 1 && image_confidence < 50) {
+  if (needs_verification === 1) {
     initial_status = 'Under Admin Triage';
     assigned_to = 'admin'; // Held at admin triage desk, NOT sent to department officer!
   }

@@ -1074,13 +1074,25 @@ def submit_complaint():
             is_cross_dept  = 1
             secondary_dept = list(matched_depts)[0]
             needs_verification = 1
-            if not mismatch_reason:
-                mismatch_reason = f"Multi-department issue detected: {department} + {secondary_dept}"
+        # Check filename for fake/synthetic/superhero/wallpaper keywords
+        filename_check = (getattr(image, 'filename', '') or '').lower()
+        suspicious_kws = [
+            'akatsuki', 'naruto', 'anime', 'wallpaper', 'meme', 'cartoon', 'test', 'fake',
+            'random', 'screenshot', 'photo', 'sample', 'art', 'sasuke', 'goku', 'manga',
+            'drawing', 'illustration', 'graphic', 'fanart', 'poster', 'game', 'avatar',
+            'doodle', 'render', 'sketch', 'dragon', 'samurai', 'fantasy', 'warrior', 'sword',
+            'pokemon', 'marvel', 'hero', 'cinema', 'fiction', 'spider', 'spiderman', 'spidey',
+            'batman', 'superman', 'ironman', 'avenger', 'cosplay', 'character', 'movie', 'film'
+        ]
+        if any(kw in filename_check for kw in suspicious_kws) or any(kw in desc_lower for kw in suspicious_kws):
+            needs_verification = 1
+            image_confidence = 10
+            mismatch_reason = f"Non-civic synthetic/fictional media detected ({getattr(image, 'filename', 'media')}). Held at Admin Special Attention Desk."
 
         # Route to Admin Quarantine if mismatch
         initial_status = "Pending"
         assigned_officer = None
-        if needs_verification and image_confidence < 50:
+        if needs_verification:
             initial_status   = "Under Admin Triage"
             assigned_officer = "admin"
         else:
