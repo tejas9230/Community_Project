@@ -975,9 +975,10 @@ app.post('/predict_preview', (req: any, res) => {
 // ============================================================================
 async function analyzeImageWithGemini(
   filePath: string,
-  mimeType: string,
   category: string,
-  description: string
+  description: string,
+  mimeType?: string,
+  originalFileName?: string
 ): Promise<{ is_civic: boolean; confidence: number; reason: string; detected_category?: string }> {
   const apiKey = process.env.GEMINI_API_KEY || 
                  process.env.API_KEY || 

@@ -113,6 +113,20 @@
 
     </header>
 
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div style="margin: 20px 0;">
+          {% for category, message in messages %}
+            <div style="padding: 14px 20px; border-radius: 12px; margin-bottom: 12px; font-size: 14px; font-weight: 600; display: flex; align-items: center; gap: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+                        background: {% if category == 'error' %}#fee2e2; color: #991b1b; border: 1px solid #f87171;{% elif category == 'warning' %}#fef3c7; color: #92400e; border: 1px solid #f59e0b;{% elif category == 'success' %}#dcfce7; color: #166534; border: 1px solid #86efac;{% else %}#e0f2fe; color: #0369a1; border: 1px solid #7dd3fc;{% endif %}">
+              <i class="fa-solid {% if category == 'error' %}fa-circle-exclamation{% elif category == 'warning' %}fa-triangle-exclamation{% elif category == 'success' %}fa-circle-check{% else %}fa-circle-info{% endif %}" style="font-size: 18px;"></i>
+              <span style="flex: 1;">{{ message }}</span>
+            </div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+
     <!-- ========================= -->
     <!-- Statistics -->
     <!-- ========================= -->

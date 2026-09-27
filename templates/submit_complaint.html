@@ -157,8 +157,24 @@
 
     </div>
 
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div style="margin-bottom: 20px;">
+          {% for category, message in messages %}
+            <div style="padding: 14px 18px; border-radius: 12px; margin-bottom: 10px; font-size: 14px; font-weight: 600; display: flex; align-items: center; gap: 10px;
+                        background: {% if category == 'error' %}#fee2e2; color: #991b1b; border: 1px solid #f87171;{% elif category == 'warning' %}#fef3c7; color: #92400e; border: 1px solid #f59e0b;{% else %}#dcfce7; color: #166534; border: 1px solid #86efac;{% endif %}">
+              <i class="fa-solid {% if category == 'error' %}fa-circle-exclamation{% elif category == 'warning' %}fa-triangle-exclamation{% else %}fa-circle-check{% endif %}"></i>
+              <span>{{ message }}</span>
+            </div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+
     <form method="POST"
-          enctype="multipart/form-data">
+          action="/submit_complaint"
+          enctype="multipart/form-data"
+          onsubmit="return validateComplaintForm(event)">
 
         <!-- ================= Location ================= -->
 
@@ -182,8 +198,7 @@
                 type="text"
                 id="address"
                 name="address"
-                placeholder="Location will appear here"
-                readonly
+                placeholder="Click on the map or type address here"
                 required>
 
             <input
@@ -495,23 +510,25 @@ function getLocation() {
 
                 document.getElementById("latitude").value = lat;
                 document.getElementById("longitude").value = lon;
+                const addrEl = document.getElementById("address");
+                addrEl.value = "GPS Location (" + Number(lat).toFixed(5) + ", " + Number(lon).toFixed(5) + ")";
 
                 fetch(
                     `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`
                 )
                 .then(response => response.json())
                 .then(data => {
-
-                    document.getElementById("address").value =
-                        data.display_name;
-
-                });
+                    if (data && data.display_name) {
+                        addrEl.value = data.display_name;
+                    }
+                })
+                .catch(() => {});
 
             },
 
             function(error) {
 
-                alert("Location access denied.");
+                alert("Location access denied. Please click on the map below to select your location.");
 
             }
 
@@ -521,7 +538,7 @@ function getLocation() {
 
     else {
 
-        alert("Geolocation is not supported by this browser.");
+        alert("Geolocation is not supported by this browser. Please click on the map to set location.");
 
     }
 
@@ -536,9 +553,11 @@ var map = L.map('map').setView(
     13
 );
 
-L.tileLayer(
-    'https://tile.openstreetmap.org/{z}/{x}/{y}.png'
-).addTo(map);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19,
+    subdomains: ['a', 'b', 'c'],
+    attribution: '&copy; OpenStreetMap contributors'
+}).addTo(map);
 
 var marker;
 
@@ -556,18 +575,49 @@ map.on('click', function(e){
     document.getElementById("longitude").value =
         e.latlng.lng;
 
+    const mapAddrEl = document.getElementById("address");
+    mapAddrEl.value = "Pinned Location (" + e.latlng.lat.toFixed(5) + ", " + e.latlng.lng.toFixed(5) + ")";
+
     fetch(
         `https://nominatim.openstreetmap.org/reverse?format=json&lat=${e.latlng.lat}&lon=${e.latlng.lng}`
     )
     .then(response => response.json())
     .then(data => {
-
-        document.getElementById("address").value =
-            data.display_name;
-
-    });
+        if (data && data.display_name) {
+            mapAddrEl.value = data.display_name;
+        }
+    })
+    .catch(() => {});
 
 });
+
+// Form submission validation
+function validateComplaintForm(event) {
+    const lat = document.getElementById("latitude").value;
+    const lon = document.getElementById("longitude").value;
+    const img = document.getElementById("image").files;
+
+    if (!lat || !lon) {
+        event.preventDefault();
+        alert("📍 Please select your complaint location on the map before submitting.");
+        document.getElementById("map").scrollIntoView({ behavior: "smooth" });
+        return false;
+    }
+
+    if (!img || img.length === 0) {
+        event.preventDefault();
+        alert("📷 Please upload an evidence photo of the issue before submitting.");
+        document.getElementById("uploadBox").scrollIntoView({ behavior: "smooth" });
+        return false;
+    }
+
+    const submitBtn = document.querySelector(".submit-btn");
+    if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Submitting & Analyzing...';
+    }
+    return true;
+}
 
 // --------------------------------------------------
 // Show Selected File Name
