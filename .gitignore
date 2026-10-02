@@ -7,3 +7,4 @@ static/uploads/
 *.log
 cv_dataset/
 *.zip
+scratch/

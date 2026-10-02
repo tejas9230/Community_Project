@@ -1073,7 +1073,7 @@ def submit_complaint():
         if matched_depts:
             is_cross_dept  = 1
             secondary_dept = list(matched_depts)[0]
-            needs_verification = 1
+
         # Check filename for fake/synthetic/superhero/wallpaper keywords
         filename_check = (getattr(image, 'filename', '') or '').lower()
         suspicious_kws = [
@@ -1089,22 +1089,38 @@ def submit_complaint():
             image_confidence = 10
             mismatch_reason = f"Non-civic synthetic/fictional media detected ({getattr(image, 'filename', 'media')}). Held at Admin Special Attention Desk."
 
-        # Route to Admin Quarantine if mismatch
-        initial_status = "Pending"
-        assigned_officer = None
-        if needs_verification:
+        # Department Officer Fallback Mapping
+        DEFAULT_OFFICERS = {
+            "Roads & Infrastructure": "roads",
+            "Water Supply": "water",
+            "Electricity & Street Lighting": "electricity",
+            "Sanitation & Waste Management": "sanitation",
+            "Drainage & Sewage": "drainage",
+            "Parks & Green Spaces": "parks",
+            "Public Property Maintenance": "property",
+            "Animal Control": "animal",
+            "Traffic & Public Safety": "traffic",
+            "Others": "others"
+        }
+
+        # Auto-assign to department officer
+        conn_tmp = get_db(); cur_tmp = conn_tmp.cursor()
+        if USE_POSTGRES:
+            cur_tmp.execute("SELECT username FROM users WHERE department=%s AND role='Officer' LIMIT 1", (department,))
+        else:
+            cur_tmp.execute("SELECT username FROM users WHERE department=? AND role='Officer' LIMIT 1", (department,))
+        off_row = cur_tmp.fetchone()
+        conn_tmp.close()
+        target_officer = off_row[0] if off_row else DEFAULT_OFFICERS.get(department, 'roads')
+
+        # Route to Admin Quarantine ONLY if image_confidence is low or fake/fictional media detected
+        if needs_verification and image_confidence < 50:
             initial_status   = "Under Admin Triage"
             assigned_officer = "admin"
         else:
-            # Auto-assign to department officer
-            conn_tmp = get_db(); cur_tmp = conn_tmp.cursor()
-            if USE_POSTGRES:
-                cur_tmp.execute("SELECT username FROM users WHERE department=%s AND role='Officer' LIMIT 1", (department,))
-            else:
-                cur_tmp.execute("SELECT username FROM users WHERE department=? AND role='Officer' LIMIT 1", (department,))
-            off_row = cur_tmp.fetchone()
-            conn_tmp.close()
-            assigned_officer = off_row[0] if off_row else None
+            initial_status   = "Pending"
+            assigned_officer = target_officer
+            needs_verification = 0
 
         # ------------------------------------
         # SLA Deadline

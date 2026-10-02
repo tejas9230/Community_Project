@@ -1,0 +1,905 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Smart Civic System (SCS) — 18-Slide Presentation Deck</title>
+  <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+  <style>
+    body { font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+    .slide { display: none; }
+    .slide.active { display: flex; }
+    .badge { display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.25rem 0.75rem; border-radius: 9999px; font-weight: 600; font-size: 0.85rem; }
+  </style>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col justify-between selection:bg-blue-600 selection:text-white">
+
+  <!-- Top Navigation & Progress Bar -->
+  <header class="bg-slate-800/90 backdrop-blur border-b border-slate-700/80 px-6 py-3 flex items-center justify-between sticky top-0 z-50 shadow-md">
+    <div class="flex items-center gap-3">
+      <div class="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center font-bold text-white shadow-inner">
+        SCS
+      </div>
+      <div>
+        <h1 class="text-sm font-bold text-white leading-tight">Smart Civic System (SCS)</h1>
+        <p class="text-xs text-slate-400">MVGR College of Engineering (Autonomous) • R24</p>
+      </div>
+    </div>
+
+    <div class="flex items-center gap-4">
+      <div class="text-xs font-semibold px-3 py-1 bg-slate-700/80 rounded-full border border-slate-600 text-slate-200">
+        Slide <span id="currentSlideNum" class="text-blue-400 font-bold">1</span> of <span id="totalSlideNum" class="text-slate-300">18</span>
+      </div>
+      <button id="toggleNotesBtn" onclick="toggleSpeakerNotes()" class="text-xs flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-200 border border-slate-600 transition">
+        <i class="fa-regular fa-comment-dots"></i> <span>Speaker Notes</span>
+      </button>
+      <a href="https://ccpai-1.ai.studio" target="_blank" class="text-xs flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-semibold shadow transition">
+        <i class="fa-solid fa-arrow-up-right-from-square"></i> <span>Live Demo</span>
+      </a>
+    </div>
+  </header>
+
+  <!-- Main Slide Presentation Area -->
+  <main class="flex-1 flex items-center justify-center p-4 md:p-8">
+    <div class="w-full max-w-5xl bg-slate-800 border border-slate-700/90 rounded-2xl shadow-2xl overflow-hidden min-h-[580px] flex flex-col justify-between relative">
+
+      <!-- ================= SLIDE 1: COVER ================= -->
+      <section class="slide active flex-col p-8 md:p-12 justify-center text-center">
+        <div class="inline-block mx-auto mb-4 px-4 py-1.5 rounded-full bg-blue-500/10 border border-blue-500/30 text-blue-400 text-xs font-semibold uppercase tracking-wider">
+          Community Project Presentation • Regulation R24 • Course: R24MSCSP001
+        </div>
+        <h1 class="text-3xl md:text-5xl font-extrabold text-white tracking-tight mb-3">
+          Community Complaint Portal Using AI
+        </h1>
+        <h2 class="text-xl md:text-2xl font-semibold text-blue-400 mb-6">
+          Smart Civic System (SCS)
+        </h2>
+        
+        <p class="text-sm text-slate-300 max-w-2xl mx-auto mb-8 leading-relaxed">
+          Department of Data Engineering • CSE (Artificial Intelligence & Machine Learning)<br>
+          <span class="text-slate-400">Maharaj Vijayaram Gajapathi Raj College of Engineering (Autonomous), Vizianagaram</span>
+        </p>
+
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 max-w-3xl mx-auto text-left mb-8">
+          <div class="bg-slate-700/50 p-3 rounded-xl border border-slate-600/60">
+            <p class="text-xs text-slate-400 font-medium">24331A4247</p>
+            <p class="text-sm font-semibold text-white">K. Deepthi</p>
+          </div>
+          <div class="bg-slate-700/50 p-3 rounded-xl border border-slate-600/60">
+            <p class="text-xs text-slate-400 font-medium">24331A4224</p>
+            <p class="text-sm font-semibold text-white">D. Tejas Reddy</p>
+          </div>
+          <div class="bg-slate-700/50 p-3 rounded-xl border border-slate-600/60">
+            <p class="text-xs text-slate-400 font-medium">24331A4248</p>
+            <p class="text-sm font-semibold text-white">K. Uma Sekhar</p>
+          </div>
+          <div class="bg-slate-700/50 p-3 rounded-xl border border-slate-600/60">
+            <p class="text-xs text-slate-400 font-medium">24331A4201</p>
+            <p class="text-sm font-semibold text-white">A. Tarun</p>
+          </div>
+        </div>
+
+        <div class="flex flex-wrap justify-center gap-6 text-xs text-slate-400 pt-4 border-t border-slate-700/70">
+          <div><strong class="text-slate-200">Guide:</strong> Dr. S. Atchuta Rao, Professor</div>
+          <div><strong class="text-slate-200">Coordinator:</strong> Mrs. K. Amaravathi</div>
+          <div><strong class="text-slate-200">HOD:</strong> Dr. V. Jyothi, Assoc. Professor</div>
+          <div><strong class="text-slate-200">Date:</strong> October 2026</div>
+        </div>
+        <div class="speaker-note hidden mt-6 p-4 bg-blue-950/60 border border-blue-800 rounded-xl text-left text-xs text-blue-200">
+          <strong>💡 Speaker Script:</strong> "Good morning respected Guide, Coordinator, HOD, and panel members. We are presenting our Community Project: 'Community Complaint Portal Using AI' (Smart Civic System)."
+        </div>
+      </section>
+
+      <!-- ================= SLIDE 2: ABSTRACT ================= -->
+      <section class="slide flex-col p-8 md:p-10">
+        <div class="border-b border-slate-700 pb-4 mb-6">
+          <span class="text-blue-400 text-xs font-bold uppercase tracking-wider">Slide 2</span>
+          <h2 class="text-2xl md:text-3xl font-bold text-white">Abstract</h2>
+        </div>
+        
+        <div class="grid md:grid-cols-3 gap-5 mb-6">
+          <div class="bg-slate-700/40 border border-slate-600/70 p-5 rounded-xl">
+            <div class="w-10 h-10 rounded-lg bg-red-500/20 text-red-400 flex items-center justify-center text-lg mb-3">
+              <i class="fa-solid fa-triangle-exclamation"></i>
+            </div>
+            <h3 class="font-bold text-white text-base mb-1.5">The Civic Problem</h3>
+            <p class="text-xs text-slate-300 leading-relaxed">
+              Municipal complaints face slow manual routing, identical duplicate submissions by neighbors, and tickets marked "Resolved" without verifiable proof of work.
+            </p>
+          </div>
+
+          <div class="bg-slate-700/40 border border-slate-600/70 p-5 rounded-xl">
+            <div class="w-10 h-10 rounded-lg bg-blue-500/20 text-blue-400 flex items-center justify-center text-lg mb-3">
+              <i class="fa-solid fa-microchip"></i>
+            </div>
+            <h3 class="font-bold text-white text-base mb-1.5">The AI Solution</h3>
+            <p class="text-xs text-slate-300 leading-relaxed">
+              Combines real-time NLP classification, GPS duplicate merging, and multimodal Computer Vision to audit Before and After repair photos.
+            </p>
+          </div>
+
+          <div class="bg-slate-700/40 border border-slate-600/70 p-5 rounded-xl">
+            <div class="w-10 h-10 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-lg mb-3">
+              <i class="fa-solid fa-check-double"></i>
+            </div>
+            <h3 class="font-bold text-white text-base mb-1.5">Full Accountability</h3>
+            <p class="text-xs text-slate-300 leading-relaxed">
+              Connects citizens, department officers, and administrators in a single transparent loop with multilingual speech input and emergency SLAs.
+            </p>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 bg-slate-900/60 p-4 rounded-xl border border-slate-700 text-center">
+          <div><p class="text-xl font-extrabold text-blue-400">10</p><p class="text-xs text-slate-400">Municipal Departments</p></div>
+          <div><p class="text-xl font-extrabold text-emerald-400">4</p><p class="text-xs text-slate-400">Languages (incl. Telugu)</p></div>
+          <div><p class="text-xl font-extrabold text-purple-400">3</p><p class="text-xs text-slate-400">Role-Based Portals</p></div>
+          <div><p class="text-xl font-extrabold text-amber-400">6 Hr</p><p class="text-xs text-slate-400">Civic SOS Emergency SLA</p></div>
+        </div>
+        <div class="speaker-note hidden mt-6 p-4 bg-blue-950/60 border border-blue-800 rounded-xl text-left text-xs text-blue-200">
+          <strong>💡 Speaker Script:</strong> "In summary, our system modernizes municipal complaint handling. It auto-classifies tickets in real time, warns neighbors if an issue is already reported, and enforces photo proof before an officer can close a ticket."
+        </div>
+      </section>
+
+      <!-- ================= SLIDE 3: INTRODUCTION ================= -->
+      <section class="slide flex-col p-8 md:p-10">
+        <div class="border-b border-slate-700 pb-4 mb-6">
+          <span class="text-blue-400 text-xs font-bold uppercase tracking-wider">Slide 3</span>
+          <h2 class="text-2xl md:text-3xl font-bold text-white">Introduction</h2>
+        </div>
+
+        <div class="grid md:grid-cols-2 gap-6 mb-6">
+          <div class="bg-slate-700/30 p-5 rounded-xl border border-slate-600/60">
+            <h3 class="text-base font-bold text-red-400 mb-3 flex items-center gap-2">
+              <i class="fa-solid fa-circle-xmark"></i> Traditional Civic Portals Today
+            </h3>
+            <ul class="space-y-2.5 text-xs text-slate-300">
+              <li class="flex items-start gap-2"><i class="fa-solid fa-chevron-right text-red-400 mt-0.5 text-[10px]"></i> <span><strong>Passive Collection:</strong> Portals simply store text in a general inbox without instant triage.</span></li>
+              <li class="flex items-start gap-2"><i class="fa-solid fa-chevron-right text-red-400 mt-0.5 text-[10px]"></i> <span><strong>Routing Bottleneck:</strong> Citizens must guess the department, resulting in misfiled tickets and days of delay.</span></li>
+              <li class="flex items-start gap-2"><i class="fa-solid fa-chevron-right text-red-400 mt-0.5 text-[10px]"></i> <span><strong>Language Barrier:</strong> Complex English forms exclude rural and non-English speaking citizens.</span></li>
+            </ul>
+          </div>
+
+          <div class="bg-slate-700/30 p-5 rounded-xl border border-slate-600/60">
+            <h3 class="text-base font-bold text-emerald-400 mb-3 flex items-center gap-2">
+              <i class="fa-solid fa-circle-check"></i> The Smart Civic System (SCS) Approach
+            </h3>
+            <ul class="space-y-2.5 text-xs text-slate-300">
+              <li class="flex items-start gap-2"><i class="fa-solid fa-chevron-right text-emerald-400 mt-0.5 text-[10px]"></i> <span><strong>AI Decision Engine:</strong> Reads text, photos, and GPS to auto-assign priority and department in $<20\text{ms}$.</span></li>
+              <li class="flex items-start gap-2"><i class="fa-solid fa-chevron-right text-emerald-400 mt-0.5 text-[10px]"></i> <span><strong>Inclusive Multilingual Access:</strong> Built with voice-to-text in Telugu, Hindi, Tamil, and English.</span></li>
+              <li class="flex items-start gap-2"><i class="fa-solid fa-chevron-right text-emerald-400 mt-0.5 text-[10px]"></i> <span><strong>Transparent Governance:</strong> Citizens, Officers, and Admins operate on one synchronized database.</span></li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="bg-blue-900/30 border border-blue-700/50 p-4 rounded-xl text-xs text-blue-200">
+          <strong>Key Innovation:</strong> Moving from a passive complaint box to an active, automated civic pipeline that validates truth at both submission and resolution.
+        </div>
+        <div class="speaker-note hidden mt-6 p-4 bg-blue-950/60 border border-blue-800 rounded-xl text-left text-xs text-blue-200">
+          <strong>💡 Speaker Script:</strong> "When a civic problem occurs, citizens often don't know who to complain to. SCS removes the guesswork—citizens speak in their native language, and AI routes the ticket to the exact department in milliseconds."
+        </div>
+      </section>
+
+      <!-- ================= SLIDE 4: PROBLEM STATEMENT ================= -->
+      <section class="slide flex-col p-8 md:p-10">
+        <div class="border-b border-slate-700 pb-4 mb-6">
+          <span class="text-blue-400 text-xs font-bold uppercase tracking-wider">Slide 4</span>
+          <h2 class="text-2xl md:text-3xl font-bold text-white">Problem Statement</h2>
+        </div>
+
+        <div class="overflow-x-auto mb-6">
+          <table class="w-full text-left text-xs border-collapse">
+            <thead>
+              <tr class="bg-slate-700/70 text-slate-200 border-b border-slate-600">
+                <th class="p-3 w-1/2 font-bold text-red-400"><i class="fa-solid fa-circle-exclamation mr-1.5"></i> The Municipal Gap Today</th>
+                <th class="p-3 w-1/2 font-bold text-emerald-400"><i class="fa-solid fa-shield-halved mr-1.5"></i> How SCS Solves It</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-700/60 text-slate-300">
+              <tr>
+                <td class="p-3"><strong>Manual Routing Delay:</strong> Complaints sit unattended for days while clerks figure out who is responsible.</td>
+                <td class="p-3 text-slate-200"><strong>Instant AI Classification:</strong> Classifies text into 10 municipal categories and routes to the officer immediately.</td>
+              </tr>
+              <tr>
+                <td class="p-3"><strong>Duplicate Ticket Spam:</strong> 5 different residents report the same pothole, creating 5 separate work orders.</td>
+                <td class="p-3 text-slate-200"><strong>Spatial Duplicate Guard:</strong> Haversine GPS radius ($\le 200\text{m}$) + cosine text similarity merges reports and enables upvoting.</td>
+              </tr>
+              <tr>
+                <td class="p-3"><strong>False Closure ("Resolved" Fraud):</strong> Tickets are marked completed with zero evidence or inspection.</td>
+                <td class="p-3 text-slate-200"><strong>AI Proof-of-Work Verification:</strong> Gemini Vision audits Before vs. After photos before allowing ticket closure.</td>
+              </tr>
+              <tr>
+                <td class="p-3"><strong>Complex Forms Exclude Citizens:</strong> Typing long English paragraphs is difficult for many community members.</td>
+                <td class="p-3 text-slate-200"><strong>Multilingual Voice Input:</strong> Web Speech API allows voice complaints in Telugu, Hindi, Tamil, and English.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="speaker-note hidden mt-6 p-4 bg-blue-950/60 border border-blue-800 rounded-xl text-left text-xs text-blue-200">
+          <strong>💡 Speaker Script:</strong> "The current system wastes municipal funds and citizen trust. We tackle manual delay with NLP, duplicate work orders with GPS radius matching, and fake closures with Before/After AI photo auditing."
+        </div>
+      </section>
+
+      <!-- ================= SLIDE 5: OBJECTIVES ================= -->
+      <section class="slide flex-col p-8 md:p-10">
+        <div class="border-b border-slate-700 pb-4 mb-6">
+          <span class="text-blue-400 text-xs font-bold uppercase tracking-wider">Slide 5</span>
+          <h2 class="text-2xl md:text-3xl font-bold text-white">Project Objectives</h2>
+        </div>
+
+        <div class="grid md:grid-cols-3 gap-4 mb-4">
+          <div class="bg-slate-700/40 p-4 rounded-xl border border-slate-600/70">
+            <span class="text-blue-400 text-xs font-bold block mb-1">Objective 1</span>
+            <h3 class="text-sm font-bold text-white mb-2">Automated Real-Time Classification</h3>
+            <p class="text-xs text-slate-300">Convert unstructured text into category, priority, and department mapping in $<20\text{ms}$.</p>
+          </div>
+          <div class="bg-slate-700/40 p-4 rounded-xl border border-slate-600/70">
+            <span class="text-emerald-400 text-xs font-bold block mb-1">Objective 2</span>
+            <h3 class="text-sm font-bold text-white mb-2">Explainable AI (XAI)</h3>
+            <p class="text-xs text-slate-300">Display prediction confidence % and highlight influential keywords live to the citizen for trust.</p>
+          </div>
+          <div class="bg-slate-700/40 p-4 rounded-xl border border-slate-600/70">
+            <span class="text-purple-400 text-xs font-bold block mb-1">Objective 3</span>
+            <h3 class="text-sm font-bold text-white mb-2">Spatial Duplicate Detection</h3>
+            <p class="text-xs text-slate-300">Prevent redundant municipal work orders by identifying similar complaints within 200m using GPS.</p>
+          </div>
+        </div>
+
+        <div class="grid md:grid-cols-2 gap-4">
+          <div class="bg-slate-700/40 p-4 rounded-xl border border-slate-600/70">
+            <span class="text-amber-400 text-xs font-bold block mb-1">Objective 4</span>
+            <h3 class="text-sm font-bold text-white mb-2">Proof-of-Work Computer Vision</h3>
+            <p class="text-xs text-slate-300">Mandate officer "After" photos and evaluate repair authenticity with automated Before/After comparison.</p>
+          </div>
+          <div class="bg-slate-700/40 p-4 rounded-xl border border-slate-600/70">
+            <span class="text-rose-400 text-xs font-bold block mb-1">Objective 5</span>
+            <h3 class="text-sm font-bold text-white mb-2">Transparent Civic Governance</h3>
+            <p class="text-xs text-slate-300">Provide an Admin Quarantine triage desk, 6-hour emergency SLA mode, and a public Open Data API.</p>
+          </div>
+        </div>
+        <div class="speaker-note hidden mt-6 p-4 bg-blue-950/60 border border-blue-800 rounded-xl text-left text-xs text-blue-200">
+          <strong>💡 Speaker Script:</strong> "Our objectives form a complete circle: understand the issue, explain the decision to the citizen, eliminate duplicates, verify the physical repair, and publish open civic data."
+        </div>
+      </section>
+
+      <!-- ================= SLIDE 6: PROJECT SCOPE ================= -->
+      <section class="slide flex-col p-8 md:p-10">
+        <div class="border-b border-slate-700 pb-4 mb-6">
+          <span class="text-blue-400 text-xs font-bold uppercase tracking-wider">Slide 6</span>
+          <h2 class="text-2xl md:text-3xl font-bold text-white">Project Scope</h2>
+        </div>
+
+        <div class="grid md:grid-cols-2 gap-6">
+          <div class="space-y-4">
+            <div class="bg-slate-700/40 p-4 rounded-xl border border-slate-600/70">
+              <h3 class="text-sm font-bold text-blue-400 mb-1.5 flex items-center gap-2">
+                <i class="fa-solid fa-users"></i> 3 Core Roles & Dashboards
+              </h3>
+              <p class="text-xs text-slate-300">
+                • <strong>Citizen:</strong> Submission, tracking, upvoting, feedback.<br>
+                • <strong>Officer:</strong> Department work orders, repair photo uploads.<br>
+                • <strong>Admin:</strong> Quarantine triage, directives, city-wide analytics.
+              </p>
+            </div>
+            <div class="bg-slate-700/40 p-4 rounded-xl border border-slate-600/70">
+              <h3 class="text-sm font-bold text-emerald-400 mb-1.5 flex items-center gap-2">
+                <i class="fa-solid fa-building-columns"></i> 10 Municipal Departments
+              </h3>
+              <p class="text-xs text-slate-300">
+                Roads & Infrastructure, Water Supply, Electricity & Streetlights, Sanitation, Drainage, Parks & Green Spaces, Public Property, Animal Control, Traffic Safety, Others.
+              </p>
+            </div>
+          </div>
+
+          <div class="space-y-4">
+            <div class="bg-slate-700/40 p-4 rounded-xl border border-slate-600/70">
+              <h3 class="text-sm font-bold text-amber-400 mb-1.5 flex items-center gap-2">
+                <i class="fa-solid fa-bell-concierge"></i> Civic SOS (Life-Safety Override)
+              </h3>
+              <p class="text-xs text-slate-300">
+                High-priority life safety incidents (open manholes, live wires, gas leaks) trigger an emergency 6-hour SLA with automated Critical escalation.
+              </p>
+            </div>
+            <div class="bg-slate-700/40 p-4 rounded-xl border border-slate-600/70">
+              <h3 class="text-sm font-bold text-purple-400 mb-1.5 flex items-center gap-2">
+                <i class="fa-solid fa-network-wired"></i> Platform Architecture
+              </h3>
+              <p class="text-xs text-slate-300">
+                Responsive web portal supporting desktop and mobile browsers, OpenStreetMap Leaflet mapping, dark/light themes, and RESTful Open Data APIs.
+              </p>
+            </div>
+          </div>
+        </div>
+        <div class="speaker-note hidden mt-6 p-4 bg-blue-950/60 border border-blue-800 rounded-xl text-left text-xs text-blue-200">
+          <strong>💡 Speaker Script:</strong> "The project scope defines three user roles, ten municipal departments, responsive web access, and an emergency Civic SOS mode for urgent life-safety hazards."
+        </div>
+      </section>
+
+      <!-- ================= SLIDE 7: LITERATURE REVIEW ================= -->
+      <section class="slide flex-col p-8 md:p-10">
+        <div class="border-b border-slate-700 pb-4 mb-6">
+          <span class="text-blue-400 text-xs font-bold uppercase tracking-wider">Slide 7</span>
+          <h2 class="text-2xl md:text-3xl font-bold text-white">Literature Review & Background Study</h2>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs border-collapse">
+            <thead>
+              <tr class="bg-slate-700/70 text-slate-200 border-b border-slate-600">
+                <th class="p-3 w-1/4 font-bold text-blue-400">Research Domain</th>
+                <th class="p-3 w-1/3 font-bold text-slate-300">Prior Methodology Studied</th>
+                <th class="p-3 w-5/12 font-bold text-emerald-400">Engineering Takeaway in SCS</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-700/60 text-slate-300">
+              <tr>
+                <td class="p-3 font-semibold text-white">Text Classification</td>
+                <td class="p-3">Salton & Buckley (1988) — TF-IDF with n-grams [1]</td>
+                <td class="p-3">Chosen for ultra-low latency ($<20\text{ms}$) and high interpretability without cloud GPU expenses.</td>
+              </tr>
+              <tr>
+                <td class="p-3 font-semibold text-white">Object Detection</td>
+                <td class="p-3">Redmon et al. (2016) — YOLO Architecture [2]</td>
+                <td class="p-3">Accurate for local bounding boxes; paired with Gemini Multimodal Vision API for zero-GPU cloud deployment.</td>
+              </tr>
+              <tr>
+                <td class="p-3 font-semibold text-white">Explainable AI</td>
+                <td class="p-3">Ribeiro et al. (2016) — LIME / XAI Principles [3]</td>
+                <td class="p-3">Trust needs reasons: displays confidence score and influential keywords to the citizen in real time.</td>
+              </tr>
+              <tr>
+                <td class="p-3 font-semibold text-white">Multimodal Vision</td>
+                <td class="p-3">Google Gemini Multimodal Models (2023) [4]</td>
+                <td class="p-3">Enables Before vs. After repair verification and catches fake/synthetic wallpaper uploads.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="speaker-note hidden mt-6 p-4 bg-blue-950/60 border border-blue-800 rounded-xl text-left text-xs text-blue-200">
+          <strong>💡 Speaker Script:</strong> "Our literature review helped us choose fast, explainable TF-IDF for text classification and Gemini multimodal vision for Before/After repair checks, eliminating the need for expensive local server GPUs."
+        </div>
+      </section>
+
+      <!-- ================= SLIDE 8: DATA USED ================= -->
+      <section class="slide flex-col p-8 md:p-10">
+        <div class="border-b border-slate-700 pb-4 mb-6">
+          <span class="text-blue-400 text-xs font-bold uppercase tracking-wider">Slide 8</span>
+          <h2 class="text-2xl md:text-3xl font-bold text-white">Data Gathered / Data Used</h2>
+        </div>
+
+        <div class="grid md:grid-cols-2 gap-4">
+          <div class="bg-slate-700/40 p-4 rounded-xl border border-slate-600/70">
+            <h3 class="text-sm font-bold text-blue-400 mb-2 flex items-center gap-2">
+              <i class="fa-solid fa-file-lines"></i> 1. Text Modality
+            </h3>
+            <p class="text-xs text-slate-300 leading-relaxed">
+              • Free-text complaint description (typed or voice-dictated).<br>
+              • Extracted n-gram keywords, predicted category, confidence level.<br>
+              • Preprocessed via stopword filtering and token normalization.
+            </p>
+          </div>
+
+          <div class="bg-slate-700/40 p-4 rounded-xl border border-slate-600/70">
+            <h3 class="text-sm font-bold text-emerald-400 mb-2 flex items-center gap-2">
+              <i class="fa-solid fa-camera"></i> 2. Image Modality
+            </h3>
+            <p class="text-xs text-slate-300 leading-relaxed">
+              • Citizen "Before" evidence photo (JPG/PNG).<br>
+              • Officer "After" repair photo with AI verification score.<br>
+              • Heuristic safety check filtering synthetic/wallpaper images.
+            </p>
+          </div>
+
+          <div class="bg-slate-700/40 p-4 rounded-xl border border-slate-600/70">
+            <h3 class="text-sm font-bold text-amber-400 mb-2 flex items-center gap-2">
+              <i class="fa-solid fa-location-dot"></i> 3. Geospatial & Time Data
+            </h3>
+            <p class="text-xs text-slate-300 leading-relaxed">
+              • Device GPS coordinates (lat, lon) and Leaflet map pin.<br>
+              • Reverse-geocoded street address via OpenStreetMap Nominatim.<br>
+              • Community center geofence radius coordinates and IST timestamps.
+            </p>
+          </div>
+
+          <div class="bg-slate-700/40 p-4 rounded-xl border border-slate-600/70">
+            <h3 class="text-sm font-bold text-purple-400 mb-2 flex items-center gap-2">
+              <i class="fa-solid fa-clock-rotate-left"></i> 4. Audit Trail & Feedback
+            </h3>
+            <p class="text-xs text-slate-300 leading-relaxed">
+              • Lifecycle events: `Pending` $\to$ `In Progress` $\to$ `Resolved`.<br>
+              • Community upvote counts, 1–5 star ratings, and remarks.<br>
+              • Unique tracking references formatted as `SCS-0001`.
+            </p>
+          </div>
+        </div>
+        <div class="speaker-note hidden mt-6 p-4 bg-blue-950/60 border border-blue-800 rounded-xl text-left text-xs text-blue-200">
+          <strong>💡 Speaker Script:</strong> "We process four types of data: complaint descriptions, photographic evidence, GPS locations, and a complete audit timeline that tracks every ticket until resolution."
+        </div>
+      </section>
+
+      <!-- ================= SLIDE 9: METHODOLOGY (FLOWCHART) ================= -->
+      <section class="slide flex-col p-8 md:p-10">
+        <div class="border-b border-slate-700 pb-4 mb-4">
+          <span class="text-blue-400 text-xs font-bold uppercase tracking-wider">Slide 9</span>
+          <h2 class="text-2xl md:text-3xl font-bold text-white">Methodology — Flow Chart</h2>
+        </div>
+
+        <div class="grid md:grid-cols-3 gap-4 mb-4 text-xs">
+          <div class="bg-blue-950/40 border border-blue-700/60 p-4 rounded-xl">
+            <span class="px-2 py-0.5 rounded bg-blue-600 text-white font-bold text-[10px] uppercase">Phase 1</span>
+            <h3 class="text-sm font-bold text-white mt-2 mb-1.5">Citizen Submission</h3>
+            <p class="text-slate-300">
+              1. Citizen speaks or types in Telugu/English + adds photo & GPS pin.<br>
+              2. Real-time NLP extracts keywords & predicts category/priority.<br>
+              3. Spatial check warns if duplicate exists within 200m.
+            </p>
+          </div>
+
+          <div class="bg-amber-950/40 border border-amber-700/60 p-4 rounded-xl">
+            <span class="px-2 py-0.5 rounded bg-amber-600 text-white font-bold text-[10px] uppercase">Phase 2</span>
+            <h3 class="text-sm font-bold text-white mt-2 mb-1.5">Department Action</h3>
+            <p class="text-slate-300">
+              4. Ticket `SCS-XXXX` routed to responsible officer.<br>
+              5. Officer reviews work order and dispatches repair crew.<br>
+              6. Officer fixes issue & <strong>must upload "After" repair photo</strong>.
+            </p>
+          </div>
+
+          <div class="bg-emerald-950/40 border border-emerald-700/60 p-4 rounded-xl">
+            <span class="px-2 py-0.5 rounded bg-emerald-600 text-white font-bold text-[10px] uppercase">Phase 3</span>
+            <h3 class="text-sm font-bold text-white mt-2 mb-1.5">AI Audit & Verification</h3>
+            <p class="text-slate-300">
+              7. Gemini Vision compares Before vs. After photos.<br>
+              8. <strong>Match $\ge 60$%:</strong> Marked `Resolved`; citizen rates 1-5 stars.<br>
+              9. <strong>Mismatch:</strong> Quarantined to Admin Desk.
+            </p>
+          </div>
+        </div>
+
+        <div class="bg-slate-900/80 p-3.5 rounded-xl border border-slate-700 text-xs text-slate-300 flex items-center gap-3">
+          <i class="fa-solid fa-circle-info text-blue-400 text-lg"></i>
+          <div>
+            <strong>Core Accountability Rule:</strong> If an officer uploads a fake or unrelated photo, the <strong>Admin rejects the resolution proof, NOT the citizen's complaint</strong>. The ticket returns to `In Progress` for re-inspection.
+          </div>
+        </div>
+        <div class="speaker-note hidden mt-6 p-4 bg-blue-950/60 border border-blue-800 rounded-xl text-left text-xs text-blue-200">
+          <strong>💡 Speaker Script:</strong> "This 3-phase flow shows our closed-loop process. Notice phase 3: if an officer uploads a fake resolution photo, the system rejects the officer's proof and forces re-inspection, protecting citizen trust."
+        </div>
+      </section>
+
+      <!-- ================= SLIDE 10: METHODOLOGY (BLOCK DIAGRAM) ================= -->
+      <section class="slide flex-col p-8 md:p-10">
+        <div class="border-b border-slate-700 pb-4 mb-4">
+          <span class="text-blue-400 text-xs font-bold uppercase tracking-wider">Slide 10</span>
+          <h2 class="text-2xl md:text-3xl font-bold text-white">Methodology — 4-Tier Architecture</h2>
+        </div>
+
+        <div class="space-y-3 text-xs">
+          <div class="bg-slate-700/40 p-3.5 rounded-xl border border-slate-600 flex items-start gap-4">
+            <span class="w-28 font-bold text-blue-400 shrink-0">1. Presentation Tier</span>
+            <span class="text-slate-300">HTML5, CSS3, Bootstrap 5, JavaScript • Web Speech API (Telugu, Hindi, Tamil, English) • Leaflet.js with OpenStreetMap tiles • Dark / Light mode</span>
+          </div>
+
+          <div class="bg-slate-700/40 p-3.5 rounded-xl border border-slate-600 flex items-start gap-4">
+            <span class="w-28 font-bold text-emerald-400 shrink-0">2. Application Tier</span>
+            <span class="text-slate-300">Flask (Python) for offline prototyping • Node.js / Express / TypeScript (`server.ts`) for cloud production • Role-Based Access Control (Citizen, Officer, Admin)</span>
+          </div>
+
+          <div class="bg-slate-700/40 p-3.5 rounded-xl border border-slate-600 flex items-start gap-4">
+            <span class="w-28 font-bold text-amber-400 shrink-0">3. AI & Spatial Tier</span>
+            <span class="text-slate-300">TF-IDF n-grams + Cosine Similarity (Explainable NLP, $<20\text{ms}$) • Gemini 1.5 Flash Vision API + OpenCV (Photo verification) • Haversine Geofencing</span>
+          </div>
+
+          <div class="bg-slate-700/40 p-3.5 rounded-xl border border-slate-600 flex items-start gap-4">
+            <span class="w-28 font-bold text-purple-400 shrink-0">4. Data Tier</span>
+            <span class="text-slate-300">SQLite for local offline storage • Supabase PostgreSQL (Managed cloud DB with connection pooling) • Cloudinary / local storage for photos</span>
+          </div>
+        </div>
+        <div class="speaker-note hidden mt-6 p-4 bg-blue-950/60 border border-blue-800 rounded-xl text-left text-xs text-blue-200">
+          <strong>💡 Speaker Script:</strong> "Our block diagram represents a standard 4-tier architecture: frontend user experience, backend application engine, AI & spatial intelligence models, and persistent cloud databases."
+        </div>
+      </section>
+
+      <!-- ================= SLIDE 11: IMPLEMENTATION / MODULES ================= -->
+      <section class="slide flex-col p-8 md:p-10">
+        <div class="border-b border-slate-700 pb-4 mb-4">
+          <span class="text-blue-400 text-xs font-bold uppercase tracking-wider">Slide 11</span>
+          <h2 class="text-2xl md:text-3xl font-bold text-white">Implementation / Modules</h2>
+        </div>
+
+        <div class="overflow-x-auto mb-4 text-xs">
+          <table class="w-full text-left border-collapse">
+            <thead>
+              <tr class="bg-slate-700/70 text-slate-200 border-b border-slate-600">
+                <th class="p-2.5 font-bold text-blue-400">Module</th>
+                <th class="p-2.5 font-bold text-slate-300">Route Endpoint</th>
+                <th class="p-2.5 font-bold text-slate-300">Core Functionality</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-700/60 text-slate-300">
+              <tr><td class="p-2.5 font-semibold text-white">Citizen Portal</td><td class="p-2.5 font-mono text-blue-300">/submit_complaint</td><td class="p-2.5">Live XAI prediction preview, map picker, voice input, SOS toggle</td></tr>
+              <tr><td class="p-2.5 font-semibold text-white">My Complaints</td><td class="p-2.5 font-mono text-blue-300">/view_complaints</td><td class="p-2.5">Real-time status tracking, community upvoting, rating & review</td></tr>
+              <tr><td class="p-2.5 font-semibold text-white">Officer Portal</td><td class="p-2.5 font-mono text-emerald-300">/department_dashboard</td><td class="p-2.5">Department-only queue, crew dispatch, resolution photo upload</td></tr>
+              <tr><td class="p-2.5 font-semibold text-white">Admin Command</td><td class="p-2.5 font-mono text-amber-300">/admin</td><td class="p-2.5">10 department overview, tactical directives, SLA monitors</td></tr>
+              <tr><td class="p-2.5 font-semibold text-white">Quarantine Desk</td><td class="p-2.5 font-mono text-rose-300">/admin/quarantine</td><td class="p-2.5">Triages image mismatches and synthetic/fake submissions</td></tr>
+              <tr><td class="p-2.5 font-semibold text-white">Open Data API</td><td class="p-2.5 font-mono text-purple-300">/api/v1/complaints</td><td class="p-2.5">Public JSON endpoint for civic transparency & research</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="bg-slate-900/60 p-3 rounded-xl border border-slate-700 text-xs text-slate-300 flex justify-between items-center">
+          <span><strong>Live Production Deployment:</strong> <a href="https://ccpai-1.ai.studio" target="_blank" class="text-blue-400 hover:underline">https://ccpai-1.ai.studio</a></span>
+          <span class="text-emerald-400 font-semibold"><i class="fa-solid fa-circle-check mr-1"></i> 16/16 Test Suites Passing</span>
+        </div>
+        <div class="speaker-note hidden mt-6 p-4 bg-blue-950/60 border border-blue-800 rounded-xl text-left text-xs text-blue-200">
+          <strong>💡 Speaker Script:</strong> "Every module is cleanly routed and decoupled. Notice our Admin Quarantine desk for catching fraud and our Open Data API for municipal open-government transparency."
+        </div>
+      </section>
+
+      <!-- ================= SLIDE 12: RESULTS & SCREENSHOTS ================= -->
+      <section class="slide flex-col p-8 md:p-10">
+        <div class="border-b border-slate-700 pb-4 mb-4">
+          <span class="text-blue-400 text-xs font-bold uppercase tracking-wider">Slide 12</span>
+          <h2 class="text-2xl md:text-3xl font-bold text-white">Results / Demonstrated Outputs</h2>
+        </div>
+
+        <div class="grid grid-cols-2 md:grid-cols-3 gap-3.5 mb-3 text-xs">
+          <div class="bg-slate-700/50 p-3 rounded-xl border border-slate-600">
+            <span class="text-blue-400 font-bold block mb-1">Figure 6.1: Home Page</span>
+            <p class="text-slate-300">Modern citizen landing page with direct role logins and civic counters.</p>
+          </div>
+          <div class="bg-slate-700/50 p-3 rounded-xl border border-slate-600">
+            <span class="text-blue-400 font-bold block mb-1">Figure 6.2: Registration</span>
+            <p class="text-slate-300">Secure user account creation with hashed passwords and session management.</p>
+          </div>
+          <div class="bg-slate-700/50 p-3 rounded-xl border border-slate-600">
+            <span class="text-emerald-400 font-bold block mb-1">Figure 6.3: User Dashboard</span>
+            <p class="text-slate-300">Status counters (Pending, In Progress, Resolved) and activity timeline.</p>
+          </div>
+          <div class="bg-slate-700/50 p-3 rounded-xl border border-slate-600">
+            <span class="text-emerald-400 font-bold block mb-1">Figure 6.4: Complaint Form</span>
+            <p class="text-slate-300">Telugu/English voice input, Leaflet map picker, and live XAI diagnosis.</p>
+          </div>
+          <div class="bg-slate-700/50 p-3 rounded-xl border border-slate-600">
+            <span class="text-amber-400 font-bold block mb-1">Figure 6.5: Admin Dashboard</span>
+            <p class="text-slate-300">10 department cards, active tickets, and directive broadcast system.</p>
+          </div>
+          <div class="bg-slate-700/50 p-3 rounded-xl border border-slate-600">
+            <span class="text-purple-400 font-bold block mb-1">Figure 6.6: Officer Dashboard</span>
+            <p class="text-slate-300">Filtered department tickets, status updates, and "After" photo upload.</p>
+          </div>
+        </div>
+
+        <div class="p-3 bg-emerald-950/40 border border-emerald-800 rounded-xl text-center text-xs text-emerald-300">
+          <strong>Tip for Presentation:</strong> Embed the 6 actual UI images from Chapter 6 of your Project Report (Pages 21–25) on this slide.
+        </div>
+        <div class="speaker-note hidden mt-6 p-4 bg-blue-950/60 border border-blue-800 rounded-xl text-left text-xs text-blue-200">
+          <strong>💡 Speaker Script:</strong> "These are the live results of our system. All 6 screens are fully deployed and interactive, from speech complaint intake to officer resolution uploads and admin governance."
+        </div>
+      </section>
+
+      <!-- ================= SLIDE 13: IMPACT ASSESSMENT ================= -->
+      <section class="slide flex-col p-8 md:p-10">
+        <div class="border-b border-slate-700 pb-4 mb-6">
+          <span class="text-blue-400 text-xs font-bold uppercase tracking-wider">Slide 13</span>
+          <h2 class="text-2xl md:text-3xl font-bold text-white">Impact Assessment</h2>
+        </div>
+
+        <div class="grid md:grid-cols-3 gap-5">
+          <div class="bg-slate-700/40 border border-slate-600 p-5 rounded-xl">
+            <div class="w-9 h-9 rounded-lg bg-blue-500/20 text-blue-400 flex items-center justify-center text-base mb-3">
+              <i class="fa-solid fa-code"></i>
+            </div>
+            <h3 class="font-bold text-white text-base mb-2">Technical Impact</h3>
+            <ul class="text-xs text-slate-300 space-y-2">
+              <li>• Lightweight TF-IDF n-grams achieve $<20\text{ms}$ latency without GPUs.</li>
+              <li>• Gemini 1.5 Flash Vision enables automated proof of work via API.</li>
+              <li>• Immutable audit trails guarantee traceability.</li>
+            </ul>
+          </div>
+
+          <div class="bg-slate-700/40 border border-slate-600 p-5 rounded-xl">
+            <div class="w-9 h-9 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-base mb-3">
+              <i class="fa-solid fa-hand-holding-heart"></i>
+            </div>
+            <h3 class="font-bold text-white text-base mb-2">Social Impact</h3>
+            <ul class="text-xs text-slate-300 space-y-2">
+              <li>• Multilingual voice input (Telugu, Hindi, Tamil) bridges digital divide.</li>
+              <li>• Civic SOS gives 6-hour emergency SLA to life-safety hazards.</li>
+              <li>• Public sees actual repair photos, rebuilding municipal trust.</li>
+            </ul>
+          </div>
+
+          <div class="bg-slate-700/40 border border-slate-600 p-5 rounded-xl">
+            <div class="w-9 h-9 rounded-lg bg-amber-500/20 text-amber-400 flex items-center justify-center text-base mb-3">
+              <i class="fa-solid fa-coins"></i>
+            </div>
+            <h3 class="font-bold text-white text-base mb-2">Economic Impact</h3>
+            <ul class="text-xs text-slate-300 space-y-2">
+              <li>• Stops duplicate crew dispatches for the same pothole or leak.</li>
+              <li>• Automated triage frees hours of municipal clerical labor.</li>
+              <li>• Verified repairs reduce costly repeat visits.</li>
+            </ul>
+          </div>
+        </div>
+        <div class="speaker-note hidden mt-6 p-4 bg-blue-950/60 border border-blue-800 rounded-xl text-left text-xs text-blue-200">
+          <strong>💡 Speaker Script:</strong> "Our project creates value on three fronts: technically through fast low-cost AI, socially by empowering non-English speakers, and economically by saving municipal labor and travel costs."
+        </div>
+      </section>
+
+      <!-- ================= SLIDE 14: CHALLENGES FACED ================= -->
+      <section class="slide flex-col p-8 md:p-10">
+        <div class="border-b border-slate-700 pb-4 mb-4">
+          <span class="text-blue-400 text-xs font-bold uppercase tracking-wider">Slide 14</span>
+          <h2 class="text-2xl md:text-3xl font-bold text-white">Challenges Faced & Engineering Solutions</h2>
+        </div>
+
+        <div class="overflow-x-auto text-xs">
+          <table class="w-full text-left border-collapse">
+            <thead>
+              <tr class="bg-slate-700/70 text-slate-200 border-b border-slate-600">
+                <th class="p-3 w-1/3 font-bold text-red-400">Engineering Challenge</th>
+                <th class="p-3 w-2/3 font-bold text-emerald-400">How Our Team Solved It</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-700/60 text-slate-300">
+              <tr>
+                <td class="p-3 font-semibold text-white">Heavy GPU Demands of YOLO</td>
+                <td class="p-3">Integrated the cloud Gemini 1.5 Flash Vision API with OpenCV, running seamlessly on lightweight cloud hosting without GPU costs.</td>
+              </tr>
+              <tr>
+                <td class="p-3 font-semibold text-white">Overlapping Departments (e.g. Burst Pipe Damaging Road)</td>
+                <td class="p-3">Implemented Cross-Department Keyword Detection that prompts the citizen to confirm the primary lead department during submission.</td>
+              </tr>
+              <tr>
+                <td class="p-3 font-semibold text-white">Fake or Unrelated Repair Photos</td>
+                <td class="p-3">Built an automated Before/After AI match score check. Mismatched or identical photos are quarantined to the Admin Desk.</td>
+              </tr>
+              <tr>
+                <td class="p-3 font-semibold text-white">Duplicate Complaints in Neighborhoods</td>
+                <td class="p-3">Combined Haversine GPS radius checking ($\le 200\text{m}$) with semantic cosine similarity to warn citizens before filing.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="speaker-note hidden mt-6 p-4 bg-blue-950/60 border border-blue-800 rounded-xl text-left text-xs text-blue-200">
+          <strong>💡 Speaker Script:</strong> "During development, we solved real constraints: we replaced heavy local GPUs with Gemini Vision API, resolved multi-department conflicts, and built an automated check against fake repair photos."
+        </div>
+      </section>
+
+      <!-- ================= SLIDE 15: CONCLUSION ================= -->
+      <section class="slide flex-col p-8 md:p-10">
+        <div class="border-b border-slate-700 pb-4 mb-6">
+          <span class="text-blue-400 text-xs font-bold uppercase tracking-wider">Slide 15</span>
+          <h2 class="text-2xl md:text-3xl font-bold text-white">Conclusion</h2>
+        </div>
+
+        <div class="space-y-4 text-xs md:text-sm">
+          <div class="bg-slate-700/40 p-4 rounded-xl border border-slate-600 flex items-start gap-3">
+            <i class="fa-solid fa-circle-check text-emerald-400 text-lg mt-0.5"></i>
+            <div>
+              <strong class="text-white block text-sm mb-1">Full-Cycle Governance:</strong>
+              <span class="text-slate-300">SCS transforms complaint handling from a passive inbox into a complete closed-loop workflow: <em>Report $\to$ Classify $\to$ Route $\to$ Resolve $\to$ Verify</em>.</span>
+            </div>
+          </div>
+
+          <div class="bg-slate-700/40 p-4 rounded-xl border border-slate-600 flex items-start gap-3">
+            <i class="fa-solid fa-circle-check text-blue-400 text-lg mt-0.5"></i>
+            <div>
+              <strong class="text-white block text-sm mb-1">Practical & Explainable AI:</strong>
+              <span class="text-slate-300">Rather than treating AI as a black box, the portal provides instant confidence scores, extracted keywords, and visual Before/After verification scores.</span>
+            </div>
+          </div>
+
+          <div class="bg-slate-700/40 p-4 rounded-xl border border-slate-600 flex items-start gap-3">
+            <i class="fa-solid fa-circle-check text-purple-400 text-lg mt-0.5"></i>
+            <div>
+              <strong class="text-white block text-sm mb-1">Live, Tested, and Functional:</strong>
+              <span class="text-slate-300">The entire platform is deployed live on AI Studio at <code>https://ccpai-1.ai.studio</code>, verified with 16 automated end-to-end test suites.</span>
+            </div>
+          </div>
+        </div>
+        <div class="speaker-note hidden mt-6 p-4 bg-blue-950/60 border border-blue-800 rounded-xl text-left text-xs text-blue-200">
+          <strong>💡 Speaker Script:</strong> "In conclusion, SCS shows how AI can solve everyday civic problems in our communities—making governance faster, more transparent, and accountable."
+        </div>
+      </section>
+
+      <!-- ================= SLIDE 16: FUTURE WORK ================= -->
+      <section class="slide flex-col p-8 md:p-10">
+        <div class="border-b border-slate-700 pb-4 mb-6">
+          <span class="text-blue-400 text-xs font-bold uppercase tracking-wider">Slide 16</span>
+          <h2 class="text-2xl md:text-3xl font-bold text-white">Future Work</h2>
+        </div>
+
+        <div class="grid md:grid-cols-2 gap-4 text-xs">
+          <div class="bg-slate-700/40 p-4 rounded-xl border border-slate-600">
+            <span class="w-7 h-7 rounded-lg bg-blue-500/20 text-blue-400 flex items-center justify-center font-bold mb-2">1</span>
+            <h3 class="text-sm font-bold text-white mb-1.5">Native Mobile Application</h3>
+            <p class="text-slate-300">Dedicated Android & iOS app with push notifications and offline complaint drafting.</p>
+          </div>
+
+          <div class="bg-slate-700/40 p-4 rounded-xl border border-slate-600">
+            <span class="w-7 h-7 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold mb-2">2</span>
+            <h3 class="text-sm font-bold text-white mb-1.5">WhatsApp & Telegram Bot</h3>
+            <p class="text-slate-300">Allow citizens to report issues simply by forwarding a photo and location pin over WhatsApp.</p>
+          </div>
+
+          <div class="bg-slate-700/40 p-4 rounded-xl border border-slate-600">
+            <span class="w-7 h-7 rounded-lg bg-amber-500/20 text-amber-400 flex items-center justify-center font-bold mb-2">3</span>
+            <h3 class="text-sm font-bold text-white mb-1.5">Automated Municipal Drone / CCTV Feeds</h3>
+            <p class="text-slate-300">Integrate traffic camera and drone imagery to detect potholes and garbage dumps before citizens report them.</p>
+          </div>
+
+          <div class="bg-slate-700/40 p-4 rounded-xl border border-slate-600">
+            <span class="w-7 h-7 rounded-lg bg-purple-500/20 text-purple-400 flex items-center justify-center font-bold mb-2">4</span>
+            <h3 class="text-sm font-bold text-white mb-1.5">Predictive Civic Analytics</h3>
+            <p class="text-slate-300">Use historical complaint density to forecast seasonal monsoon drainage overflows and water shortages.</p>
+          </div>
+        </div>
+        <div class="speaker-note hidden mt-6 p-4 bg-blue-950/60 border border-blue-800 rounded-xl text-left text-xs text-blue-200">
+          <strong>💡 Speaker Script:</strong> "In the future, we plan to release a dedicated mobile app, introduce WhatsApp bot submissions, and use drone feeds to detect civic defects automatically."
+        </div>
+      </section>
+
+      <!-- ================= SLIDE 17: REFERENCES ================= -->
+      <section class="slide flex-col p-8 md:p-10">
+        <div class="border-b border-slate-700 pb-4 mb-4">
+          <span class="text-blue-400 text-xs font-bold uppercase tracking-wider">Slide 17</span>
+          <h2 class="text-2xl md:text-3xl font-bold text-white">References</h2>
+        </div>
+
+        <div class="space-y-2.5 text-xs text-slate-300">
+          <p class="bg-slate-700/30 p-2.5 rounded-lg border border-slate-600/50">
+            <strong>[1]</strong> G. Salton and C. Buckley, "Term-weighting approaches in automatic text retrieval," <em>Information Processing & Management</em>, vol. 24, no. 5, pp. 513–523, 1988.
+          </p>
+          <p class="bg-slate-700/30 p-2.5 rounded-lg border border-slate-600/50">
+            <strong>[2]</strong> J. Redmon, S. Divvala, R. Girshick, and A. Farhadi, "You only look once: Unified, real-time object detection," in <em>Proc. IEEE CVPR</em>, 2016, pp. 779–788.
+          </p>
+          <p class="bg-slate-700/30 p-2.5 rounded-lg border border-slate-600/50">
+            <strong>[3]</strong> M. T. Ribeiro, S. Singh, and C. Guestrin, "‘Why should I trust you?’ Explaining the predictions of any classifier," in <em>Proc. ACM SIGKDD</em>, 2016, pp. 1135–1144.
+          </p>
+          <p class="bg-slate-700/30 p-2.5 rounded-lg border border-slate-600/50">
+            <strong>[4]</strong> Gemini Team, Google, "Gemini: A family of highly capable multimodal models," <em>arXiv preprint arXiv:2312.11805</em>, 2023.
+          </p>
+          <p class="bg-slate-700/30 p-2.5 rounded-lg border border-slate-600/50">
+            <strong>[5]</strong> G. Bradski, "The OpenCV Library," <em>Dr. Dobb's Journal of Software Tools</em>, 2000.
+          </p>
+        </div>
+        <div class="speaker-note hidden mt-6 p-4 bg-blue-950/60 border border-blue-800 rounded-xl text-left text-xs text-blue-200">
+          <strong>💡 Speaker Script:</strong> "Our research citations follow IEEE standard format as shown on this slide."
+        </div>
+      </section>
+
+      <!-- ================= SLIDE 18: Q&A / CONCLUSION ================= -->
+      <section class="slide flex-col p-8 md:p-12 justify-center text-center">
+        <div class="w-16 h-16 rounded-2xl bg-blue-600 text-white flex items-center justify-center text-2xl mx-auto mb-4 shadow-lg shadow-blue-500/20">
+          <i class="fa-solid fa-comments"></i>
+        </div>
+        <h2 class="text-3xl md:text-5xl font-extrabold text-white mb-3">Thank You!</h2>
+        <p class="text-lg text-blue-400 font-semibold mb-6">Any Queries or Questions?</p>
+
+        <div class="max-w-md mx-auto bg-slate-700/50 p-4 rounded-xl border border-slate-600 text-xs text-slate-300 space-y-2 mb-8">
+          <div><strong class="text-white">Live Platform:</strong> <a href="https://ccpai-1.ai.studio" target="_blank" class="text-blue-400 hover:underline">https://ccpai-1.ai.studio</a></div>
+          <div><strong class="text-white">GitHub:</strong> <a href="https://github.com/tejas9230/Community_Project" target="_blank" class="text-blue-400 hover:underline">github.com/tejas9230/Community_Project</a></div>
+          <div class="text-slate-400 pt-2 border-t border-slate-600">MVGR College of Engineering (Autonomous) • Dept. of Data Engineering</div>
+        </div>
+
+        <div class="flex justify-center gap-3">
+          <a href="https://ccpai-1.ai.studio" target="_blank" class="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs shadow-lg transition">
+            <i class="fa-solid fa-play mr-1.5"></i> Launch Live Demonstration
+          </a>
+        </div>
+        <div class="speaker-note hidden mt-6 p-4 bg-blue-950/60 border border-blue-800 rounded-xl text-left text-xs text-blue-200">
+          <strong>💡 Speaker Script:</strong> "Thank you for your valuable time and attention. We are ready to demonstrate our live platform and welcome your questions."
+        </div>
+      </section>
+
+      <!-- Bottom Control Bar -->
+      <footer class="bg-slate-900/80 border-t border-slate-700/80 px-6 py-3 flex items-center justify-between">
+        <button id="prevBtn" onclick="prevSlide()" class="px-4 py-1.5 rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-200 font-semibold text-xs transition flex items-center gap-1.5">
+          <i class="fa-solid fa-arrow-left"></i> Previous
+        </button>
+
+        <!-- Slide Dots Navigation -->
+        <div id="slideDots" class="hidden md:flex items-center gap-1.5"></div>
+
+        <button id="nextBtn" onclick="nextSlide()" class="px-4 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs shadow transition flex items-center gap-1.5">
+          Next <i class="fa-solid fa-arrow-right"></i>
+        </button>
+      </footer>
+
+    </div>
+  </main>
+
+  <script>
+    let currentSlide = 1;
+    const totalSlides = 18;
+    const slides = document.querySelectorAll('.slide');
+    const dotsContainer = document.getElementById('slideDots');
+
+    // Create slide navigation dots
+    for (let i = 1; i <= totalSlides; i++) {
+      const dot = document.createElement('button');
+      dot.className = `w-2 h-2 rounded-full transition-all ${i === 1 ? 'bg-blue-500 w-5' : 'bg-slate-600 hover:bg-slate-500'}`;
+      dot.title = `Go to Slide ${i}`;
+      dot.onclick = () => goToSlide(i);
+      dotsContainer.appendChild(dot);
+    }
+
+    function updateSlide() {
+      slides.forEach((s, idx) => {
+        if (idx + 1 === currentSlide) {
+          s.classList.add('active');
+        } else {
+          s.classList.remove('active');
+        }
+      });
+      document.getElementById('currentSlideNum').textContent = currentSlide;
+
+      // Update dots
+      const dots = dotsContainer.children;
+      for (let i = 0; i < dots.length; i++) {
+        if (i + 1 === currentSlide) {
+          dots[i].className = 'w-5 h-2 rounded-full bg-blue-500 transition-all';
+        } else {
+          dots[i].className = 'w-2 h-2 rounded-full bg-slate-600 hover:bg-slate-500 transition-all';
+        }
+      }
+
+      document.getElementById('prevBtn').disabled = currentSlide === 1;
+      document.getElementById('prevBtn').classList.toggle('opacity-50', currentSlide === 1);
+      
+      const nextBtn = document.getElementById('nextBtn');
+      if (currentSlide === totalSlides) {
+        nextBtn.innerHTML = '<i class="fa-solid fa-rotate-left"></i> Restart';
+      } else {
+        nextBtn.innerHTML = 'Next <i class="fa-solid fa-arrow-right"></i>';
+      }
+    }
+
+    function nextSlide() {
+      if (currentSlide < totalSlides) {
+        currentSlide++;
+      } else {
+        currentSlide = 1;
+      }
+      updateSlide();
+    }
+
+    function prevSlide() {
+      if (currentSlide > 1) {
+        currentSlide--;
+        updateSlide();
+      }
+    }
+
+    function goToSlide(n) {
+      currentSlide = n;
+      updateSlide();
+    }
+
+    function toggleSpeakerNotes() {
+      const notes = document.querySelectorAll('.speaker-note');
+      notes.forEach(n => n.classList.toggle('hidden'));
+      const btn = document.getElementById('toggleNotesBtn');
+      btn.classList.toggle('bg-blue-600');
+      btn.classList.toggle('text-white');
+    }
+
+    // Keyboard Arrow Navigation
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') {
+        nextSlide();
+      } else if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
+        prevSlide();
+      } else if (e.key === 'Home') {
+        goToSlide(1);
+      } else if (e.key === 'End') {
+        goToSlide(totalSlides);
+      }
+    });
+
+    updateSlide();
+  </script>
+</body>
+</html>
