@@ -244,6 +244,14 @@
 
             <div id="map"></div>
 
+            <div id="radiusInfoBadge" style="margin-top:10px; font-size:12px; font-weight:600; padding:8px 14px; border-radius:8px; background:rgba(37,99,235,0.08); color:#1d4ed8; border:1px solid rgba(37,99,235,0.2); display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px;">
+                <span>🏛️ Active Jurisdiction: <strong>{{ community_settings.name if community_settings and community_settings.name else 'Municipal Jurisdiction' }}</strong></span>
+                <span>Coverage Radius: <strong id="boundaryRadiusDisplay">{{ community_settings.radius if community_settings and community_settings.radius else 25.0 }} KM</strong></span>
+            </div>
+            <div id="radiusWarningAlert" style="display:none; margin-top:10px; font-size:12.5px; font-weight:600; padding:10px 14px; border-radius:8px; background:#fee2e2; color:#b91c1c; border:1px solid #f87171;">
+                <i class="fa-solid fa-triangle-exclamation"></i> Location is outside the active jurisdiction area.
+            </div>
+
         </div>
 
         
@@ -486,18 +494,90 @@
 // Get Current Location
 // --------------------------------------------------
 
+// --------------------------------------------------
+// Community Jurisdiction Boundary Settings
+// --------------------------------------------------
+const baseLat = parseFloat("{{ community_settings.latitude if community_settings and community_settings.latitude else 17.7231 }}") || 17.7231;
+const baseLon = parseFloat("{{ community_settings.longitude if community_settings and community_settings.longitude else 83.3013 }}") || 83.3013;
+const baseRadiusKm = parseFloat("{{ community_settings.radius if community_settings and community_settings.radius else 25.0 }}") || 25.0;
+const communityName = "{{ community_settings.name if community_settings and community_settings.name else 'Visakhapatnam Municipal Corporation (GVMC)' }}";
+
+function calculateDistanceKm(lat1, lon1, lat2, lon2) {
+    if (!lat1 || !lon1 || !lat2 || !lon2) return 9999;
+    const R = 6371;
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+              Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+              Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
+}
+
+let isLocationOutOfRange = false;
+let outOfRangeDistance = 0;
+
+// --------------------------------------------------
+// Leaflet Map Initialization
+// --------------------------------------------------
+var map = L.map('map').setView([baseLat, baseLon], 13);
+
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19,
+    subdomains: ['a', 'b', 'c'],
+    attribution: '&copy; OpenStreetMap contributors'
+}).addTo(map);
+
+// Draw active municipal jurisdiction boundary
+var jurisdictionCircle = L.circle([baseLat, baseLon], {
+    color: '#2563eb',
+    fillColor: '#3b82f6',
+    fillOpacity: 0.1,
+    weight: 2,
+    dashArray: '4, 4',
+    radius: baseRadiusKm * 1000
+}).addTo(map);
+
+jurisdictionCircle.bindTooltip(`${communityName} Jurisdiction (${baseRadiusKm} KM)`, { permanent: false, direction: 'top' });
+
+// Mark jurisdiction center
+L.circleMarker([baseLat, baseLon], {
+    radius: 6,
+    color: '#1d4ed8',
+    fillColor: '#3b82f6',
+    fillOpacity: 1
+}).addTo(map).bindPopup(`<strong>${communityName}</strong><br>Center of Jurisdiction (${baseRadiusKm} KM radius)`);
+
+var marker;
+
+function checkAndDisplayBoundaryWarning(lat, lon) {
+    const dist = calculateDistanceKm(lat, lon, baseLat, baseLon);
+    const warnEl = document.getElementById("radiusWarningAlert");
+
+    if (dist > baseRadiusKm) {
+        isLocationOutOfRange = true;
+        outOfRangeDistance = dist;
+        if (warnEl) {
+            warnEl.style.display = 'block';
+            warnEl.innerHTML = `<i class="fa-solid fa-triangle-exclamation"></i> <strong>Location Out of Jurisdiction:</strong> Selected location is <strong>${dist.toFixed(1)} KM</strong> away from ${communityName} (Coverage limit: <strong>${baseRadiusKm} KM</strong>). Please select a location inside the blue circle.`;
+        }
+    } else {
+        isLocationOutOfRange = false;
+        outOfRangeDistance = 0;
+        if (warnEl) warnEl.style.display = 'none';
+    }
+}
+
+// --------------------------------------------------
+// Get Current Location
+// --------------------------------------------------
 function getLocation() {
-
     if (navigator.geolocation) {
-
         navigator.geolocation.getCurrentPosition(
-
             function(position) {
-
                 let lat = position.coords.latitude;
                 let lon = position.coords.longitude;
 
-                map.setView([lat, lon], 16);
+                map.setView([lat, lon], 15);
 
                 if (marker) {
                     map.removeLayer(marker);
@@ -513,9 +593,9 @@ function getLocation() {
                 const addrEl = document.getElementById("address");
                 addrEl.value = "GPS Location (" + Number(lat).toFixed(5) + ", " + Number(lon).toFixed(5) + ")";
 
-                fetch(
-                    `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`
-                )
+                checkAndDisplayBoundaryWarning(lat, lon);
+
+                fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`)
                 .then(response => response.json())
                 .then(data => {
                     if (data && data.display_name) {
@@ -523,64 +603,32 @@ function getLocation() {
                     }
                 })
                 .catch(() => {});
-
             },
-
             function(error) {
-
                 alert("Location access denied. Please click on the map below to select your location.");
-
             }
-
         );
-
-    }
-
-    else {
-
+    } else {
         alert("Geolocation is not supported by this browser. Please click on the map to set location.");
-
     }
-
 }
 
-// --------------------------------------------------
-// Leaflet Map
-// --------------------------------------------------
-
-var map = L.map('map').setView(
-    [17.6868, 83.2185],
-    13
-);
-
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    maxZoom: 19,
-    subdomains: ['a', 'b', 'c'],
-    attribution: '&copy; OpenStreetMap contributors'
-}).addTo(map);
-
-var marker;
-
 map.on('click', function(e){
-
     if(marker){
         map.removeLayer(marker);
     }
 
     marker = L.marker(e.latlng).addTo(map);
 
-    document.getElementById("latitude").value =
-        e.latlng.lat;
+    document.getElementById("latitude").value = e.latlng.lat;
+    document.getElementById("longitude").value = e.latlng.lng;
 
-    document.getElementById("longitude").value =
-        e.latlng.lng;
+    checkAndDisplayBoundaryWarning(e.latlng.lat, e.latlng.lng);
 
     const mapAddrEl = document.getElementById("address");
     mapAddrEl.value = "Pinned Location (" + e.latlng.lat.toFixed(5) + ", " + e.latlng.lng.toFixed(5) + ")";
 
-    fetch(
-        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${e.latlng.lat}&lon=${e.latlng.lng}`
-    )
+    fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${e.latlng.lat}&lon=${e.latlng.lng}`)
     .then(response => response.json())
     .then(data => {
         if (data && data.display_name) {
@@ -588,7 +636,6 @@ map.on('click', function(e){
         }
     })
     .catch(() => {});
-
 });
 
 // Form submission validation
@@ -600,6 +647,13 @@ function validateComplaintForm(event) {
     if (!lat || !lon) {
         event.preventDefault();
         alert("📍 Please select your complaint location on the map before submitting.");
+        document.getElementById("map").scrollIntoView({ behavior: "smooth" });
+        return false;
+    }
+
+    if (isLocationOutOfRange) {
+        event.preventDefault();
+        alert(`📍 Location Out of Jurisdiction: Your selected location is ${outOfRangeDistance.toFixed(1)} KM away from ${communityName} (Coverage limit: ${baseRadiusKm} KM). Please select a location inside the highlighted community jurisdiction circle.`);
         document.getElementById("map").scrollIntoView({ behavior: "smooth" });
         return false;
     }

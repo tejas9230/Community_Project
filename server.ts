@@ -765,6 +765,17 @@ function getDepartmentForCategory(category: string): string {
   return map[category] || "Others";
 }
 
+function calculateDistanceKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  if (!lat1 || !lon1 || !lat2 || !lon2) return 9999;
+  const R = 6371;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+            Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+            Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
+}
+
 function getOfficersList() {
   return db.users
     .filter(u => u.role === 'Officer')
@@ -1007,7 +1018,10 @@ app.post('/predict_preview', (req: any, res) => {
 });
 
 app.get('/api/check_gemini', async (req: any, res) => {
-  const keys = getGeminiApiKeys();
+  const queryKey = req.query.key ? String(req.query.key).trim().replace(/^['"]|['"]$/g, '') : '';
+  const isDirectTest = Boolean(queryKey);
+  const keys = isDirectTest ? [queryKey] : getGeminiApiKeys();
+
   if (keys.length === 0) {
     return res.json({
       ok: false,
@@ -1028,27 +1042,31 @@ app.get('/api/check_gemini', async (req: any, res) => {
     let workingModel = '';
     let lastError = '';
 
-    for (const m of testModels) {
-      try {
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${key}`;
-        const testResp = await fetch(url, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contents: [{ parts: [{ text: 'Ping: reply with OK' }] }]
-          })
-        });
+    if (!key.startsWith('AIzaSy')) {
+      lastError = `Invalid format: Gemini API keys always start with "AIzaSy". Your key starts with "${key.slice(0, 6)}...". Please get a free API key at aistudio.google.com/app/apikey.`;
+    } else {
+      for (const m of testModels) {
+        try {
+          const url = `https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${key}`;
+          const testResp = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              contents: [{ parts: [{ text: 'Ping: reply with OK' }] }]
+            })
+          });
 
-        if (testResp.ok) {
-          keyWorking = true;
-          workingModel = m;
-          break;
-        } else {
-          const errBody = await testResp.text();
-          lastError = `HTTP ${testResp.status}: ${errBody.slice(0, 80)}`;
+          if (testResp.ok) {
+            keyWorking = true;
+            workingModel = m;
+            break;
+          } else {
+            const errBody = await testResp.text();
+            lastError = `HTTP ${testResp.status}: ${errBody.slice(0, 80)}`;
+          }
+        } catch (err: any) {
+          lastError = err?.message || String(err);
         }
-      } catch (err: any) {
-        lastError = err?.message || String(err);
       }
     }
 
@@ -1062,14 +1080,20 @@ app.get('/api/check_gemini', async (req: any, res) => {
   }
 
   const activeCount = results.filter(r => r.status === 'Active & Verified').length;
+  const anyNonAiza = keys.some(k => !k.startsWith('AIzaSy'));
+  const helpTip = anyNonAiza 
+    ? ' Tip: Google Gemini API keys must start with "AIzaSy...". Generate a free key at aistudio.google.com/app/apikey.' 
+    : '';
+
   res.json({
     ok: activeCount > 0,
+    is_direct_test: isDirectTest,
     keys_count: keys.length,
     active_keys: activeCount,
     results,
     message: activeCount > 0 
-      ? `AI Vision is fully functional (${activeCount}/${keys.length} API keys verified active).` 
-      : `All ${keys.length} configured Gemini API keys failed verification.`
+      ? (isDirectTest ? `Key verified active and working! (${results[0]?.model} ready). Click "Save Settings" below to apply it.` : `AI Vision is fully functional (${activeCount}/${keys.length} API keys verified active).`) 
+      : (isDirectTest ? `Key verification failed: ${results[0]?.error || 'Unknown error'}.${helpTip}` : `All ${keys.length} configured Gemini API keys failed verification.${helpTip}`)
   });
 });
 
@@ -1421,7 +1445,9 @@ Note: Set "verified" to true ONLY if score >= 60 and Image 2 is genuinely the sa
 // Submit Complaint
 app.get('/submit_complaint', (req: any, res) => {
   if (!req.session.username) return res.redirect('/login');
-  res.render('submit_complaint.html');
+  res.render('submit_complaint.html', {
+    community_settings: db.communitySettings
+  });
 });
 
 app.post('/submit_complaint', upload.single('image'), async (req: any, res) => {
@@ -1432,6 +1458,18 @@ app.post('/submit_complaint', upload.single('image'), async (req: any, res) => {
   if (!latitude || !longitude) {
     req.flash('Please pick your location on the map before submitting.', 'error');
     return res.redirect('/submit_complaint');
+  }
+
+  // Check Community Jurisdiction Radius
+  const compLat = parseFloat(latitude);
+  const compLon = parseFloat(longitude);
+  if (!isNaN(compLat) && !isNaN(compLon) && db.communitySettings && typeof db.communitySettings.radius === 'number') {
+    const dist = calculateDistanceKm(compLat, compLon, db.communitySettings.latitude, db.communitySettings.longitude);
+    const maxRadius = db.communitySettings.radius;
+    if (dist > maxRadius) {
+      req.flash(`Location Out of Jurisdiction: Your selected location is ${dist.toFixed(1)} KM away from ${db.communitySettings.name} (Active Jurisdiction: ${maxRadius} KM radius). Please submit to your local municipal ward authority.`, 'error');
+      return res.redirect('/submit_complaint');
+    }
   }
 
   const isEmergency = is_emergency === '1' || is_emergency === 'true';
@@ -1537,15 +1575,43 @@ app.post('/submit_complaint', upload.single('image'), async (req: any, res) => {
       mismatch_reason = `AI Vision Flag: ${aiVision.reason}`;
     } else {
       image_confidence = aiVision.confidence || 94;
-      if (aiVision.detected_category && aiVision.detected_category !== category && aiVision.detected_category !== 'Others' && !aiVision.detected_category.includes(category)) {
+      const catNorm = category.toLowerCase().trim();
+      const detNorm = (aiVision.detected_category || '').toLowerCase().trim();
+
+      const isMismatch = detNorm && 
+        detNorm !== 'others' && 
+        detNorm !== catNorm && 
+        !detNorm.includes(catNorm) && 
+        !catNorm.includes(detNorm);
+
+      if (isMismatch) {
+        needs_verification = 1;
+        image_confidence = 35; // Lower confidence triggers Under Admin Triage
+        mismatch_reason = `Category Mismatch: Reported as "${category}" but image visual analysis indicates "${aiVision.detected_category}". Held for Admin Special Attention Review.`;
         is_cross_dept = 1;
         secondary_dept = aiVision.detected_category;
+        console.warn(`[AI Category Mismatch] Complaint category "${category}" vs detected "${aiVision.detected_category}" -> Routing to Admin Review.`);
       }
     }
   }
 
-  // 3. Heuristic safety checks (expanded keyword & media inspection)
+  // 3. Heuristic category contradiction & safety checks
   const fileCheckName = (String(req.file?.originalname || '') + ' ' + String(req.file?.filename || '')).toLowerCase();
+  const isRoad = category.includes('Road') || department.includes('Road');
+  const isWater = category.includes('Water') || department.includes('Water');
+  const isGarbage = category.includes('Garbage') || department.includes('Sanitation');
+
+  const hasWaterEvidence = fileCheckName.includes('water') || fileCheckName.includes('leak') || fileCheckName.includes('pipe') || fileCheckName.includes('flood') || fileCheckName.includes('tap') || fileCheckName.includes('drain');
+  const hasRoadEvidence = fileCheckName.includes('road') || fileCheckName.includes('pothole') || fileCheckName.includes('tar') || fileCheckName.includes('asphalt');
+  const hasGarbageEvidence = fileCheckName.includes('garbage') || fileCheckName.includes('trash') || fileCheckName.includes('waste') || fileCheckName.includes('dump') || fileCheckName.includes('bin');
+
+  if ((isRoad && hasWaterEvidence) || (isWater && hasRoadEvidence) || (isGarbage && hasRoadEvidence) || (isRoad && hasGarbageEvidence)) {
+    needs_verification = 1;
+    image_confidence = 30;
+    mismatch_reason = `Category / Media Mismatch: Reported as "${category}", but image evidence indicates a conflicting civic category. Held for Admin Review.`;
+    console.warn(`[Heuristic Category Mismatch] Quarantined complaint due to category-media contradiction.`);
+  }
+
   const suspiciousKeywords = [
     'akatsuki', 'naruto', 'anime', 'wallpaper', 'meme', 'cartoon', 'test', 'fake', 
     'random', 'screenshot', 'photo', 'sample', 'art', 'sasuke', 'goku', 'manga', 
