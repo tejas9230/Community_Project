@@ -1033,7 +1033,7 @@ app.get('/api/check_gemini', async (req: any, res) => {
   }
 
   const results: any[] = [];
-  const testModels = ['gemini-1.5-flash', 'gemini-2.0-flash'];
+  const testModels = ['gemini-3.8-flash', 'gemini-3.5-flash', 'gemini-flash-latest'];
 
   for (let i = 0; i < keys.length; i++) {
     const key = keys[i];
@@ -1094,7 +1094,7 @@ app.get('/api/check_gemini', async (req: any, res) => {
     results,
     message: activeCount > 0 
       ? (isDirectTest ? `Key verified active and working! (${results[0]?.model} ready). Click "Save Settings" below to apply it.` : `AI Vision is fully functional (${activeCount}/${keys.length} API keys verified active).`) 
-      : (isDirectTest ? `Key verification failed: ${results[0]?.error || 'Unknown error'}.${helpTip}` : `All ${keys.length} configured Gemini API keys failed verification.${helpTip}`)
+      : (isDirectTest ? `Key verification failed: ${results[0]?.error || 'Unknown error'}` : `All ${keys.length} configured Gemini API keys failed verification.`)
   });
 });
 
@@ -1214,7 +1214,7 @@ Respond ONLY with a JSON object matching this exact schema:
 }
 Set confidence between 0 and 100. If fake, anime, superhero, or wallpaper, is_civic MUST be false and confidence must be below 15.`;
 
-    const models = ['gemini-1.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash-latest'];
+    const models = ['gemini-3.8-flash', 'gemini-3.5-flash', 'gemini-flash-latest'];
 
     for (let i = 0; i < keys.length; i++) {
       const apiKey = keys[i];
@@ -1358,9 +1358,40 @@ async function compareResolutionWithGemini(
   const beforeName = path.basename(beforePathOrUrl || '').toLowerCase();
   const afterName = path.basename(afterPath || '').toLowerCase();
 
+  // 1. Exact image byte / content check (catches re-uploading the exact same image!)
+  if (beforeBuf && afterBuf && beforeBuf === afterBuf) {
+    console.warn('[Integrity Guard] Officer re-submitted the identical image as repair proof!');
+    return {
+      verified: false,
+      score: 5,
+      notes: 'Fraudulent submission: The exact same citizen complaint photo was re-uploaded as repair proof without any repair done.'
+    };
+  }
+
   // Basic check: Identical filename resubmitted
   if (beforeName && beforeName === afterName) {
     return { verified: false, score: 10, notes: 'Identical photo re-submitted as repair proof.' };
+  }
+
+  const suspiciousKeywords = [
+    'akatsuki', 'naruto', 'anime', 'wallpaper', 'meme', 'cartoon', 'test', 'fake', 
+    'random', 'screenshot', 'photo', 'sample', 'art', 'sasuke', 'goku', 'manga', 
+    'drawing', 'illustration', 'graphic', 'fanart', 'poster', 'game', 'avatar', 
+    'doodle', 'render', 'sketch', 'dragon', 'samurai', 'fantasy', 'warrior', 'sword',
+    'pokemon', 'marvel', 'hero', 'cinema', 'fiction', 'spider', 'spiderman', 'spidey',
+    'batman', 'superman', 'ironman', 'avenger', 'cosplay', 'character', 'movie', 'film'
+  ];
+  if (suspiciousKeywords.some(kw => afterName.includes(kw))) {
+    return { verified: false, score: 10, notes: 'Non-civic synthetic or entertainment media uploaded as repair proof.' };
+  }
+
+  const isRoad = category.includes('Road');
+  const isWater = category.includes('Water');
+  if (isRoad && (afterName.includes('water') || afterName.includes('pipe') || afterName.includes('leak'))) {
+    return { verified: false, score: 15, notes: 'Category Mismatch: Reported issue is road infrastructure, but uploaded repair proof shows water supply.' };
+  }
+  if (isWater && (afterName.includes('road') || afterName.includes('pothole') || afterName.includes('asphalt'))) {
+    return { verified: false, score: 15, notes: 'Category Mismatch: Reported issue is water supply, but uploaded repair proof shows road work.' };
   }
 
   if (keys.length === 0 || !beforeBuf || !afterBuf) {
@@ -1396,50 +1427,53 @@ Respond ONLY with a JSON object matching this exact schema:
 }
 Note: Set "verified" to true ONLY if score >= 60 and Image 2 is genuinely the same location repaired. If mismatched, fake, or unrelated, set "verified" to false and score below 30.`;
 
+    const models = ['gemini-3.8-flash', 'gemini-3.5-flash', 'gemini-flash-latest'];
     for (let i = 0; i < keys.length; i++) {
       const apiKey = keys[i];
-      try {
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
-        const response = await fetch(url, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'x-goog-api-key': apiKey
-          },
-          body: JSON.stringify({
-            contents: [{
-              parts: [
-                { text: prompt },
-                { inlineData: { mimeType: beforeMime, data: beforeBuf } },
-                { inlineData: { mimeType: afterMime, data: afterBuf } }
-              ]
-            }],
-            generationConfig: {
-              response_mime_type: 'application/json',
-              temperature: 0.1
-            }
-          })
-        });
+      for (const model of models) {
+        try {
+          const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+          const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'x-goog-api-key': apiKey
+            },
+            body: JSON.stringify({
+              contents: [{
+                parts: [
+                  { text: prompt },
+                  { inlineData: { mimeType: beforeMime, data: beforeBuf } },
+                  { inlineData: { mimeType: afterMime, data: afterBuf } }
+                ]
+              }],
+              generationConfig: {
+                response_mime_type: 'application/json',
+                temperature: 0.1
+              }
+            })
+          });
 
-        if (response.ok) {
-          const data: any = await response.json();
-          const raw = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-          if (raw) {
-            const parsed = JSON.parse(raw);
-            console.log(`[Gemini Vision] Key #${i + 1} Resolution comparison result:`, parsed);
-            const score = typeof parsed.score === 'number' ? Math.min(100, Math.max(0, parsed.score)) : (parsed.verified ? 90 : 20);
-            return {
-              verified: parsed.verified === true && score >= 60,
-              score,
-              notes: parsed.notes || (parsed.verified ? 'AI Verified repair work' : 'Image mismatch or unverified repair')
-            };
+          if (response.ok) {
+            const data: any = await response.json();
+            const raw = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+            if (raw) {
+              const parsed = JSON.parse(raw);
+              console.log(`[Gemini Vision] Model ${model} Key #${i + 1} Resolution comparison result:`, parsed);
+              const score = typeof parsed.score === 'number' ? Math.min(100, Math.max(0, parsed.score)) : (parsed.verified ? 90 : 20);
+              return {
+                verified: parsed.verified === true && score >= 60,
+                score,
+                notes: parsed.notes || (parsed.verified ? 'AI Verified repair work' : 'Image mismatch or unverified repair')
+              };
+            }
+          } else {
+            const errText = await response.text();
+            console.warn(`[Gemini Vision] Model ${model} Key #${i + 1} comparison status ${response.status}: ${errText.slice(0, 100)}. Trying next...`);
           }
-        } else {
-          const errText = await response.text();
-          console.warn(`[Gemini Vision] Key #${i + 1} comparison status ${response.status}: ${errText.slice(0, 100)}. Trying next key...`);
+        } catch (keyErr: any) {
+          console.warn(`[Gemini Vision] Model ${model} Key #${i + 1} comparison error: ${keyErr?.message || keyErr}. Trying next...`);
         }
-      } catch (keyErr: any) {
-        console.warn(`[Gemini Vision] Key #${i + 1} comparison error: ${keyErr?.message || keyErr}. Trying next key...`);
       }
     }
   } catch (err: any) {
