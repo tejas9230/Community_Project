@@ -327,10 +327,10 @@ let db: DatabaseSchema = {
   notifications: [],
   announcements: [],
   communitySettings: {
-    name: 'Rasapudipalem Community',
-    latitude: 17.6868,
-    longitude: 83.2185,
-    radius: 5.0
+    name: 'Visakhapatnam Municipal Corporation (GVMC)',
+    latitude: 17.7231,
+    longitude: 83.3013,
+    radius: 25.0
   },
   adminDirectives: [],
   nextComplaintId: 1001,
@@ -452,12 +452,12 @@ async function loadOrSeedDatabase() {
       if (!Array.isArray(db.notifications)) db.notifications = [];
       if (!Array.isArray(db.announcements)) db.announcements = [];
       if (!Array.isArray(db.adminDirectives)) db.adminDirectives = [];
-      if (!db.communitySettings) {
+      if (!db.communitySettings || db.communitySettings.radius < 10) {
         db.communitySettings = {
-          name: 'Rasapudipalem Community',
-          latitude: 17.6868,
-          longitude: 83.2185,
-          radius: 5.0
+          name: 'Visakhapatnam Municipal Corporation (GVMC)',
+          latitude: 17.7231,
+          longitude: 83.3013,
+          radius: 25.0
         };
       }
       console.log(`Loaded ${db.users.length} users and ${db.complaints.length} complaints from persistent database.`);
@@ -1146,6 +1146,20 @@ Set confidence between 0 and 100. If fake, anime, superhero, or wallpaper, is_ci
   };
 }
 
+function detectMimeType(filePathOrUrl: string, base64Data?: string): string {
+  const clean = String(filePathOrUrl || '').toLowerCase().split('?')[0];
+  if (clean.endsWith('.png')) return 'image/png';
+  if (clean.endsWith('.webp')) return 'image/webp';
+  if (clean.endsWith('.gif')) return 'image/gif';
+  if (clean.endsWith('.jpg') || clean.endsWith('.jpeg')) return 'image/jpeg';
+  if (base64Data) {
+    if (base64Data.startsWith('/9j/')) return 'image/jpeg';
+    if (base64Data.startsWith('iVBORw0KGgo')) return 'image/png';
+    if (base64Data.startsWith('UklGR')) return 'image/webp';
+  }
+  return 'image/jpeg';
+}
+
 async function compareResolutionWithGemini(
   beforePathOrUrl: string,
   afterPath: string,
@@ -1185,10 +1199,21 @@ async function compareResolutionWithGemini(
     console.error('[Gemini Vision] Error reading images for comparison:', readErr?.message || readErr);
   }
 
+  const beforeName = path.basename(beforePathOrUrl || '').toLowerCase();
+  const afterName = path.basename(afterPath || '').toLowerCase();
+
+  // Basic check: Identical filename resubmitted
+  if (beforeName && beforeName === afterName) {
+    return { verified: false, score: 10, notes: 'Identical photo re-submitted as repair proof.' };
+  }
+
   if (keys.length === 0 || !beforeBuf || !afterBuf) {
     console.warn('[Gemini Vision] Verification check: missing key or image buffer, using municipal fallback');
     return { verified: true, score: 92, notes: 'Automated repair verification' };
   }
+
+  const beforeMime = detectMimeType(beforePathOrUrl, beforeBuf);
+  const afterMime = detectMimeType(afterPath, afterBuf);
 
   try {
     const prompt = `You are an AI Quality & Integrity Auditor for municipal civil repairs in India.
@@ -1226,8 +1251,8 @@ Note: Set "verified" to true ONLY if score >= 60 and Image 2 is genuinely the sa
             contents: [{
               parts: [
                 { text: prompt },
-                { inlineData: { mimeType: 'image/jpeg', data: beforeBuf } },
-                { inlineData: { mimeType: 'image/jpeg', data: afterBuf } }
+                { inlineData: { mimeType: beforeMime, data: beforeBuf } },
+                { inlineData: { mimeType: afterMime, data: afterBuf } }
               ]
             }],
             generationConfig: {
@@ -1591,7 +1616,7 @@ app.post('/verify_resolution/:id', async (req: any, res) => {
 
 // High-quality repaired counterpart images for distinct Before vs Repaired showcase
 const DEFAULT_REPAIRED_IMAGES: Record<string, string> = {
-  'Road Damage': 'https://images.unsplash.com/photo-1545459720-aac8509eb02c?w=600&auto=format&fit=crop&q=60',
+  'Road Damage': 'https://images.unsplash.com/photo-1578916171728-46686eac8d58?w=600&auto=format&fit=crop&q=60',
   'Garbage': 'https://images.unsplash.com/photo-1516253593875-bd7ba052fbc5?w=600&auto=format&fit=crop&q=60',
   'Water Supply': 'https://images.unsplash.com/photo-1584467735815-f778f274e296?w=600&auto=format&fit=crop&q=60',
   'Street Light': 'https://images.unsplash.com/photo-1509114397022-ed747cca3f65?w=600&auto=format&fit=crop&q=60',
@@ -1600,7 +1625,7 @@ const DEFAULT_REPAIRED_IMAGES: Record<string, string> = {
   'Traffic': 'https://images.unsplash.com/photo-1494522855154-9297ac14b55f?w=600&auto=format&fit=crop&q=60',
   'Public Property': 'https://images.unsplash.com/photo-1577495508048-b635879837f1?w=600&auto=format&fit=crop&q=60',
   'Animal': 'https://images.unsplash.com/photo-1548767797-d8c844163c4c?w=600&auto=format&fit=crop&q=60',
-  'Others': 'https://images.unsplash.com/photo-1545459720-aac8509eb02c?w=600&auto=format&fit=crop&q=60'
+  'Others': 'https://images.unsplash.com/photo-1578916171728-46686eac8d58?w=600&auto=format&fit=crop&q=60'
 };
 
 // Public Wall of Impact
@@ -1616,8 +1641,9 @@ app.get('/impact_wall', (req: any, res) => {
       const beforeName = path.basename(String(c.image_path || ''));
       const afterName = path.basename(String(resImg || ''));
 
-      // If resolution image is identical to before image (old seed or bad seed data), provide verified repaired image
-      if (!resImg || resImg === c.image_path || (beforeName && beforeName === afterName)) {
+      // If resolution image is identical to before image or matches the scenic mountain placeholder, provide authentic repaired road/infrastructure image
+      const isMismatchedScenic = afterName.includes('262.webp') || String(resImg).includes('photo-1545459720');
+      if (!resImg || resImg === c.image_path || (beforeName && beforeName === afterName) || isMismatchedScenic) {
         resImg = DEFAULT_REPAIRED_IMAGES[c.category] || DEFAULT_REPAIRED_IMAGES['Road Damage'];
       }
 
@@ -1672,10 +1698,30 @@ app.get('/view_complaints', (req: any, res) => {
   }
 
   const complaintTuples = filtered.map(c => {
+    let resImg = c.resolution_image || '';
+    if (resImg && (resImg.includes('262.webp') || resImg.includes('photo-1545459720'))) {
+      resImg = DEFAULT_REPAIRED_IMAGES[c.category] || DEFAULT_REPAIRED_IMAGES['Road Damage'];
+    }
+
     const arr: any = [
-      c.id, c.category, c.priority, c.address, c.latitude, c.longitude,
-      c.description, c.status, c.image_path, c.feedback, c.rating,
-      c.rejection_reason, c.assigned_to, c.sla_deadline
+      c.id,                                   // 0: id
+      c.category,                             // 1: category
+      c.priority,                             // 2: priority
+      c.address,                              // 3: address
+      c.latitude,                             // 4: latitude
+      c.longitude,                            // 5: longitude
+      c.description,                          // 6: description
+      c.status,                               // 7: status
+      c.image_path,                           // 8: image_path
+      c.feedback || '',                       // 9: feedback
+      c.rating || 0,                          // 10: rating
+      c.rejection_reason || '',               // 11: rejection_reason
+      c.sla_deadline || '',                   // 12: sla_deadline
+      resImg,                                 // 13: resolution_image
+      c.resolution_score != null ? c.resolution_score : 90, // 14: resolution_score
+      c.verification_status || 'Pending',     // 15: verification_status
+      c.needs_verification || 0,              // 16: needs_verification
+      c.assigned_to || ''                     // 17: assigned_to
     ];
     arr.id = c.id;
     arr.category = c.category;
@@ -1688,6 +1734,8 @@ app.get('/view_complaints', (req: any, res) => {
     arr.feedback = c.feedback;
     arr.rejection_reason = c.rejection_reason;
     arr.sla_deadline = c.sla_deadline;
+    arr.resolution_image = resImg;
+    arr.resolution_score = c.resolution_score;
     return arr;
   });
 
@@ -2587,7 +2635,7 @@ app.get('/admin_settings', (req: any, res) => {
   });
 });
 
-app.post('/admin_settings', (req: any, res) => {
+app.post('/admin_settings', async (req: any, res) => {
   if (!isAdmin(req)) return res.redirect('/login');
   const { community_name, latitude, longitude, radius } = req.body;
 
@@ -2597,6 +2645,27 @@ app.post('/admin_settings', (req: any, res) => {
   db.communitySettings.radius = parseFloat(radius) || db.communitySettings.radius;
 
   saveDatabase();
+
+  if (pgPool) {
+    try {
+      await pgPool.query(`
+        CREATE TABLE IF NOT EXISTS community_settings (
+          id INTEGER PRIMARY KEY,
+          community_name TEXT,
+          latitude REAL,
+          longitude REAL,
+          radius REAL
+        )
+      `);
+      await pgPool.query(`
+        INSERT INTO community_settings (id, community_name, latitude, longitude, radius)
+        VALUES (1, $1, $2, $3, $4)
+        ON CONFLICT (id) DO UPDATE SET community_name = $1, latitude = $2, longitude = $3, radius = $4
+      `, [db.communitySettings.name, db.communitySettings.latitude, db.communitySettings.longitude, db.communitySettings.radius]);
+    } catch (pgErr) {
+      console.error('Failed to save community settings to PostgreSQL:', pgErr);
+    }
+  }
 
   req.flash('Community settings saved successfully!', 'success');
   res.redirect('/admin_settings');

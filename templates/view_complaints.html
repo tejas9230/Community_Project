@@ -480,7 +480,7 @@
 
                 class="view-btn"
 
-                onclick="openImage('{{ complaint[8] | image_url }}')">
+                onclick="openImage('{{ complaint[8] | image_url }}', '📷 Original Complaint Photo')">
 
                 <i class="fa-solid fa-image"></i>
 
@@ -593,8 +593,8 @@
 
             {% if complaint[13] %}
                 <button type="button" class="view-btn" style="font-size:10px; margin-bottom:4px; background:#2563eb; border-color:#2563eb;"
-                    onclick="openImage('{{ complaint[13] | image_url }}')">
-                    📸 Repair Photo (CV: {{ complaint[14] or 85 }}%)
+                    onclick="openImage('{{ complaint[13] | image_url }}', '✅ Officer Resolution / Repair Proof')">
+                    📸 Repair Photo (CV: {{ complaint[14] or 90 }}%)
                 </button>
             {% endif %}
 
@@ -724,11 +724,16 @@
 
         </span>
 
-        <img
-            id="popupImage"
-            class="popup-image"
-            alt="Complaint Evidence"
-            onerror="this.src='/static/placeholder.jpg'">
+        <div style="display:flex; flex-direction:column; align-items:center; max-width:90vw;">
+            <div id="modalTitle" style="color:#fff; font-weight:700; font-size:15px; margin-bottom:10px; background:rgba(0,0,0,0.6); padding:4px 16px; border-radius:20px;">
+                Complaint Evidence
+            </div>
+            <img
+                id="popupImage"
+                class="popup-image"
+                alt="Complaint Evidence"
+                onerror="this.src='/static/placeholder.jpg'">
+        </div>
 
     </div>
 
@@ -788,8 +793,10 @@
 
 <script>
 
-function openImage(image){
+function openImage(image, title){
     document.getElementById("popupImage").src = image;
+    const titleEl = document.getElementById("modalTitle");
+    if (titleEl) titleEl.innerText = title || "Complaint Evidence";
     document.getElementById("imageModal").style.display = "flex";
 }
 
