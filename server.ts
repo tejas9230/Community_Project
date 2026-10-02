@@ -1042,31 +1042,36 @@ app.get('/api/check_gemini', async (req: any, res) => {
     let workingModel = '';
     let lastError = '';
 
-    if (!key.startsWith('AIzaSy')) {
-      lastError = `Invalid format: Gemini API keys always start with "AIzaSy". Your key starts with "${key.slice(0, 6)}...". Please get a free API key at aistudio.google.com/app/apikey.`;
-    } else {
-      for (const m of testModels) {
-        try {
-          const url = `https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${key}`;
-          const testResp = await fetch(url, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              contents: [{ parts: [{ text: 'Ping: reply with OK' }] }]
-            })
-          });
+    for (const m of testModels) {
+      try {
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${key}`;
+        const testResp = await fetch(url, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-goog-api-key': key
+          },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: 'Ping: reply with OK' }] }]
+          })
+        });
 
-          if (testResp.ok) {
-            keyWorking = true;
-            workingModel = m;
-            break;
+        if (testResp.ok) {
+          keyWorking = true;
+          workingModel = m;
+          break;
+        } else {
+          const errBody = await testResp.text();
+          if (errBody.includes('ACCESS_TOKEN_TYPE_UNSUPPORTED') || errBody.includes('API_KEY_SERVICE_BLOCKED')) {
+            lastError = `Google Cloud Project Restriction: The Generative Language API is disabled or restricted in this project. Please create a key in a NEW project in AI Studio.`;
+          } else if (errBody.includes('API_KEY_INVALID')) {
+            lastError = `API Key Invalid: Please check that the key was copied completely without trailing characters.`;
           } else {
-            const errBody = await testResp.text();
-            lastError = `HTTP ${testResp.status}: ${errBody.slice(0, 80)}`;
+            lastError = `HTTP ${testResp.status}: ${errBody.slice(0, 90)}`;
           }
-        } catch (err: any) {
-          lastError = err?.message || String(err);
         }
+      } catch (err: any) {
+        lastError = err?.message || String(err);
       }
     }
 
@@ -1080,10 +1085,6 @@ app.get('/api/check_gemini', async (req: any, res) => {
   }
 
   const activeCount = results.filter(r => r.status === 'Active & Verified').length;
-  const anyNonAiza = keys.some(k => !k.startsWith('AIzaSy'));
-  const helpTip = anyNonAiza 
-    ? ' Tip: Google Gemini API keys must start with "AIzaSy...". Generate a free key at aistudio.google.com/app/apikey.' 
-    : '';
 
   res.json({
     ok: activeCount > 0,
@@ -1222,7 +1223,10 @@ Set confidence between 0 and 100. If fake, anime, superhero, or wallpaper, is_ci
           const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
           const response = await fetch(url, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+              'Content-Type': 'application/json',
+              'x-goog-api-key': apiKey
+            },
             body: JSON.stringify({
               contents: [{
                 parts: [
@@ -1398,7 +1402,10 @@ Note: Set "verified" to true ONLY if score >= 60 and Image 2 is genuinely the sa
         const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
         const response = await fetch(url, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            'x-goog-api-key': apiKey
+          },
           body: JSON.stringify({
             contents: [{
               parts: [
