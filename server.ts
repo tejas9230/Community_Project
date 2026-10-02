@@ -435,6 +435,36 @@ async function loadOrSeedDatabase() {
         }
         console.log(`Synced ${db.complaints.length} complaints directly from Supabase PostgreSQL!`);
       }
+
+      try {
+        await pgPool.query(`
+          CREATE TABLE IF NOT EXISTS community_settings (
+            id INTEGER PRIMARY KEY,
+            community_name TEXT,
+            latitude REAL,
+            longitude REAL,
+            radius REAL,
+            gemini_api_key TEXT
+          )
+        `);
+        const commRes = await pgPool.query('SELECT community_name, latitude, longitude, radius, gemini_api_key FROM community_settings WHERE id = 1');
+        if (commRes.rows && commRes.rows.length > 0) {
+          const cr = commRes.rows[0];
+          db.communitySettings = {
+            name: cr.community_name || 'Visakhapatnam Municipal Corporation (GVMC)',
+            latitude: parseFloat(cr.latitude) || 17.7231,
+            longitude: parseFloat(cr.longitude) || 83.3013,
+            radius: parseFloat(cr.radius) || 25.0
+          };
+          if (cr.gemini_api_key) {
+            (db as any).geminiApiKey = cr.gemini_api_key;
+          }
+          console.log(`Loaded community settings from Supabase: ${db.communitySettings.name} (${db.communitySettings.radius} KM)`);
+        }
+      } catch (cErr) {
+        console.warn('Could not query community_settings from PostgreSQL:', cErr);
+      }
+
       saveDatabase();
       return;
     } catch (pgErr) {
@@ -452,7 +482,7 @@ async function loadOrSeedDatabase() {
       if (!Array.isArray(db.notifications)) db.notifications = [];
       if (!Array.isArray(db.announcements)) db.announcements = [];
       if (!Array.isArray(db.adminDirectives)) db.adminDirectives = [];
-      if (!db.communitySettings || db.communitySettings.radius < 10) {
+      if (!db.communitySettings || typeof db.communitySettings.radius !== 'number' || isNaN(db.communitySettings.radius)) {
         db.communitySettings = {
           name: 'Visakhapatnam Municipal Corporation (GVMC)',
           latitude: 17.7231,
@@ -494,6 +524,12 @@ async function loadOrSeedDatabase() {
 
   const now = new Date();
   const dateStr = `${String(now.getDate()).padStart(2, '0')}-${String(now.getMonth() + 1).padStart(2, '0')}-${now.getFullYear()} 10:00`;
+  const dSeed1 = new Date(Date.now() + 6 * 86400000);
+  const dSeed2 = new Date(Date.now() + 3 * 86400000);
+  const dSeed3 = new Date(Date.now() + 1 * 86400000);
+  const slaSeed1 = `${String(dSeed1.getDate()).padStart(2, '0')}-${String(dSeed1.getMonth() + 1).padStart(2, '0')}-${dSeed1.getFullYear()} 18:00`;
+  const slaSeed2 = `${String(dSeed2.getDate()).padStart(2, '0')}-${String(dSeed2.getMonth() + 1).padStart(2, '0')}-${dSeed2.getFullYear()} 18:00`;
+  const slaSeed3 = `${String(dSeed3.getDate()).padStart(2, '0')}-${String(dSeed3.getMonth() + 1).padStart(2, '0')}-${dSeed3.getFullYear()} 18:00`;
 
   db.complaints.push(
     {
@@ -510,7 +546,7 @@ async function loadOrSeedDatabase() {
       image_path: 'https://images.unsplash.com/photo-1515162816999-a0c47dc192f7?w=600&auto=format&fit=crop&q=60',
       created_at: dateStr,
       updated_at: dateStr,
-      sla_deadline: '21-08-2026',
+      sla_deadline: slaSeed1,
       assigned_to: 'roads',
       needs_verification: 0,
       escalated: 0,
@@ -530,7 +566,7 @@ async function loadOrSeedDatabase() {
       image_path: 'https://images.unsplash.com/photo-1509114397022-ed747cca3f65?w=600&auto=format&fit=crop&q=60',
       created_at: dateStr,
       updated_at: dateStr,
-      sla_deadline: '17-08-2026',
+      sla_deadline: slaSeed2,
       assigned_to: 'electricity',
       officer_remark: 'Field team dispatched to replace lighting unit.',
       needs_verification: 0,
@@ -551,7 +587,7 @@ async function loadOrSeedDatabase() {
       image_path: 'https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?w=600&auto=format&fit=crop&q=60',
       created_at: dateStr,
       updated_at: dateStr,
-      sla_deadline: '16-08-2026',
+      sla_deadline: slaSeed3,
       assigned_to: 'sanitation',
       officer_remark: 'Area cleaned and waste bin sanitized by sanitation crew.',
       rating: 5,
@@ -709,7 +745,7 @@ function getSlaDeadline(category: string): string {
   const days = SLA_DAYS[category] || 7;
   const d = new Date();
   d.setDate(d.getDate() + days);
-  return `${String(d.getDate()).padStart(2, '0')}-${String(d.getMonth() + 1).padStart(2, '0')}-${d.getFullYear()}`;
+  return `${String(d.getDate()).padStart(2, '0')}-${String(d.getMonth() + 1).padStart(2, '0')}-${d.getFullYear()} 18:00`;
 }
 
 function getDepartmentForCategory(category: string): string {
@@ -970,8 +1006,75 @@ app.post('/predict_preview', (req: any, res) => {
   res.json(result);
 });
 
+app.get('/api/check_gemini', async (req: any, res) => {
+  const keys = getGeminiApiKeys();
+  if (keys.length === 0) {
+    return res.json({
+      ok: false,
+      keys_count: 0,
+      active_keys: 0,
+      results: [],
+      message: 'No Gemini API keys found. Please add GEMINI_API_KEY in environment or configure it in Admin Settings.'
+    });
+  }
+
+  const results: any[] = [];
+  const testModels = ['gemini-1.5-flash', 'gemini-2.0-flash'];
+
+  for (let i = 0; i < keys.length; i++) {
+    const key = keys[i];
+    const preview = key.length > 10 ? (key.slice(0, 6) + '...' + key.slice(-4)) : '***';
+    let keyWorking = false;
+    let workingModel = '';
+    let lastError = '';
+
+    for (const m of testModels) {
+      try {
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${key}`;
+        const testResp = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: 'Ping: reply with OK' }] }]
+          })
+        });
+
+        if (testResp.ok) {
+          keyWorking = true;
+          workingModel = m;
+          break;
+        } else {
+          const errBody = await testResp.text();
+          lastError = `HTTP ${testResp.status}: ${errBody.slice(0, 80)}`;
+        }
+      } catch (err: any) {
+        lastError = err?.message || String(err);
+      }
+    }
+
+    results.push({
+      key_index: i + 1,
+      preview,
+      status: keyWorking ? 'Active & Verified' : 'Failed',
+      model: workingModel || 'None',
+      error: keyWorking ? null : lastError
+    });
+  }
+
+  const activeCount = results.filter(r => r.status === 'Active & Verified').length;
+  res.json({
+    ok: activeCount > 0,
+    keys_count: keys.length,
+    active_keys: activeCount,
+    results,
+    message: activeCount > 0 
+      ? `AI Vision is fully functional (${activeCount}/${keys.length} API keys verified active).` 
+      : `All ${keys.length} configured Gemini API keys failed verification.`
+  });
+});
+
 // ============================================================================
-// GEMINI 1.5 FLASH COMPUTER VISION AI INTEGRATION
+// GEMINI 1.5 & 2.0 FLASH COMPUTER VISION AI INTEGRATION
 // Multi-Key Rotation & Failover Pool
 function getGeminiApiKeys(): string[] {
   const keys: string[] = [];
@@ -988,17 +1091,25 @@ function getGeminiApiKeys(): string[] {
     'AI_STUDIO_KEY'
   ];
 
+  if ((db as any).geminiApiKey && typeof (db as any).geminiApiKey === 'string') {
+    const clean = (db as any).geminiApiKey.trim().replace(/^['"]|['"]$/g, '');
+    if (clean && !keys.includes(clean)) keys.push(clean);
+  }
+
   for (const v of candidateVars) {
     const val = process.env[v];
-    if (val && val.trim() && !keys.includes(val.trim())) {
-      keys.push(val.trim());
+    if (val && typeof val === 'string') {
+      const clean = val.trim().replace(/^['"]|['"]$/g, '');
+      if (clean && !keys.includes(clean)) {
+        keys.push(clean);
+      }
     }
   }
 
   const multi = process.env.GEMINI_API_KEYS;
   if (multi) {
     for (const k of multi.split(',')) {
-      const clean = k.trim();
+      const clean = k.trim().replace(/^['"]|['"]$/g, '');
       if (clean && !keys.includes(clean)) {
         keys.push(clean);
       }
@@ -1009,7 +1120,7 @@ function getGeminiApiKeys(): string[] {
 }
 
 // ============================================================================
-// GEMINI 1.5 FLASH COMPUTER VISION AI INTEGRATION (MULTI-KEY FAILOVER)
+// GEMINI 1.5/2.0 FLASH COMPUTER VISION AI INTEGRATION (MULTI-KEY FAILOVER)
 // ============================================================================
 async function analyzeImageWithGemini(
   filePath: string,
@@ -1032,7 +1143,8 @@ async function analyzeImageWithGemini(
     'character', 'doodle', 'render', 'sketch', 'screenshot', 'sample', 'test', 'fake',
     'spider', 'spiderman', 'spidey', 'batman', 'superman', 'marvel', 'dc', 'hero', 'superhero',
     'ironman', 'avenger', 'cinema', 'movie', 'film', 'fiction', 'fantasy', 'warrior', 'sword',
-    'dragon', 'samurai', 'pokemon', 'disney', 'pixar', 'action', 'actor', 'cosplay', 'digital'
+    'dragon', 'samurai', 'pokemon', 'disney', 'pixar', 'action', 'actor', 'cosplay', 'digital',
+    'selfie', 'cat', 'dog', 'puppy', 'kitten', 'food', 'snack', 'cake', 'party', 'dress', 'shirt'
   ];
   const hasSuspiciousName = suspiciousKeywords.some(kw => checkNames.includes(kw));
 
@@ -1045,19 +1157,10 @@ async function analyzeImageWithGemini(
     };
   }
 
-  if (keys.length === 0) {
-    console.log(`[Gemini Vision] No API key detected. Using municipal heuristics. Verified civic issue.`);
-    return { 
-      is_civic: true, 
-      confidence: 90, 
-      reason: 'Verified as authentic civic issue.' 
-    };
-  }
-
   try {
     const fileBuffer = fs.readFileSync(filePath);
     const base64Data = fileBuffer.toString('base64');
-    const safeMime = mimeType && mimeType.startsWith('image/') ? mimeType : 'image/jpeg';
+    const safeMime = detectMimeType(filePath, base64Data);
 
     const prompt = `You are a strict AI municipal civil infrastructure auditor in India.
 Analyze this submitted complaint photo.
@@ -1070,7 +1173,7 @@ Determine:
 3. Does the visual evidence match the claimed category "${category}"?
 
 CRITICAL SAFETY DIRECTIVE:
-If the image shows a superhero (Spider-Man, Batman, Marvel, DC), fictional character, movie scene, anime, cartoon, video game graphic, wallpaper, or non-civic scene:
+If the image shows a superhero (Spider-Man, Batman, Marvel, DC), fictional character, movie scene, anime, cartoon, video game graphic, wallpaper, meme, or non-civic scene:
 You MUST set:
 "is_civic": false
 "confidence": 5
@@ -1086,59 +1189,84 @@ Respond ONLY with a JSON object matching this exact schema:
 }
 Set confidence between 0 and 100. If fake, anime, superhero, or wallpaper, is_civic MUST be false and confidence must be below 15.`;
 
+    const models = ['gemini-1.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash-latest'];
+
     for (let i = 0; i < keys.length; i++) {
       const apiKey = keys[i];
-      try {
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
-        const response = await fetch(url, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contents: [{
-              parts: [
-                { text: prompt },
-                {
-                  inlineData: {
-                    mimeType: safeMime,
-                    data: base64Data
+      for (const model of models) {
+        try {
+          const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+          const response = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              contents: [{
+                parts: [
+                  { text: prompt },
+                  {
+                    inlineData: {
+                      mimeType: safeMime,
+                      data: base64Data
+                    }
                   }
-                }
-              ]
-            }],
-            generationConfig: {
-              response_mime_type: 'application/json',
-              temperature: 0.1
-            }
-          })
-        });
+                ]
+              }],
+              generationConfig: {
+                response_mime_type: 'application/json',
+                temperature: 0.1
+              }
+            })
+          });
 
-        if (response.ok) {
-          const data: any = await response.json();
-          const rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-          if (rawText) {
-            const parsed = JSON.parse(rawText);
-            console.log(`[Gemini Vision] Key #${i + 1} Image verification result:`, parsed);
-            const isCivic = parsed.is_civic === true && (typeof parsed.confidence !== 'number' || parsed.confidence >= 50);
-            return {
-              is_civic: isCivic,
-              confidence: typeof parsed.confidence === 'number' ? parsed.confidence : (isCivic ? 92 : 10),
-              reason: parsed.reason || (isCivic ? 'Verified civic issue' : 'Non-civic image detected'),
-              detected_category: parsed.detected_category || category
-            };
+          if (response.ok) {
+            const data: any = await response.json();
+            const rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+            if (rawText) {
+              const parsed = JSON.parse(rawText);
+              console.log(`[Gemini Vision] Model ${model} Key #${i + 1} Image verification result:`, parsed);
+              const isCivic = parsed.is_civic === true && (typeof parsed.confidence !== 'number' || parsed.confidence >= 50);
+              return {
+                is_civic: isCivic,
+                confidence: typeof parsed.confidence === 'number' ? parsed.confidence : (isCivic ? 92 : 10),
+                reason: parsed.reason || (isCivic ? 'Verified civic issue' : 'Non-civic image detected'),
+                detected_category: parsed.detected_category || category
+              };
+            }
+          } else {
+            const errText = await response.text();
+            console.warn(`[Gemini Vision] Model ${model} Key #${i + 1} returned status ${response.status}: ${errText.slice(0, 120)}.`);
           }
-        } else {
-          const errText = await response.text();
-          console.warn(`[Gemini Vision] Key #${i + 1} returned status ${response.status}: ${errText.slice(0, 120)}. Trying next key...`);
+        } catch (keyErr: any) {
+          console.warn(`[Gemini Vision] Model ${model} Key #${i + 1} request error: ${keyErr?.message || keyErr}.`);
         }
-      } catch (keyErr: any) {
-        console.warn(`[Gemini Vision] Key #${i + 1} request error: ${keyErr?.message || keyErr}. Trying next key...`);
       }
     }
   } catch (err: any) {
     console.error('[Gemini Vision] Verification error:', err?.message || err);
   }
 
-  // Graceful fallback: If no suspicious keywords detected, accept as authentic civic issue so it routes to the Department Officer!
+  // Graceful fallback with heuristic safeguards:
+  const combinedText = (checkNames + ' ' + (description || '')).toLowerCase();
+  const suspiciousKeywordsFallback = [
+    'akatsuki', 'naruto', 'anime', 'wallpaper', 'manga', 'sasuke', 'goku', 'drawing', 
+    'illustration', 'graphic', 'cartoon', 'meme', 'art', 'game', 'fanart', 'poster', 
+    'character', 'doodle', 'render', 'sketch', 'screenshot', 'sample', 'test', 'fake',
+    'spider', 'spiderman', 'spidey', 'batman', 'superman', 'marvel', 'dc', 'hero', 'superhero',
+    'ironman', 'avenger', 'cinema', 'movie', 'film', 'fiction', 'fantasy', 'warrior', 'sword',
+    'dragon', 'samurai', 'pokemon', 'disney', 'pixar', 'action', 'actor', 'cosplay', 'digital',
+    'selfie', 'cat', 'dog', 'puppy', 'kitten', 'food', 'snack', 'cake', 'party', 'dress', 'shirt'
+  ];
+  const hasSuspiciousFallback = suspiciousKeywordsFallback.some(kw => combinedText.includes(kw));
+
+  if (hasSuspiciousFallback) {
+    console.warn(`[AI Vision Fallback] Suspicious non-civic indicator found: ${combinedText}`);
+    return {
+      is_civic: false,
+      confidence: 10,
+      reason: 'Non-civic/unrelated image detected. Held for Admin Special Review Desk.'
+    };
+  }
+
   return { 
     is_civic: true, 
     confidence: 88, 
@@ -1736,6 +1864,12 @@ app.get('/view_complaints', (req: any, res) => {
     arr.sla_deadline = c.sla_deadline;
     arr.resolution_image = resImg;
     arr.resolution_score = c.resolution_score;
+    arr.department = c.department || getDepartmentForCategory(c.category);
+    arr.assigned_to = c.assigned_to;
+    arr.is_cross_department = c.is_cross_department || 0;
+    arr.secondary_department = c.secondary_department || '';
+    arr.is_emergency = c.is_emergency || 0;
+    arr.image_confidence = c.image_confidence;
     return arr;
   });
 
@@ -2624,6 +2758,10 @@ app.get('/officer_performance', (req: any, res) => {
 app.get('/admin_settings', (req: any, res) => {
   if (!isAdmin(req)) return res.redirect('/login');
 
+  const keys = getGeminiApiKeys();
+  const currentKey = (db as any).geminiApiKey || process.env.GEMINI_API_KEY_2 || process.env.GEMINI_API_KEY || '';
+  const keyPreview = currentKey.length > 8 ? currentKey.slice(0, 6) + '...' + currentKey.slice(-4) : (currentKey ? 'Configured' : '');
+
   res.render('admin_settings.html', {
     settings: [
       1,
@@ -2631,18 +2769,34 @@ app.get('/admin_settings', (req: any, res) => {
       db.communitySettings.latitude,
       db.communitySettings.longitude,
       db.communitySettings.radius
-    ]
+    ],
+    gemini_key_configured: keys.length > 0,
+    gemini_key_preview: keyPreview,
+    gemini_keys_count: keys.length
   });
 });
 
 app.post('/admin_settings', async (req: any, res) => {
   if (!isAdmin(req)) return res.redirect('/login');
-  const { community_name, latitude, longitude, radius } = req.body;
+  const { community_name, latitude, longitude, radius, gemini_api_key } = req.body;
 
   db.communitySettings.name = community_name || db.communitySettings.name;
-  db.communitySettings.latitude = parseFloat(latitude) || db.communitySettings.latitude;
-  db.communitySettings.longitude = parseFloat(longitude) || db.communitySettings.longitude;
-  db.communitySettings.radius = parseFloat(radius) || db.communitySettings.radius;
+  if (latitude !== undefined && latitude !== '') {
+    const lat = parseFloat(latitude);
+    if (!isNaN(lat)) db.communitySettings.latitude = lat;
+  }
+  if (longitude !== undefined && longitude !== '') {
+    const lon = parseFloat(longitude);
+    if (!isNaN(lon)) db.communitySettings.longitude = lon;
+  }
+  if (radius !== undefined && radius !== '') {
+    const rad = parseFloat(radius);
+    if (!isNaN(rad)) db.communitySettings.radius = rad;
+  }
+
+  if (gemini_api_key !== undefined && typeof gemini_api_key === 'string' && gemini_api_key.trim()) {
+    (db as any).geminiApiKey = gemini_api_key.trim();
+  }
 
   saveDatabase();
 
@@ -2654,20 +2808,26 @@ app.post('/admin_settings', async (req: any, res) => {
           community_name TEXT,
           latitude REAL,
           longitude REAL,
-          radius REAL
+          radius REAL,
+          gemini_api_key TEXT
         )
       `);
       await pgPool.query(`
-        INSERT INTO community_settings (id, community_name, latitude, longitude, radius)
-        VALUES (1, $1, $2, $3, $4)
-        ON CONFLICT (id) DO UPDATE SET community_name = $1, latitude = $2, longitude = $3, radius = $4
-      `, [db.communitySettings.name, db.communitySettings.latitude, db.communitySettings.longitude, db.communitySettings.radius]);
+        INSERT INTO community_settings (id, community_name, latitude, longitude, radius, gemini_api_key)
+        VALUES (1, $1, $2, $3, $4, $5)
+        ON CONFLICT (id) DO UPDATE SET 
+          community_name = $1, 
+          latitude = $2, 
+          longitude = $3, 
+          radius = $4, 
+          gemini_api_key = COALESCE($5, community_settings.gemini_api_key)
+      `, [db.communitySettings.name, db.communitySettings.latitude, db.communitySettings.longitude, db.communitySettings.radius, (db as any).geminiApiKey || null]);
     } catch (pgErr) {
       console.error('Failed to save community settings to PostgreSQL:', pgErr);
     }
   }
 
-  req.flash('Community settings saved successfully!', 'success');
+  req.flash('Settings saved successfully!', 'success');
   res.redirect('/admin_settings');
 });
 

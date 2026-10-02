@@ -188,7 +188,7 @@
                     step="0.5"
                     id="radius"
                     name="radius"
-                    value="{{ settings[4] if settings[4] and settings[4] >= 10 else 25.0 }}"
+                    value="{{ settings[4] if settings[4] is defined and settings[4] is not none and settings[4] != '' else 25.0 }}"
                     oninput="updateRadiusPreview(this.value)"
                     required>
 
@@ -204,7 +204,32 @@
             <!-- Radius Preview -->
 
             <div class="radius-preview">
-                Coverage Area: <span id="radiusDisplay">{{ settings[4] if settings[4] and settings[4] >= 10 else 25.0 }}</span> KM Radius from Municipal HQ
+                Coverage Area: <span id="radiusDisplay">{{ settings[4] if settings[4] is defined and settings[4] is not none and settings[4] != '' else 25.0 }}</span> KM Radius from Municipal HQ
+            </div>
+
+            <!-- AI Vision / Gemini Key Configuration -->
+            <div class="form-group" style="margin-top:20px; padding-top:16px; border-top:1px dashed #94a3b8;">
+                <label style="display:flex; justify-content:space-between; align-items:center;">
+                    <span>🤖 Gemini AI Computer Vision</span>
+                    <span id="geminiStatusBadge" style="font-size:11px; padding:3px 10px; border-radius:12px; font-weight:700; background:rgba(37,99,235,0.15); color:#2563eb;">
+                        Checking...
+                    </span>
+                </label>
+                <div style="font-size:12px; color:#94a3b8; margin-bottom:8px;">
+                    Powers authentic civic vs. fake/anime/wallpaper verification and officer repair proof audits.
+                </div>
+                <div style="display:flex; gap:10px;">
+                    <input
+                        type="password"
+                        id="gemini_api_key"
+                        name="gemini_api_key"
+                        placeholder="{% if gemini_key_configured %}Key Configured ({{ gemini_key_preview }}) — enter new key to replace{% else %}Enter Google Gemini API Key (e.g. AIzaSy...){% endif %}"
+                        style="flex:1;">
+                    <button type="button" onclick="testGeminiConnection()" style="padding:8px 14px; background:#059669; color:#fff; font-weight:600; font-size:13px; border-radius:8px; border:none; cursor:pointer; display:inline-flex; align-items:center; gap:6px; white-space:nowrap;">
+                        ⚡ Test AI Key
+                    </button>
+                </div>
+                <div id="geminiTestDetails" style="margin-top:8px; font-size:12px; display:none; padding:8px 12px; border-radius:8px;"></div>
             </div>
 
             <!-- Save -->
@@ -242,6 +267,67 @@ function setRadius(val) {
 function updateRadiusPreview(val) {
     document.getElementById('radiusDisplay').textContent = val || '0';
 }
+
+function testGeminiConnection() {
+    const badge = document.getElementById('geminiStatusBadge');
+    const details = document.getElementById('geminiTestDetails');
+    const inputKey = document.getElementById('gemini_api_key').value;
+
+    if (badge) {
+        badge.textContent = '⏳ Testing...';
+        badge.style.background = '#fef08a';
+        badge.style.color = '#854d0e';
+    }
+    if (details) {
+        details.style.display = 'block';
+        details.style.background = 'rgba(255,255,255,0.06)';
+        details.style.color = '#94a3b8';
+        details.innerHTML = 'Connecting to Google Gemini API...';
+    }
+
+    fetch('/api/check_gemini')
+        .then(r => r.json())
+        .then(data => {
+            if (data.ok) {
+                if (badge) {
+                    badge.textContent = '🟢 Active & Verified';
+                    badge.style.background = '#dcfce7';
+                    badge.style.color = '#15803d';
+                }
+                if (details) {
+                    details.style.display = 'block';
+                    details.style.background = 'rgba(16,185,129,0.1)';
+                    details.style.color = '#059669';
+                    details.innerHTML = `<strong>✅ Active:</strong> ${data.message} (${data.active_keys} key(s) ready with Gemini Flash Vision)`;
+                }
+            } else {
+                if (badge) {
+                    badge.textContent = '🔴 Key Issue';
+                    badge.style.background = '#fee2e2';
+                    badge.style.color = '#991b1b';
+                }
+                if (details) {
+                    details.style.display = 'block';
+                    details.style.background = 'rgba(239,68,68,0.1)';
+                    details.style.color = '#dc2626';
+                    details.innerHTML = `<strong>⚠️ Status:</strong> ${data.message}`;
+                }
+            }
+        })
+        .catch(err => {
+            if (badge) {
+                badge.textContent = '⚠️ Check Failed';
+            }
+            if (details) {
+                details.style.display = 'block';
+                details.textContent = 'Network error testing Gemini API.';
+            }
+        });
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    testGeminiConnection();
+});
 
 function getLocation() {
 

@@ -425,6 +425,37 @@ function toggleCivicTheme() {
 })();
 
 // ================= DYNAMIC SLA COUNTDOWN =================
+function parseIndianDate(raw) {
+    if (!raw) return null;
+    raw = String(raw).trim();
+    if (raw.includes('-')) {
+        const parts = raw.split(' ');
+        const dateParts = parts[0].split('-');
+        let day, month, year, hours = 18, mins = 0;
+        
+        if (dateParts[0].length === 4) {
+            year = parseInt(dateParts[0], 10);
+            month = parseInt(dateParts[1], 10) - 1;
+            day = parseInt(dateParts[2], 10);
+        } else {
+            day = parseInt(dateParts[0], 10);
+            month = parseInt(dateParts[1], 10) - 1;
+            year = parseInt(dateParts[2], 10);
+        }
+
+        if (parts[1] && parts[1].includes(':')) {
+            const timeParts = parts[1].split(':');
+            hours = parseInt(timeParts[0], 10);
+            mins = parseInt(timeParts[1], 10);
+        }
+
+        const d = new Date(year, month, day, hours, mins, 0);
+        if (!isNaN(d.getTime())) return d;
+    }
+    const d = new Date(raw);
+    return isNaN(d.getTime()) ? null : d;
+}
+
 function updateSlaBadges() {
     const badges = document.querySelectorAll('.sla-countdown-badge');
     const now = new Date();
@@ -433,22 +464,25 @@ function updateSlaBadges() {
         const raw = badge.getAttribute('data-sla');
         if (!raw) return;
 
-        let deadline = null;
-        if (raw.includes('-') && raw.includes(':')) {
-            const parts = raw.split(' ');
-            const dateParts = parts[0].split('-');
-            const timeParts = parts[1].split(':');
-            deadline = new Date(dateParts[2], parseInt(dateParts[1], 10) - 1, dateParts[0], timeParts[0], timeParts[1]);
-        } else {
-            deadline = new Date(raw);
-        }
-
-        if (isNaN(deadline.getTime())) return;
+        const deadline = parseIndianDate(raw);
+        if (!deadline || isNaN(deadline.getTime())) return;
 
         const diffMs = deadline - now;
         const diffHours = Math.round(diffMs / (1000 * 60 * 60));
 
-        if (diffHours > 12) {
+        if (diffHours >= 48) {
+            const days = Math.floor(diffHours / 24);
+            badge.style.background = '#dcfce7';
+            badge.style.color = '#15803d';
+            badge.style.borderColor = '#86efac';
+            badge.innerHTML = `🟢 ${days} days left (Within SLA)`;
+        } else if (diffHours >= 24) {
+            const remHours = diffHours % 24;
+            badge.style.background = '#dcfce7';
+            badge.style.color = '#15803d';
+            badge.style.borderColor = '#86efac';
+            badge.innerHTML = `🟢 1 day ${remHours}h left (Within SLA)`;
+        } else if (diffHours > 12) {
             badge.style.background = '#dcfce7';
             badge.style.color = '#15803d';
             badge.style.borderColor = '#86efac';
@@ -463,7 +497,12 @@ function updateSlaBadges() {
             badge.style.background = '#fee2e2';
             badge.style.color = '#b91c1c';
             badge.style.borderColor = '#fca5a5';
-            badge.innerHTML = `🔴 Overdue by ${overdue}h (Escalated)`;
+            if (overdue >= 24) {
+                const odDays = Math.floor(overdue / 24);
+                badge.innerHTML = `🔴 Overdue by ${odDays}d (Escalated)`;
+            } else {
+                badge.innerHTML = `🔴 Overdue by ${overdue}h (Escalated)`;
+            }
         }
     });
 }

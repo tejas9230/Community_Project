@@ -388,61 +388,77 @@
 
         {% if complaint[7] == "Under Admin Triage" %}
 
-            <span class="status" style="background:linear-gradient(135deg,#7c3aed,#6d28d9);white-space:nowrap;">
-                🔍 Under AI Quality Review
+            <span class="status" style="background:linear-gradient(135deg,#7c3aed,#6d28d9);white-space:nowrap;padding:4px 10px;border-radius:12px;font-size:11px;font-weight:700;color:#fff;">
+                🛡️ Under Admin Review
             </span>
+            <div style="margin-top:6px; font-size:11px; font-weight:600; color:#9333ea; display:flex; align-items:center; gap:4px;">
+                <i class="fa-solid fa-user-shield"></i>
+                <span>Desk: <strong>Admin Quarantine Triage</strong></span>
+            </div>
 
         {% elif complaint[7] == "Pending" %}
 
             <span class="status pending">
-
                 🟡 Pending
-
             </span>
+            <div style="margin-top:6px; font-size:11px; font-weight:600; color:#1d4ed8; display:flex; align-items:center; gap:4px;">
+                <i class="fa-solid fa-building-columns"></i>
+                <span>Routed to: <strong>{{ complaint.department or complaint[1] }}</strong></span>
+            </div>
+            {% if complaint[17] and complaint[17] != 'admin' %}
+                <div style="font-size:10px; color:#64748b; margin-left:18px;">
+                    Officer Queue: @{{ complaint[17] }}
+                </div>
+            {% endif %}
 
         {% elif complaint[7] == "In Progress" %}
 
             <span class="status progress">
-
                 🔵 In Progress
-
             </span>
+            <div style="margin-top:6px; font-size:11px; font-weight:600; color:#0284c7; display:flex; align-items:center; gap:4px;">
+                <i class="fa-solid fa-wrench"></i>
+                <span>Department: <strong>{{ complaint.department or complaint[1] }}</strong></span>
+            </div>
+            {% if complaint[17] and complaint[17] != 'admin' %}
+                <div style="font-size:10px; color:#64748b; margin-left:18px;">
+                    Assigned Officer: @{{ complaint[17] }}
+                </div>
+            {% endif %}
 
         {% elif complaint[7] == "Resolved" %}
 
             <span class="status resolved" style="background:#0284c7; color:#fff;">
-
                 🟢 Resolved (Sign-Off Pending)
-
             </span>
+            <div style="margin-top:5px; font-size:10px; color:#64748b;">
+                Dept: {{ complaint.department or complaint[1] }}
+            </div>
 
         {% elif complaint[7] == "Closed" %}
 
             <span class="status resolved" style="background:#059669; color:#fff;">
-
                 🔒 Closed (Verified)
-
             </span>
 
         {% elif complaint[7] == "Reopened" %}
 
             <span class="status rejected" style="background:#ea580c; color:#fff;">
-
                 ⚠️ Reopened (Disputed)
-
             </span>
+            <div style="margin-top:5px; font-size:10px; color:#ea580c;">
+                Re-escalated to Department
+            </div>
 
         {% else %}
 
             <span class="status rejected">
-
                 🔴 Rejected
-
             </span>
 
         {% endif %}
 
-        {% if complaint[17] == 1 %}
+        {% if complaint.is_emergency == 1 %}
             <div style="margin-top:5px;">
                 <span class="badge" style="background:#dc2626; color:#fff; font-size:10px; padding:2px 8px; border-radius:10px;">
                     🚨 Civic SOS
@@ -832,6 +848,37 @@ function toggleCivicTheme() {
 })();
 
 // ================= DYNAMIC SLA COUNTDOWN =================
+function parseIndianDate(raw) {
+    if (!raw) return null;
+    raw = String(raw).trim();
+    if (raw.includes('-')) {
+        const parts = raw.split(' ');
+        const dateParts = parts[0].split('-');
+        let day, month, year, hours = 18, mins = 0;
+        
+        if (dateParts[0].length === 4) {
+            year = parseInt(dateParts[0], 10);
+            month = parseInt(dateParts[1], 10) - 1;
+            day = parseInt(dateParts[2], 10);
+        } else {
+            day = parseInt(dateParts[0], 10);
+            month = parseInt(dateParts[1], 10) - 1;
+            year = parseInt(dateParts[2], 10);
+        }
+
+        if (parts[1] && parts[1].includes(':')) {
+            const timeParts = parts[1].split(':');
+            hours = parseInt(timeParts[0], 10);
+            mins = parseInt(timeParts[1], 10);
+        }
+
+        const d = new Date(year, month, day, hours, mins, 0);
+        if (!isNaN(d.getTime())) return d;
+    }
+    const d = new Date(raw);
+    return isNaN(d.getTime()) ? null : d;
+}
+
 function updateSlaBadges() {
     const badges = document.querySelectorAll('.sla-countdown-badge');
     const now = new Date();
@@ -840,23 +887,25 @@ function updateSlaBadges() {
         const raw = badge.getAttribute('data-sla');
         if (!raw) return;
 
-        // format: DD-MM-YYYY HH:MM
-        let deadline = null;
-        if (raw.includes('-') && raw.includes(':')) {
-            const parts = raw.split(' ');
-            const dateParts = parts[0].split('-');
-            const timeParts = parts[1].split(':');
-            deadline = new Date(dateParts[2], parseInt(dateParts[1], 10) - 1, dateParts[0], timeParts[0], timeParts[1]);
-        } else {
-            deadline = new Date(raw);
-        }
-
-        if (isNaN(deadline.getTime())) return;
+        const deadline = parseIndianDate(raw);
+        if (!deadline || isNaN(deadline.getTime())) return;
 
         const diffMs = deadline - now;
         const diffHours = Math.round(diffMs / (1000 * 60 * 60));
 
-        if (diffHours > 12) {
+        if (diffHours >= 48) {
+            const days = Math.floor(diffHours / 24);
+            badge.style.background = '#dcfce7';
+            badge.style.color = '#15803d';
+            badge.style.borderColor = '#86efac';
+            badge.innerHTML = `🟢 ${days} days left (Within SLA)`;
+        } else if (diffHours >= 24) {
+            const remHours = diffHours % 24;
+            badge.style.background = '#dcfce7';
+            badge.style.color = '#15803d';
+            badge.style.borderColor = '#86efac';
+            badge.innerHTML = `🟢 1 day ${remHours}h left (Within SLA)`;
+        } else if (diffHours > 12) {
             badge.style.background = '#dcfce7';
             badge.style.color = '#15803d';
             badge.style.borderColor = '#86efac';
@@ -871,7 +920,12 @@ function updateSlaBadges() {
             badge.style.background = '#fee2e2';
             badge.style.color = '#b91c1c';
             badge.style.borderColor = '#fca5a5';
-            badge.innerHTML = `🔴 Overdue by ${overdue}h (Escalated)`;
+            if (overdue >= 24) {
+                const odDays = Math.floor(overdue / 24);
+                badge.innerHTML = `🔴 Overdue by ${odDays}d (Escalated)`;
+            } else {
+                badge.innerHTML = `🔴 Overdue by ${overdue}h (Escalated)`;
+            }
         }
     });
 }
