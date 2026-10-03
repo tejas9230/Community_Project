@@ -653,78 +653,312 @@ async function loadOrSeedDatabase() {
 
 loadOrSeedDatabase();
 
-// AI / NLP Categorization & Priority Predictor (with Explainable AI & Ambiguity Detection)
+// AI / NLP Categorization & Priority Predictor (with Multilingual & Explainable AI & Ambiguity Detection)
+interface MultilingualRule {
+  cat: string;
+  dept: string;
+  pri: string;
+  conf: number;
+  strong: RegExp[];
+  keywords: RegExp[];
+  tagKeywords: string[];
+}
+
+const MULTILINGUAL_RULES: MultilingualRule[] = [
+  {
+    cat: "Water Supply",
+    dept: "Water Supply",
+    pri: "High",
+    conf: 94,
+    strong: [
+      /water\s*supply/i, /drinking\s*water/i, /pipe\s*leak/i, /pipeline/i, /water\s*tank/i, /tap\s*leak/i,
+      /पानी\s*का\s*पाइप/i, /पानी\s*की\s*सप्लाई/i, /पेयजल/i, /नल\s*का\s*पानी/i, /पानी\s*की\s*किल्लत/i, /जल\s*आपूर्ति/i,
+      /మంచినీరు/i, /నీటి\s*సమస్య/i, /పైపు\s*లీక్/i, /పైపులైన్/i, /కుళాయి/i, /నీరు\s*సరఫరా/i, /నీళ్లు\s*రావట్లేదు/i,
+      /குடிநீர்/i, /தண்ணீர்\s*குழாய்/i, /குழாய்\s*உடைப்பு/i, /தண்ணீர்\s*கசிவு/i, /நீர்\s*விநியோகம்/i,
+      /paani\s*leak/i, /paani\s*nahi/i, /pani\s*supply/i, /neellu\s*ravatledu/i, /thanni\s*varala/i
+    ],
+    keywords: [
+      /\bwater\b/i, /\bpipe\b/i, /\bleak\b/i, /\btap\b/i, /\bsupply\b/i, /\bchlorine\b/i, /\bseepage\b/i,
+      /पानी/i, /पेयजल/i, /जलभराव/i, /\bनल\b/i, /पाइप/i, /रिसाव/i,
+      /నీరు/i, /నీళ్లు/i, /నీళ్ల/i, /పైపు/i, /లీకేజీ/i, /కుళాయి/i,
+      /தண்ணீர்/i, /குடிநீர்/i, /குழாய்/i, /கசிவு/i,
+      /\bpaani\b/i, /\bpani\b/i, /\bneellu\b/i, /\bneeru\b/i, /\bthanni\b/i, /\bthanneer\b/i
+    ],
+    tagKeywords: ['water', 'pipe', 'leak', 'tap', 'pipeline', 'पानी', 'पाइप', 'नल', 'నీరు', 'నీళ్లు', 'పైపు', 'కుళాయి', 'தண்ணீர்', 'குழாய்']
+  },
+  {
+    cat: "Road Damage",
+    dept: "Roads & Infrastructure",
+    pri: "High",
+    conf: 92,
+    strong: [
+      /pothole/i, /road\s*damage/i, /broken\s*road/i, /asphalt\s*crack/i, /road\s*crack/i, /crater/i,
+      /गड्ढा/i, /गड्ढे/i, /टूटी\s*सड़क/i, /सड़क\s*खराब/i, /सड़क\s*पर\s*गड्ढा/i, /खड्डा/i,
+      /గుంత/i, /గుంతలు/i, /రోడ్డు\s*పాడై/i, /రోడ్డుపై\s*గుంత/i, /తారు\s*రోడ్డు/i,
+      /குழி/i, /பள்ளம்/i, /சாலை\s*சேதம்/i, /தார்\s*சாலை/i, /உடைந்த\s*சாலை/i,
+      /guntalu/i, /guntha/i, /gaddha/i, /gaddhe/i, /sadak\s*kharab/i, /road\s*lo\s*pedda\s*guntalu/i
+    ],
+    keywords: [
+      /\bpothole\b/i, /\bpotholes\b/i, /\bcrack\b/i, /\basphalt\b/i, /\btar\b/i, /\bdivider\b/i, /\bcrater\b/i, /\bpavement\b/i,
+      /गड्ढा/i, /गड्ढे/i, /डामर/i, /फुटपाथ/i,
+      /గుంత/i, /గుంతలు/i, /తారు/i, /రహదారులు/i,
+      /குழி/i, /பள்ளம்/i, /தார்/i,
+      /\broad\b/i, /\bhighway\b/i, /सड़क/i, /सड़क/i, /రోడ్డు/i, /రహదారి/i, /சாலை/i
+    ],
+    tagKeywords: ['pothole', 'crack', 'asphalt', 'road', 'गड्ढा', 'सड़क', 'डामर', 'గుంతలు', 'రోడ్డు', 'రహదారి', 'குழி', 'சாலை']
+  },
+  {
+    cat: "Street Light",
+    dept: "Electricity & Street Lighting",
+    pri: "Medium",
+    conf: 90,
+    strong: [
+      /street\s*light/i, /street\s*lamp/i, /light\s*pole/i, /streetlight/i, /lamp\s*post/i,
+      /स्ट्रीट\s*लाइट/i, /स्ट्रीटलाइट/i, /खंभे\s*की\s*लाइट/i, /लाइट\s*बंद/i, /गली\s*की\s*बत्ती/i,
+      /వీధి\s*దీపం/i, /వీధిదీపం/i, /వీధి\s*లైట్/i, /వీధి\s*దీపాలు/i, /కరెంట్\s*స్తంభం/i,
+      /தெருவிளக்கு/i, /மின்விளக்கு/i, /விளக்கு\s*எரியவில்லை/i, /தெரு\s*விளக்கு/i,
+      /veedhi\s*light/i, /street\s*light\s*band/i, /light\s*nahi\s*jal/i, /velagatle/i
+    ],
+    keywords: [
+      /street\s*light/i, /\blamp\b/i, /\bbulb\b/i, /\bdark\b/i, /\blantern\b/i,
+      /बत्ती/i, /अंधेरा/i, /दीपक/i,
+      /లైట్లు/i, /చీకటి/i, /బల్బ్/i, /దీపాలు/i,
+      /இருட்டு/i, /இருட்டாக/i, /பல்பு/i,
+      /\bandhera\b/i, /\bcheekati\b/i, /\biruttu\b/i
+    ],
+    tagKeywords: ['street light', 'lamp', 'bulb', 'dark', 'स्ट्रीट लाइट', 'अंधेरा', 'बत्ती', 'వీధి దీపం', 'లైట్లు', 'చీకటి', 'தெருவிளக்கு', 'இருட்டு']
+  },
+  {
+    cat: "Electricity",
+    dept: "Electricity & Street Lighting",
+    pri: "Critical",
+    conf: 96,
+    strong: [
+      /electric\s*shock/i, /live\s*wire/i, /wire\s*hanging/i, /transformer\s*blast/i, /power\s*outage/i, /high\s*voltage/i,
+      /करंट\s*का\s*खतरा/i, /तार\s*लटक/i, /बिजली\s*का\s*तार/i, /ट्रांसफार्मर\s*खराब/i, /बिजली\s*गुल/i,
+      /కరెంట్\s*తీగలు/i, /తీగలు\s*తెగి/i, /షాక్\s*కొట్టే/i, /ట్రాన్స్\s*ఫార్మర్/i, /కరెంట్\s*పోయింది/i,
+      /மின்\s*கம்பி/i, /கம்பி\s*அறுந்து/i, /மின்வெட்டு/i, /மின்சாரம்\s*இல்லை/i, /மின்\s*கசிவு/i,
+      /current\s*poyindi/i, /bijli\s*chali\s*gayi/i, /transformer\s*spark/i
+    ],
+    keywords: [
+      /\belectric\b/i, /\bpower\b/i, /\bwire\b/i, /\bvoltage\b/i, /\btransformer\b/i, /\bshock\b/i, /\bspark\b/i, /\bfuse\b/i,
+      /बिजली/i, /करंट/i, /तार/i, /ट्रांसफार्मर/i, /विद्युत/i,
+      /కరెంట్/i, /విద్యుత్/i, /తీగలు/i, /వైర్లు/i, /షాక్/i,
+      /மின்சாரம்/i, /மின்கம்பி/i, /மின்மாற்றி/i,
+      /\bbijli\b/i, /\bcurrent\b/i, /\bminsaram\b/i
+    ],
+    tagKeywords: ['electric', 'power', 'wire', 'transformer', 'shock', 'बिजली', 'करंट', 'तार', 'కరెంట్', 'విద్యుత్', 'తీగలు', 'மின்சாரம்', 'மின்கம்பி']
+  },
+  {
+    cat: "Garbage",
+    dept: "Sanitation & Waste Management",
+    pri: "Medium",
+    conf: 88,
+    strong: [
+      /garbage\s*dump/i, /waste\s*dump/i, /garbage\s*pile/i, /trash\s*bin/i, /foul\s*smell/i,
+      /कचरे\s*का\s*ढेर/i, /कचरा\s*पड़ा/i, /कूड़े\s*का\s*ढेर/i, /कूड़ादान\s*भर/i, /बदबू\s*आ\s*रही/i,
+      /చెత్త\s*పేరుకుపోయి/i, /చెత్త\s*కుప్పలు/i, /దుర్వాసన/i, /చెత్తకుండీ/i, /చెత్త\s*డంపింగ్/i,
+      /குப்பைக்\s*குவியல்/i, /குப்பை\s*கொட்டப்பட்டு/i, /துர்நாற்றம்/i, /குப்பை\s*தொட்டி/i,
+      /kachra\s*pada/i, /chetta\s*dump/i, /kuppai\s*kotti/i, /dustbin\s*overflow/i
+    ],
+    keywords: [
+      /\bgarbage\b/i, /\btrash\b/i, /\bwaste\b/i, /\bdump\b/i, /\bbin\b/i, /\blitter\b/i, /\bdebris\b/i, /\bsmell\b/i,
+      /कचरा/i, /कूड़ा/i, /कूड़ेदान/i, /गंदगी/i, /बदबू/i, /सफाई/i, /दुर्गंध/i,
+      /చెత్త/i, /చెత్తకుండీ/i, /వ్యర్థాలు/i, /పరిశుభ్రత/i, /కంపు/i,
+      /குப்பை/i, /கழிவு/i, /துப்புரவு/i,
+      /\bkachra\b/i, /\bkooda\b/i, /\bchetta\b/i, /\bkuppai\b/i, /\bbadboo\b/i
+    ],
+    tagKeywords: ['garbage', 'trash', 'waste', 'smell', 'कचरा', 'कूड़ा', 'बदबू', 'చెత్త', 'దుర్వాసన', 'குப்பை', 'துர்நாற்றம்']
+  },
+  {
+    cat: "Drainage",
+    dept: "Drainage & Sewage",
+    pri: "High",
+    conf: 91,
+    strong: [
+      /drainage\s*overflow/i, /sewage\s*leak/i, /open\s*manhole/i, /gutter\s*clog/i, /sewer\s*line/i,
+      /नाली\s*जाम/i, /सीवर\s*जाम/i, /गटर\s*का\s*पानी/i, /नाली\s*का\s*पानी/i, /सीवर\s*का\s*पानी/i, /खुला\s*मैनहोल/i,
+      /మురుగు\s*కాలువ/i, /మురుగు\s*కాల్వ/i, /డ్రైనేజీ\s*సమస్య/i, /డ్రైనేజి/i, /పొంగిపొర్లుతోంది/i, /మ్యాన్‌హోల్/i,
+      /சாக்கடை\s*அடைப்பு/i, /கழிவுநீர்\s*சாலையில்/i, /பாதாள\s*சாக்கடை/i, /கழிவுநீர்\s*கால்வாய்/i,
+      /drainage\s*overflow/i, /naali\s*jam/i, /gutter\s*overflow/i, /murugu\s*kaluva/i, /saakadai\s*adaippu/i
+    ],
+    keywords: [
+      /\bdrain\b/i, /\bdrainage\b/i, /\bsewage\b/i, /\bgutter\b/i, /\bmanhole\b/i, /\bclog\b/i, /\bsewer\b/i,
+      /नाली/i, /सीवर/i, /गटर/i, /सीवेज/i,
+      /కాలువ/i, /మురుగుకాల్వ/i, /మురుగునీరు/i, /డ్రైనేజీ/i,
+      /சாக்கடை/i, /கழிவுநீர்/i,
+      /\bnaali\b/i, /\bgatar\b/i, /\bkaluva\b/i, /\bmurugu\b/i, /\bsaakadai\b/i
+    ],
+    tagKeywords: ['drainage', 'sewage', 'gutter', 'manhole', 'नाली', 'सीवर', 'गटर', 'కాలువ', 'మురుగు', 'డ్రైనేజీ', 'சாக்கடை', 'கழிவுநீர்']
+  },
+  {
+    cat: "Animal",
+    dept: "Animal Control",
+    pri: "High",
+    conf: 89,
+    strong: [
+      /stray\s*dog/i, /dog\s*bite/i, /monkey\s*menace/i, /rabid\s*dog/i, /pack\s*of\s*dogs/i,
+      /आवारा\s*कुत्ते/i, /कुत्तों\s*का\s*झुंड/i, /कुत्ते\s*काटते/i, /बंदरों\s*का\s*आतंक/i, /पागल\s*कुत्ता/i,
+      /పిచ్చి\s*కుక్కలు/i, /కుక్కల\s*దాడి/i, /పిల్లలను\s*కరుస్తున్నాయి/i, /కోతుల\s*బాధ/i, /కుక్కలు\s*తిరుగుతున్నాయి/i,
+      /தெரு\s*நாய்கள்/i, /நாய்கள்\s*தொல்லை/i, /மக்களை\s*கடிக்கிறது/i, /குரங்கு\s*தொல்லை/i,
+      /stray\s*dog/i, /kukkalu\s*karustunnayi/i, /kutte\s*kaat/i, /naai\s*thollai/i
+    ],
+    keywords: [
+      /\bdog\b/i, /\bdogs\b/i, /\bstray\b/i, /\bmonkey\b/i, /\banimal\b/i, /\bbite\b/i, /\bcow\b/i, /\bcattle\b/i, /\bsnake\b/i,
+      /कुत्ता/i, /कुत्ते/i, /बंदर/i, /गाय/i, /सांप/i, /जानवर/i, /पशु/i,
+      /కుక్క/i, /కుక్కలు/i, /కోతులు/i, /ఆవులు/i, /పశువులు/i, /పాము/i,
+      /நாய்/i, /நாய்கள்/i, /குரங்கு/i, /மாடு/i, /பாம்பு/i,
+      /\bkutta\b/i, /\bkutte\b/i, /\bkukkalu\b/i, /\bnaai\b/i, /\bbandar\b/i
+    ],
+    tagKeywords: ['dog', 'stray animal', 'monkey', 'कुत्ता', 'आवारा कुत्ते', 'बंदर', 'కుక్కలు', 'పిచ్చి కుక్కలు', 'కోతులు', 'நாய்', 'குரங்கு']
+  },
+  {
+    cat: "Traffic",
+    dept: "Traffic & Public Safety",
+    pri: "Medium",
+    conf: 87,
+    strong: [
+      /traffic\s*jam/i, /traffic\s*signal/i, /signal\s*not\s*working/i, /heavy\s*traffic/i, /traffic\s*congestion/i,
+      /ट्रैफिक\s*जाम/i, /सिग्नल\s*काम\s*नहीं/i, /सिग्नल\s*खराब/i, /यातायात\s*जाम/i, /चौराहे\s*पर\s*जाम/i,
+      /ట్రాఫిక్\s*జామ్/i, /ట్రాఫిక్\s*సిగ్నల్/i, /సిగ్నల్\s*పనిచేయడం\s*లేదు/i, /రద్దీగా\s*ఉంది/i,
+      /போக்குவரத்து\s*நெரிசல்/i, /சிக்னல்\s*வேலை\s*செய்யவில்லை/i, /வாகன\s*நெரிசல்/i,
+      /traffic\s*jam/i, /signal\s*panicheyatle/i, /heavy\s*jam/i
+    ],
+    keywords: [
+      /traffic/i, /\bsignal\b/i, /\bjam\b/i, /\bparking\b/i, /\bcongestion\b/i, /\baccident\b/i, /\bgridlock\b/i,
+      /ट्रैफिक/i, /सिग्नल/i, /यातायात/i, /\bजाम\b/i,
+      /ట్రాఫిక్/i, /సిగ్నల్/i, /\bజామ్\b/i, /రద్దీ/i,
+      /போக்குவரத்து/i, /சிக்னல்/i,
+      /\bjam\b/i, /\braddi\b/i
+    ],
+    tagKeywords: ['traffic', 'signal', 'congestion', 'जाम', 'ट्रैफिक', 'सिग्नल', 'ట్రాఫిక్', 'జామ్', 'సిగ్నల్', 'போக்குவரத்து', 'சிக்னல்']
+  },
+  {
+    cat: "Parks & Green Spaces",
+    dept: "Parks & Green Spaces",
+    pri: "Low",
+    conf: 86,
+    strong: [
+      /fallen\s*tree/i, /tree\s*branch/i, /park\s*maintenance/i, /playground\s*broken/i,
+      /पेड़\s*गिर\s*गया/i, /पार्क\s*की\s*सफाई/i, /पौधे\s*सूख/i,
+      /చెట్టు\s*కూలిపోయింది/i, /పార్క్\s*నిర్వహణ/i, /ఆటస్థలం/i,
+      /மரம்\s*விழுந்தது/i, /பூங்கா\s*பராமரிப்பு/i,
+      /ped\s*gir\s*gaya/i, /chettu\s*koolindi/i
+    ],
+    keywords: [
+      /\bpark\b/i, /\bbench\b/i, /\btree\b/i, /\bplayground\b/i, /\bgrass\b/i, /\bgarden\b/i, /\bpruning\b/i,
+      /पार्क/i, /पेड़/i, /बगीचा/i, /घास/i,
+      /పార్క్/i, /చెట్లు/i, /చెట్టు/i, /తోట/i,
+      /பூங்கா/i, /மரம்/i,
+      /\bgarden\b/i, /\bped\b/i, /\bmaram\b/i
+    ],
+    tagKeywords: ['park', 'tree', 'garden', 'पार्क', 'पेड़', 'बगीचा', 'పార్క్', 'చెట్లు', 'பூங்கா', 'மரம்']
+  },
+  {
+    cat: "Public Property",
+    dept: "Public Property Maintenance",
+    pri: "Low",
+    conf: 85,
+    strong: [
+      /bus\s*stop\s*damaged/i, /public\s*property/i, /broken\s*fence/i, /wall\s*collapse/i,
+      /बस\s*स्टॉप\s*टूटा/i, /सार्वजनिक\s*संपत्ति/i, /दीवार\s*गिर/i,
+      /బస్టాప్\s*పాడైంది/i, /ప్రభుత్వ\s*ఆస్తి/i, /గోడ\s*కూలింది/i,
+      /பேருந்து\s*நிறுத்தம்\s*சேதம்/i, /பொது\s*சொத்து/i,
+      /bus\s*stop\s*damage/i, /wall\s*crack/i
+    ],
+    keywords: [
+      /\bproperty\b/i, /\bbuilding\b/i, /\bfence\b/i, /\bwall\b/i, /\bvandalism\b/i, /bus\s*stop\b/i,
+      /संपत्ति/i, /दीवार/i, /इमारत/i,
+      /ఆస్తి/i, /భవనం/i, /గోడ/i,
+      /சொத்து/i, /சுவர்/i,
+      /\bbus\s*stop\b/i
+    ],
+    tagKeywords: ['bus stop', 'public property', 'wall', 'सार्वजनिक संपत्ति', 'दीवार', 'ప్రభుత్వ ఆస్తి', 'గోడ', 'பொது சொத்து']
+  }
+];
+
 function predictComplaint(description: string) {
-  const desc = description.toLowerCase();
+  const desc = (description || '').toLowerCase();
   let category = "Others";
   let department = "Others";
   let priority = "Medium";
   let confidence = 85;
 
-  const matches: Array<{ cat: string; dept: string; pri: string; conf: number }> = [];
+  const scores: Array<{ cat: string; dept: string; pri: string; conf: number; score: number; matchedKeywords: string[] }> = [];
 
-  if (desc.match(/water|pipe|leak|tap|supply|tank|chlorine|seepage/)) {
-    matches.push({ cat: "Water Supply", dept: "Water Supply", pri: "High", conf: 94 });
-  }
-  if (desc.match(/road|pothole|crack|asphalt|street|path|tar|divider|crater/)) {
-    matches.push({ cat: "Road Damage", dept: "Roads & Infrastructure", pri: "High", conf: 92 });
-  }
-  if (desc.match(/street light|dark|lamp|bulb|streetlight|lighting|pole/)) {
-    matches.push({ cat: "Street Light", dept: "Electricity & Street Lighting", pri: "Medium", conf: 90 });
-  }
-  if (desc.match(/electric|power|wire|voltage|transformer|shock|current|fuse/)) {
-    matches.push({ cat: "Electricity", dept: "Electricity & Street Lighting", pri: "Critical", conf: 96 });
-  }
-  if (desc.match(/garbage|trash|waste|dump|bin|clean|smell|litter|debris/)) {
-    matches.push({ cat: "Garbage", dept: "Sanitation & Waste Management", pri: "Medium", conf: 88 });
-  }
-  if (desc.match(/drain|sewage|gutter|overflow|stagnant|manhole|clog/)) {
-    matches.push({ cat: "Drainage", dept: "Drainage & Sewage", pri: "High", conf: 91 });
-  }
-  if (desc.match(/dog|stray|monkey|animal|bite|cattle|cow|snake/)) {
-    matches.push({ cat: "Animal", dept: "Animal Control", pri: "High", conf: 89 });
-  }
-  if (desc.match(/traffic|signal|jam|parking|congestion|accident|gridlock/)) {
-    matches.push({ cat: "Traffic", dept: "Traffic & Public Safety", pri: "Medium", conf: 87 });
-  }
-  if (desc.match(/park|bench|tree|playground|grass|garden|pruning/)) {
-    matches.push({ cat: "Parks & Green Spaces", dept: "Parks & Green Spaces", pri: "Low", conf: 86 });
-  }
-  if (desc.match(/property|building|fence|wall|vandalism|public|bus stop/)) {
-    matches.push({ cat: "Public Property", dept: "Public Property Maintenance", pri: "Low", conf: 85 });
-  }
+  for (const r of MULTILINGUAL_RULES) {
+    let score = 0;
+    const foundTags: string[] = [];
 
-  // Extract trigger keywords
-  const triggerWords = [
-    'pothole', 'crack', 'asphalt', 'leak', 'pipe', 'water', 'garbage',
-    'trash', 'drainage', 'sewage', 'street light', 'wire', 'electric',
-    'dog', 'animal', 'traffic', 'signal', 'danger', 'broken'
-  ];
-  const keywords = triggerWords.filter(w => desc.includes(w)).slice(0, 5);
-  if (keywords.length === 0) {
-    keywords.push(...desc.split(/\s+/).filter(w => w.length > 4).slice(0, 4));
+    // Check strong multi-word phrases (weight: 12)
+    for (const sp of r.strong) {
+      if (sp.test(desc)) {
+        score += 12;
+      }
+    }
+
+    // Check keywords (weight: 3, locations 1)
+    for (const kw of r.keywords) {
+      if (kw.test(desc)) {
+        const isLoc = kw.source.includes('road') || kw.source.includes('highway') ||
+                      kw.source.includes('सड़क') || kw.source.includes('రోడ్డు') || kw.source.includes('சாலை');
+        score += isLoc ? 1 : 3;
+      }
+    }
+
+    // Extract tags for Explainable AI
+    for (const tag of r.tagKeywords) {
+      if (desc.includes(tag.toLowerCase()) && !foundTags.includes(tag)) {
+        foundTags.push(tag);
+      }
+    }
+
+    if (score > 0) {
+      scores.push({
+        cat: r.cat,
+        dept: r.dept,
+        pri: r.pri,
+        conf: Math.min(99, r.conf + Math.min(5, Math.floor(score / 3))),
+        score,
+        matchedKeywords: foundTags
+      });
+    }
   }
 
   let is_ambiguous = false;
   let secondary_category: string | null = null;
   let secondary_department: string | null = null;
   let margin = 100;
+  let keywords: string[] = [];
 
-  if (matches.length > 0) {
-    matches.sort((a, b) => b.conf - a.conf);
-    category = matches[0].cat;
-    department = matches[0].dept;
-    priority = matches[0].pri;
-    confidence = matches[0].conf;
+  if (scores.length > 0) {
+    scores.sort((a, b) => b.score - a.score || b.conf - a.conf);
 
-    if (matches.length > 1) {
-      margin = Math.abs(matches[0].conf - matches[1].conf);
-      if (margin <= 18) {
+    const top = scores[0];
+    category = top.cat;
+    department = top.dept;
+    priority = top.pri;
+    confidence = top.conf;
+    keywords = top.matchedKeywords.slice(0, 5);
+
+    if (scores.length > 1) {
+      const top2 = scores[1];
+      const diffScore = top.score - top2.score;
+      margin = Math.max(5, Math.min(100, diffScore * 8));
+
+      if (diffScore <= 5 && top2.score >= 4) {
         is_ambiguous = true;
-        secondary_category = matches[1].cat;
-        secondary_department = matches[1].dept;
+        secondary_category = top2.cat;
+        secondary_department = top2.dept;
       }
     }
+  }
+
+  if (keywords.length === 0) {
+    keywords = desc
+      .split(/[\s,.;:!?।]+/)
+      .filter(w => w.length > 3 && !['with', 'have', 'from', 'this', 'that', 'near', 'there', 'very'].includes(w))
+      .slice(0, 4);
   }
 
   return {

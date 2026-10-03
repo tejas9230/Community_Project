@@ -291,6 +291,14 @@
                 </button>
             </div>
 
+            <!-- Quick Multilingual One-Click Templates -->
+            <div id="quickLangSamplesContainer" style="margin-top:8px; margin-bottom:10px;">
+                <span style="font-size:11px; font-weight:700; color:#64748b; text-transform:uppercase; letter-spacing:0.5px; display:block; margin-bottom:5px;">
+                    ⚡ One-Click AI Test Examples (<span id="sampleLangLabel">English</span>):
+                </span>
+                <div id="quickLangSamples" style="display:flex; flex-wrap:wrap; gap:6px;"></div>
+            </div>
+
             <!-- Listening Soundwave Animation Box -->
             <div id="voiceWaveBox" class="voice-wave-box" style="display:none;">
                 <div class="voice-wave-bars">
@@ -856,28 +864,89 @@ const langConfigs = {
     'en-IN': {
         name: 'English',
         placeholder: 'Describe the issue in detail (e.g. Huge pothole on main road causing traffic delays, street light not working for 3 days)...',
-        hint: '💡 Type or speak your complaint in English to see real-time AI classification & XAI keywords.',
-        listening: '🎙️ Listening in English... Speak clearly into your microphone.'
+        hint: 'Type or speak your complaint in English to see real-time AI classification & XAI keywords.',
+        listening: '🎙️ Listening in English... Speak clearly into your microphone.',
+        samples: [
+            { label: '🛣️ Deep Pothole', text: 'Deep pothole on main road causing severe traffic delays and bike accidents' },
+            { label: '💧 Leaking Water Pipe', text: 'Main drinking water pipeline is leaking and clean water is being wasted on street' },
+            { label: '💡 Dark Street Light', text: 'Street lights not working for three days whole street is completely dark' },
+            { label: '⚡ Live Wire Dangling', text: 'High voltage electric wire broke from pole and is hanging dangerously' },
+            { label: '🗑️ Garbage Pile', text: 'Huge pile of rotting garbage dumped beside market causing bad smell' },
+            { label: '🌊 Drainage Clogged', text: 'Sewage drain is blocked and overflow water is flooding onto the road' }
+        ]
     },
     'hi-IN': {
         name: 'हिन्दी (Hindi)',
         placeholder: 'समस्या का विस्तार से वर्णन करें (जैसे: मुख्य सड़क पर गहरा गड्ढा, 3 दिनों से स्ट्रीट लाइट बंद है)...',
-        hint: '💡 अपनी शिकायत बोलें या लिखें - एआई तुरंत विभाग और प्राथमिक शब्दों की पहचान करेगा।',
-        listening: '🎙️ हिन्दी में सुन रहे हैं... कृपया स्पष्ट बोलें।'
+        hint: 'अपनी शिकायत हिन्दी में बोलें या लिखें - एआई तुरंत विभाग और प्राथमिक शब्दों की पहचान करेगा।',
+        listening: '🎙️ हिन्दी में सुन रहे हैं... कृपया स्पष्ट बोलें।',
+        samples: [
+            { label: '🛣️ सड़क पर गड्ढा', text: 'मुख्य सड़क पर बहुत गहरा गड्ढा हो गया है गाड़ियां गिर रही हैं तुरंत मरम्मत करें' },
+            { label: '💧 पानी का पाइप लीक', text: 'पीने के पानी का मुख्य पाइप टूट गया है और भारी जलभराव हो रहा है' },
+            { label: '💡 स्ट्रीट लाइट बंद', text: 'गली में स्ट्रीट लाइट तीन दिनों से बंद है रात में बहुत अंधेरा रहता है' },
+            { label: '⚡ बिजली का तार टूटा', text: 'बिजली का तार खंभे से टूटकर लटक रहा है करंट लगने का भारी खतरा है' },
+            { label: '🗑️ कचरे का ढेर', text: 'घर के सामने कूड़े का बड़ा ढेर लगा है और भयंकर बदबू आ रही है' },
+            { label: '🌊 नाली जाम', text: 'नाली जाम हो गई है और सीवर का गंदा पानी सड़क पर बह रहा है' }
+        ]
     },
     'te-IN': {
         name: 'తెలుగు (Telugu)',
         placeholder: 'సమస్యను వివరంగా వివరించండి (ఉదా: ప్రధాన రహదారిపై పెద్ద గుంత, 3 రోజులుగా వీధి దీపం వెలగడం లేదు)...',
-        hint: '💡 మీ ఫిర్యాదును మాట్లాడండి లేదా టైప్ చేయండి - AI విభాగాన్ని గుర్తిస్తుంది.',
-        listening: '🎙️ తెలుగులో వింటున్నాము... దయచేసి స్పష్టంగా మాట్లాడండి.'
+        hint: 'మీ ఫిర్యాదును తెలుగులో మాట్లాడండి లేదా టైప్ చేయండి - AI విభాగాన్ని గుర్తిస్తుంది.',
+        listening: '🎙️ తెలుగులో వింటున్నాము... దయచేసి స్పష్టంగా మాట్లాడండి.',
+        samples: [
+            { label: '🛣️ రోడ్డుపై గుంతలు', text: 'ప్రధాన రహదారిపై పెద్ద గుంతలు ఉన్నాయి వాహనాలు వెళ్లలేకపోతున్నాయి' },
+            { label: '💧 తాగునీటి పైపు లీకేజీ', text: 'మా వీధిలో పైపు పగిలి మంచినీరు వృధాగా పోతోంది వెంటనే బాగుచేయండి' },
+            { label: '💡 వీధి దీపాలు వెలగట్లేదు', text: 'గత వారం రోజులుగా వీధి దీపాలు వెలగడం లేదు ప్రాంతం మొత్తం చీకటిగా ఉంది' },
+            { label: '⚡ కరెంట్ తీగలు తెగాయి', text: 'కరెంట్ స్తంభంపై తీగలు తెగి కింద పడ్డాయి చాలా ప్రమాదకరంగా ఉంది' },
+            { label: '🗑️ చెత్త పేరుకుపోయింది', text: 'రోడ్డు పక్కన చెత్త పేరుకుపోయి దుర్వాసన వస్తోంది దోమలు ఎక్కువయ్యాయి' },
+            { label: '🌊 డ్రైనేజీ పొంగిపొర్లుతోంది', text: 'మురుగు కాలువ పొంగి రోడ్డుపైకి వస్తోంది డ్రైనేజీ సమస్య పరిష్కరించండి' }
+        ]
     },
     'ta-IN': {
         name: 'தமிழ் (Tamil)',
         placeholder: 'பிரச்சினையை விரிவாக விவரிக்கவும் (எ.கா: பிரதான சாலையில் பெரிய குழி, 3 நாட்களாக தெருவிளக்கு எரியவில்லை)...',
-        hint: '💡 உங்கள் புகாரைப் பேசுங்கள் அல்லது தட்டச்சு செய்யுங்கள் - AI தானாகவே துறையை அடையாளம் காணும்.',
-        listening: '🎙️ தமிழில் கேட்கிறது... தெளிவாக பேசவும்.'
+        hint: 'உங்கள் புகாரைத் தமிழில் பேசுங்கள் அல்லது தட்டச்சு செய்யுங்கள் - AI தானாகவே துறையை அடையாளம் காணும்.',
+        listening: '🎙️ தமிழில் கேட்கிறது... தெளிவாக பேசவும்.',
+        samples: [
+            { label: '🛣️ சாலையில் பெரிய குழி', text: 'பிரதான சாலையில் பெரிய குழி உள்ளது வாகனங்கள் செல்ல முடியவில்லை' },
+            { label: '💧 குடிநீர் குழாய் உடைப்பு', text: 'குடிநீர் குழாய் உடைந்து தண்ணீர் வீணாக போகிறது குடிநீர் வரவில்லை' },
+            { label: '💡 தெருவிளக்கு பழுது', text: 'எங்கள் தெருவில் தெருவிளக்கு எரியவில்லை இரவு நேரத்தில் மிகவும் இருட்டாக உள்ளது' },
+            { label: '⚡ மின் கம்பி அறுந்தது', text: 'மின் கம்பி அறுந்து விழுந்து கிடக்கிறது பெரும் ஆபத்து உள்ளது' },
+            { label: '🗑️ குப்பை தேக்கம்', text: 'தெருவோரம் குப்பை கொட்டப்பட்டு கடும் துர்நாற்றம் வீசுகிறது' },
+            { label: '🌊 சாக்கடை அடைப்பு', text: 'சாக்கடை அடைப்பு ஏற்பட்டு கழிவுநீர் சாலையில் பாய்கிறது' }
+        ]
     }
 };
+
+function renderLangSamples(code) {
+    const container = document.getElementById('quickLangSamples');
+    const label = document.getElementById('sampleLangLabel');
+    if (!container) return;
+
+    const cfg = langConfigs[code] || langConfigs['en-IN'];
+    if (label) label.textContent = cfg.name;
+
+    container.innerHTML = '';
+    (cfg.samples || []).forEach(s => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.style.cssText = 'background:#f1f5f9; border:1px solid #cbd5e1; border-radius:14px; padding:3px 10px; font-size:11px; font-weight:600; color:#334155; cursor:pointer; transition:all 0.2s; white-space:nowrap;';
+        btn.innerHTML = s.label;
+        btn.onmouseover = function() { btn.style.background = '#e2e8f0'; btn.style.borderColor = '#94a3b8'; };
+        btn.onmouseout = function() { btn.style.background = '#f1f5f9'; btn.style.borderColor = '#cbd5e1'; };
+        btn.onclick = function() { useSampleComplaint(s.text); };
+        container.appendChild(btn);
+    });
+}
+
+function useSampleComplaint(text) {
+    const desc = document.getElementById('description');
+    if (desc) {
+        desc.value = text;
+        desc.dispatchEvent(new Event('input'));
+    }
+}
 
 function switchLanguage(code) {
     currentLangCode = code;
@@ -898,6 +967,14 @@ function switchLanguage(code) {
     if (hintEl) {
         hintEl.innerHTML = `💡 <em>${cfg.hint}</em>`;
     }
+
+    renderLangSamples(code);
+
+    // If currently recording voice, restart with new language
+    if (isRecording && speechRecognizer) {
+        stopVoiceRecording();
+        setTimeout(() => startVoiceRecording(), 250);
+    }
 }
 
 let speechRecognizer = null;
@@ -914,29 +991,35 @@ function toggleVoiceRecording() {
 function startVoiceRecording() {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SpeechRecognition) {
-        alert('Your browser does not support Speech Recognition. Please use Google Chrome, Microsoft Edge, or Safari, or type your complaint manually.');
+        alert('Your browser does not support Speech Recognition. Please use Google Chrome, Microsoft Edge, or Safari, or click one of the quick test templates above.');
         return;
     }
 
     try {
+        if (speechRecognizer) {
+            try { speechRecognizer.stop(); } catch(e) {}
+            speechRecognizer = null;
+        }
+
         speechRecognizer = new SpeechRecognition();
         speechRecognizer.lang = currentLangCode;
-
-        // On mobile (iOS/Android), continuous mode causes word repetition — use single-shot
-        const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-        speechRecognizer.continuous     = !isMobile;
-        speechRecognizer.interimResults = !isMobile;  // only show interim on desktop
+        speechRecognizer.continuous = true;
+        speechRecognizer.interimResults = true;
+        speechRecognizer.maxAlternatives = 1;
 
         const waveBox = document.getElementById('voiceWaveBox');
         const voiceBtn = document.getElementById('voiceRecordBtn');
         const voiceStatus = document.getElementById('voiceStatusText');
         const cfg = langConfigs[currentLangCode] || langConfigs['en-IN'];
 
-        let lastAppended = '';  // guard against double-append on mobile
+        let baseText = '';
+        const descEl = document.getElementById('description');
+        if (descEl) {
+            baseText = descEl.value.trim() ? descEl.value.trim() + ' ' : '';
+        }
 
         speechRecognizer.onstart = function() {
             isRecording = true;
-            lastAppended = '';
             if (waveBox) waveBox.style.display = 'flex';
             if (voiceBtn) {
                 voiceBtn.classList.add('recording');
@@ -946,35 +1029,63 @@ function startVoiceRecording() {
         };
 
         speechRecognizer.onresult = function(event) {
+            let interimTranscript = '';
             let finalTranscript = '';
+
             for (let i = event.resultIndex; i < event.results.length; ++i) {
+                const transcript = event.results[i][0].transcript;
                 if (event.results[i].isFinal) {
-                    finalTranscript += event.results[i][0].transcript + ' ';
+                    finalTranscript += transcript + ' ';
+                } else {
+                    interimTranscript += transcript;
                 }
             }
-            finalTranscript = finalTranscript.trim();
-            // Guard: don't append the same transcript twice (mobile fires onresult + onend)
-            if (finalTranscript && finalTranscript !== lastAppended) {
-                lastAppended = finalTranscript;
-                const desc = document.getElementById('description');
-                if (desc) {
-                    desc.value = (desc.value.trim() ? desc.value.trim() + ' ' : '') + finalTranscript;
-                    desc.dispatchEvent(new Event('input'));
+
+            if (voiceStatus && (interimTranscript || finalTranscript)) {
+                voiceStatus.innerHTML = `🎙️ <strong>Speaking:</strong> <span style="color:#7c3aed;">"${interimTranscript || finalTranscript}"</span>`;
+            }
+
+            if (finalTranscript) {
+                baseText += finalTranscript;
+                if (descEl) {
+                    descEl.value = baseText.trim();
+                    descEl.dispatchEvent(new Event('input'));
                 }
+            } else if (interimTranscript && descEl) {
+                descEl.value = (baseText + interimTranscript).trim();
+                descEl.dispatchEvent(new Event('input'));
             }
         };
 
         speechRecognizer.onerror = function(event) {
-            console.warn('Speech recognition error:', event.error);
+            console.warn('Speech recognition status:', event.error);
+            // Ignore brief pauses/silence
+            if (event.error === 'no-speech') {
+                return;
+            }
             if (event.error === 'not-allowed') {
                 alert('Microphone permission was denied. Please allow microphone access in your browser address bar.');
+                stopVoiceRecording();
+                return;
+            }
+            if (event.error === 'network') {
+                console.warn('Speech network issue, continuing...');
+                return;
             }
             stopVoiceRecording();
         };
 
         speechRecognizer.onend = function() {
-            // On mobile single-shot mode, don't try to restart — just stop cleanly
-            stopVoiceRecording();
+            // Keep listening seamlessly if user hasn't clicked Stop
+            if (isRecording) {
+                try {
+                    speechRecognizer.start();
+                } catch(e) {
+                    stopVoiceRecording();
+                }
+            } else {
+                stopVoiceRecording();
+            }
         };
 
         speechRecognizer.start();
@@ -998,6 +1109,11 @@ function stopVoiceRecording() {
         voiceBtn.innerHTML = '<i class="fa-solid fa-microphone"></i> <span>Speak Complaint (Voice)</span>';
     }
 }
+
+// Initialize sample templates on load
+document.addEventListener('DOMContentLoaded', function() {
+    renderLangSamples('en-IN');
+});
 
 // Theme Toggle Functionality
 function toggleCivicTheme() {

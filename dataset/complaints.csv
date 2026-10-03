@@ -598,4 +598,146 @@ Traffic flow disrupted,Traffic
 Road safety complaint submitted,Traffic
 Traffic signal requires repair,Traffic
 Traffic congestion unresolved,Traffic
-Urgent traffic management required,Traffic
+Urgent traffic management required,Trafficరోడ్డుపై పెద్ద గుంతలు ఉన్నాయి వాహనాలు వెళ్లలేకపోతున్నాయి,Road Damage,High,Roads & Infrastructure
+ప్రధాన రహదారి పూర్తిగా పాడైపోయింది ప్రయాణం ప్రమాదకరంగా ఉంది,Road Damage,High,Roads & Infrastructure
+వర్షాల వల్ల రోడ్డుపై తారు కొట్టుకుపోయింది,Road Damage,Medium,Roads & Infrastructure
+పాఠశాల దగ్గర రోడ్డు మధ్యలో పెద్ద గుంత ఏర్పడింది,Road Damage,Critical,Roads & Infrastructure
+రహదారి డివైడర్ విరిగిపోయి ప్రమాదాలు జరుగుతున్నాయి,Road Damage,High,Roads & Infrastructure
+सड़क पर बहुत बड़ा गड्ढा हो गया है दुर्घटना हो सकती है,Road Damage,High,Roads & Infrastructure
+मुख्य सड़क पूरी तरह से टूट चुकी है गाड़ियां नहीं चल पा रही हैं,Road Damage,High,Roads & Infrastructure
+बारिश के कारण डामर उखड़ गया है और बड़े-बड़े गड्ढे बन गए हैं,Road Damage,Medium,Roads & Infrastructure
+अस्पताल के सामने सड़क धंस गई है एम्बुलेंस को परेशानी हो रही है,Road Damage,Critical,Roads & Infrastructure
+फुटपाथ टूट गया है पैदल चलने वालों के लिए खतरा है,Road Damage,Low,Roads & Infrastructure
+சாலையில் பெரிய குழி உள்ளது வாகனங்கள் செல்ல முடியவில்லை,Road Damage,High,Roads & Infrastructure
+மழையினால் தார் சாலை முற்றிலும் சேதமடைந்துள்ளது,Road Damage,Medium,Roads & Infrastructure
+பள்ளி அருகில் சாலையில் ஆழமான குழி ஏற்பட்டுள்ளது,Road Damage,Critical,Roads & Infrastructure
+road lo pedda guntalu unnayi travel cheyadam kastam,Road Damage,High,Roads & Infrastructure
+sadak pe bada gaddha hai bike wale gir rahe hain,Road Damage,High,Roads & Infrastructure
+main road damage aipoindi immediate ga repair cheyali,Road Damage,High,Roads & Infrastructure
+మా వీధిలో పైపు పగిలి మంచినీరు వృధాగా పోతోంది,Water Supply,High,Water Supply
+గత నాలుగు రోజులుగా మా కాలనీకి తాగునీరు సరఫరా లేదు,Water Supply,High,Water Supply
+కుళాయిలలో కలుషిత నీరు వస్తోంది తాగడానికి పనికిరాదు,Water Supply,Critical,Water Supply
+నీటి ట్యాంక్ లీక్ అవుతోంది నీరు మొత్తం రోడ్డుపైకి వస్తోంది,Water Supply,Medium,Water Supply
+మెయిన్ పైపులైన్ పగిలిపోవడంతో నీటి కొరత ఏర్పడింది,Water Supply,High,Water Supply
+हमारे इलाके में पानी का पाइप टूट गया है पानी की किल्लत है,Water Supply,High,Water Supply
+तीन दिनों से पीने का पानी नहीं आ रहा है जनता परेशान है,Water Supply,High,Water Supply
+नल में बहुत गंदा और बदबूदार पानी आ रहा है बीमारी का खतरा है,Water Supply,Critical,Water Supply
+पानी की टंकी से लगातार रिसाव हो रहा है पानी बर्बाद हो रहा है,Water Supply,Medium,Water Supply
+पेयजल पाइपलाइन फट गई है और सारा पानी बह गया,Water Supply,High,Water Supply
+குடிநீர் குழாய் உடைந்து தண்ணீர் வீணாக போகிறது,Water Supply,High,Water Supply
+கடந்த மூன்று நாட்களாக எங்கள் பகுதிக்கு குடிநீர் வரவில்லை,Water Supply,High,Water Supply
+குழாயில் அசுத்தமான குடிநீர் வருகிறது மக்கள் குடிக்க முடியவில்லை,Water Supply,Critical,Water Supply
+paani nahi aa raha 3 din se pipeline leak hai,Water Supply,High,Water Supply
+colony lo neellu ravatledu drinking water problem,Water Supply,High,Water Supply
+drinking water pipeline damage aindi water waste avtundi,Water Supply,High,Water Supply
+మా ప్రాంతంలో గత వారం రోజులుగా వీధి దీపాలు వెలగడం లేదు చీకటిగా ఉంది,Street Light,Medium,Electricity & Street Lighting
+వీధి లైట్ స్తంభంపై బల్బ్ పగిలిపోయింది రాత్రి పూట తిరగలేకపోతున్నాం,Street Light,Medium,Electricity & Street Lighting
+కాలనీలో అన్ని వీధి లైట్లు నిరంతరం వెలుగుతూనే ఉన్నాయి,Street Light,Low,Electricity & Street Lighting
+రాత్రి వేళల్లో వీధి లైట్లు లేకపోవడంతో దొంగతనాలు జరుగుతున్నాయి,Street Light,High,Electricity & Street Lighting
+గ్రామంలో కరెంట్ స్తంభం వద్ద లైట్ అమర్చవలెను,Street Light,Low,Electricity & Street Lighting
+गली में स्ट्रीट लाइट बंद पड़ी है रात में बहुत अंधेरा रहता है,Street Light,Medium,Electricity & Street Lighting
+स्ट्रीटलाइट का बल्ब फ्यूज हो गया है अंधेरे में आवागमन मुश्किल है,Street Light,Medium,Electricity & Street Lighting
+सड़क के सभी खंभों की बत्तियां खराब हैं रात में डर लगता है,Street Light,High,Electricity & Street Lighting
+दिन में भी स्ट्रीट लाइट जलती रहती है बिजली की बर्बादी हो रही है,Street Light,Low,Electricity & Street Lighting
+हमारे मोहल्ले के खंभे पर नई लाइट लगाई जाए,Street Light,Low,Electricity & Street Lighting
+எங்கள் தெருவில் தெருவிளக்கு எரியவில்லை இருட்டாக உள்ளது,Street Light,Medium,Electricity & Street Lighting
+மின் கம்பத்தில் உள்ள பல்பு உடைந்துவிட்டது இரவில் பயமாக இருக்கிறது,Street Light,Medium,Electricity & Street Lighting
+தெரு விளக்குகள் பழுதாகிவிட்டதால் விபத்துக்கள் நேரிடுகின்றன,Street Light,High,Electricity & Street Lighting
+street light velagadam ledu motham cheekati ga undi,Street Light,Medium,Electricity & Street Lighting
+gali me street light band hai andhera rehta hai,Street Light,Medium,Electricity & Street Lighting
+veedhi light panichestale new bulb pettali,Street Light,Medium,Electricity & Street Lighting
+కరెంట్ స్తంభంపై తీగలు తెగి కింద పడ్డాయి చాలా ప్రమాదకరం,Electricity,Critical,Electricity & Street Lighting
+ట్రాన్స్ ఫార్మర్ పేలిపోయి కాలనీ అంతా విద్యుత్ సరఫరా నిలిచిపోయింది,Electricity,Critical,Electricity & Street Lighting
+కరెంట్ తీగలలో స్పార్క్స్ వస్తున్నాయి మంటలు చెలరేగే అవకాశం ఉంది,Electricity,Critical,Electricity & Street Lighting
+హై వోల్టేజ్ రావడం వల్ల ఇంట్లోని విద్యుత్ ఉపకరణాలు కాలిపోయాయి,Electricity,High,Electricity & Street Lighting
+కరెంట్ స్తంభం రోడ్డువైపు వంగిపోయింది ఎప్పుడైనా పడిపోవచ్చు,Electricity,Critical,Electricity & Street Lighting
+बिजली का खंभा झुक गया है और तार लटक रहे हैं करंट का खतरा है,Electricity,Critical,Electricity & Street Lighting
+ट्रांसफार्मर में तेज धमाका हुआ और पूरे इलाके की बिजली गुल हो गई,Electricity,Critical,Electricity & Street Lighting
+बिजली के खुले तारों से चिंगारी निकल रही है किसी को झटका लग सकता है,Electricity,Critical,Electricity & Street Lighting
+हाई वोल्टेज आने से कई घरों के पंखे और फ्रिज खराब हो गए,Electricity,High,Electricity & Street Lighting
+बारिश में बिजली का तार टूटकर सड़क पर गिर गया है तुरंत हटाएं,Electricity,Critical,Electricity & Street Lighting
+மின் கம்பி அறுந்து விழுந்து கிடக்கிறது மின்சாரம் இல்லை,Electricity,Critical,Electricity & Street Lighting
+மின்மாற்றி வெடித்து தீப்பிடித்தது மின்சாரம் துண்டிக்கப்பட்டது,Electricity,Critical,Electricity & Street Lighting
+உயர் அழுத்த மின் கம்பிகள் தாழ்வாக தொங்குகின்றன ஆபத்து,Electricity,Critical,Electricity & Street Lighting
+bijli chali gayi transformer me spark aa raha hai,Electricity,Critical,Electricity & Street Lighting
+current wires tegipoyi road meeda paddayi chala danger,Electricity,Critical,Electricity & Street Lighting
+power supply blackout shock lag sakta hai live wire open,Electricity,Critical,Electricity & Street Lighting
+రోడ్డు పక్కన చెత్త పేరుకుపోయి దుర్వాసన వస్తోంది,Garbage,Medium,Sanitation & Waste Management
+చెత్త కుండీలు నిండిపోయి చెత్త రోడ్డుపై పడుతోంది,Garbage,Medium,Sanitation & Waste Management
+శానిటేషన్ సిబ్బంది గత వారం రోజులుగా చెత్త తీసుకెళ్లడం లేదు,Garbage,Medium,Sanitation & Waste Management
+"మార్కెట్ ప్రాంతంలో కుళ్ళిన వ్యర్థాల వల్ల ఈగలు, దోమలు పెరిగిపోతున్నాయి",Garbage,High,Sanitation & Waste Management
+కాలనీలో చెత్త వేయడానికి తగిన చెత్తకుండీలు ఏర్పాటు చేయాలి,Garbage,Low,Sanitation & Waste Management
+घर के सामने कचरे का ढेर लगा है बहुत बदबू आ रही है,Garbage,Medium,Sanitation & Waste Management
+कूड़ेदान भर चुका है और कचरा सड़क पर बिखर रहा है,Garbage,Medium,Sanitation & Waste Management
+सफाई कर्मचारी कई दिनों से कूड़ा उठाने नहीं आए हैं,Garbage,Medium,Sanitation & Waste Management
+बाजार के पास सड़े हुए कचरे से मच्छर और बीमारियां फैल रही हैं,Garbage,High,Sanitation & Waste Management
+मोहल्ले में सार्वजनिक कूड़ादान रखवाया जाए,Garbage,Low,Sanitation & Waste Management
+தெருவோரம் குப்பை கொட்டப்பட்டு துர்நாற்றம் வீசுகிறது,Garbage,Medium,Sanitation & Waste Management
+குப்பை தொட்டி நிரம்பி வழிகிறது துப்புரவு பணியாளர்கள் வரவில்லை,Garbage,Medium,Sanitation & Waste Management
+குப்பைக் கழிவுகளினால் கொசுக்கள் பெருகி நோய் பரவும் அபாயம்,Garbage,High,Sanitation & Waste Management
+chetta dump chesaru chala smell vastondi,Garbage,Medium,Sanitation & Waste Management
+kachra nahi uthaya dustbin overflow ho raha hai,Garbage,Medium,Sanitation & Waste Management
+garbage truck raledu colony lo foul smell vastundi,Garbage,Medium,Sanitation & Waste Management
+మురుగు కాలువ పొంగి రోడ్డుపైకి వస్తోంది డ్రైనేజీ సమస్య,Drainage,High,Drainage Department
+డ్రైనేజీ మ్యాన్‌హోల్ మూత విరిగిపోయింది ప్రమాదకరంగా ఉంది,Drainage,Critical,Drainage Department
+కాలువలో ప్లాస్టిక్ వ్యర్థాలు పేరుకుపోయి మురుగునీరు నిలిచిపోయింది,Drainage,Medium,Drainage Department
+భారీ వర్షానికి డ్రైనేజీ జామ్ అయి నీరు ఇళ్లలోకి వస్తోంది,Drainage,Critical,Drainage Department
+గ్రామంలో సరైన డ్రైనేజీ వ్యవస్థ లేక రోడ్లపై మురుగు పారుతోంది,Drainage,High,Drainage Department
+नाली का पानी ओवरफ्लो होकर सड़क पर बह रहा है सीवर जाम है,Drainage,High,Drainage Department
+गटर का मैनहोल खुला पड़ा है कोई भी गिर सकता है,Drainage,Critical,Drainage Department
+सीवर लाइन चोक होने से गंदा पानी घरों के आगे जमा हो गया है,Drainage,High,Drainage Department
+नालियों की सफाई न होने से भारी दुर्गंध और पानी का भराव है,Drainage,Medium,Drainage Department
+बरसात का पानी निकलने के लिए नाली का निर्माण किया जाए,Drainage,Low,Drainage Department
+சாக்கடை அடைப்பு ஏற்பட்டு கழிவுநீர் சாலையில் பாய்கிறது,Drainage,High,Drainage Department
+பாதாள சாக்கடை மேன்ஹோல் மூடி உடைந்து கிடக்கிறது ஆபத்து,Drainage,Critical,Drainage Department
+கழிவுநீர் கால்வாயில் அடைப்பு ஏற்பட்டு வீடுகளுக்குள் நீர் புகுகிறது,Drainage,Critical,Drainage Department
+naali jam ho gayi hai gutter pani overflow,Drainage,High,Drainage Department
+drainage kaluva overflow aindi manhole open undi,Drainage,Critical,Drainage Department
+sewer line blocked dirty sewage water on street,Drainage,High,Drainage Department
+మా కాలనీలో పిచ్చి కుక్కలు తిరుగుతున్నాయి పిల్లలను కరుస్తున్నాయి,Animal,High,Animal Control
+వీధి కుక్కల గుంపు రాత్రి పూట వాహనదారులపై దాడి చేస్తోంది,Animal,High,Animal Control
+కోతులు గుంపులుగా వచ్చి ఇళ్లలోని సామాగ్రిని ధ్వంసం చేస్తున్నాయి,Animal,Medium,Animal Control
+"రోడ్డుపై ఆవులు, పశువులు నిలబడి ఉండటం వల్ల ట్రాఫిక్ ఇబ్బంది",Animal,Medium,Animal Control
+కాలనీలో విషపూరిత పాము కనిపించింది వెంటనే పట్టుకోవాలి,Animal,Critical,Animal Control
+सड़क पर आवारा कुत्तों का झुंड है आने जाने वालों को काटते हैं,Animal,High,Animal Control
+पागल कुत्ते ने दो बच्चों को काट लिया है तुरंत पकड़ा जाए,Animal,Critical,Animal Control
+बंदरों का आतंक बहुत बढ़ गया है छत पर कपड़े और सामान नुकसान कर रहे हैं,Animal,Medium,Animal Control
+सड़क पर लावारिस गाय और मवेशी बैठे रहते हैं जाम लगता है,Animal,Medium,Animal Control
+इलाके में जहरीला सांप देखा गया है वन विभाग को सूचित करें,Animal,Critical,Animal Control
+தெரு நாய்கள் தொல்லை அதிகமாக உள்ளது மக்களை கடிக்கிறது,Animal,High,Animal Control
+வெறி நாய் கடித்து பலர் காயமடைந்துள்ளனர் உடனே பிடிக்க வேண்டும்,Animal,Critical,Animal Control
+குரங்குகள் வீடுகளுக்குள் புகுந்து பொருட்களை சேதப்படுத்துகின்றன,Animal,Medium,Animal Control
+kukkalu chala ekkuva unnayi karustunnayi,Animal,High,Animal Control
+stray dogs biting pedestrians and chasing bikes,Animal,High,Animal Control
+awara kutte pareshan kar rahe hain rabies threat,Animal,High,Animal Control
+జంక్షన్ వద్ద ట్రాఫిక్ సిగ్నల్ పనిచేయడం లేదు విపరీతమైన జామ్,Traffic,Medium,Traffic Police
+పీక్ అవర్స్‌లో తీవ్రమైన ట్రాఫిక్ రద్దీ ఉంటోంది ట్రాఫిక్ పోలీస్ అవసరం,Traffic,Medium,Traffic Police
+నో పార్కింగ్ జోన్‌లో వాహనాలు నిలపడం వల్ల రోడ్డు ఇరుకుగా మారింది,Traffic,Low,Traffic Police
+సిగ్నల్ వద్ద తరచూ రోడ్డు ప్రమాదాలు జరుగుతున్నాయి స్పీడ్ బ్రేకర్ కావాలి,Traffic,High,Traffic Police
+चौराहे पर ट्रैफिक जाम बहुत है सिग्नल काम नहीं कर रहा,Traffic,Medium,Traffic Police
+सड़क पर गलत पार्किंग की वजह से भारी जाम लग रहा है,Traffic,Low,Traffic Police
+व्यस्त समय में ट्रैफिक पुलिस तैनात की जाए भीड़ बहुत होती है,Traffic,Medium,Traffic Police
+अवैध ऑटो स्टैंड की वजह से सड़क पर चलना मुश्किल हो गया है,Traffic,Medium,Traffic Police
+சிக்னல் வேலை செய்யாததால் கடுமையான போக்குவரத்து நெரிசல்,Traffic,Medium,Traffic Police
+வாகனங்கள் தாறுமாறாக நிறுத்தப்படுவதால் நெரிசல் ஏற்படுகிறது,Traffic,Low,Traffic Police
+traffic jam bahut hai red light signal kharab hai,Traffic,Medium,Traffic Police
+signal panicheyatledu heavy traffic congestion,Traffic,Medium,Traffic Police
+పార్క్ లో భారీ చెట్టు కొమ్మ విరిగి నడక దారిపై పడింది,Parks & Green Spaces,Low,Parks & Green Spaces
+"పార్క్ లో పిల్లల ఆట వస్తువులు, ఊయలలు విరిగిపోయాయి",Parks & Green Spaces,Low,Parks & Green Spaces
+"పార్కులో గడ్డి, పిచ్చి మొక్కలు పెరిగిపోయాయి శుభ్రం చేయాలి",Parks & Green Spaces,Low,Parks & Green Spaces
+गंभीर तूफान के बाद पेड़ की बड़ी डाल सड़क और पार्क पर गिर गई,Parks & Green Spaces,Medium,Parks & Green Spaces
+पार्क में बच्चों के झूले टूट गए हैं चोट लगने का खतरा है,Parks & Green Spaces,Low,Parks & Green Spaces
+பூங்காவில் மரம் முறிந்து விழுந்துள்ளது நடைபாதை அடைக்கப்பட்டுள்ளது,Parks & Green Spaces,Low,Parks & Green Spaces
+பூங்காவில் உள்ள குழந்தைகள் விளையாட்டு உபகரணங்கள் உடைந்தன,Parks & Green Spaces,Low,Parks & Green Spaces
+park lo chettu virigindi playground swings broken,Parks & Green Spaces,Low,Parks & Green Spaces
+ped gir gaya hai park ki maintenance karvao,Parks & Green Spaces,Low,Parks & Green Spaces
+బస్టాప్ షెల్టర్ పైకప్పు విరిగిపోయింది ప్రయాణికులు ఎండలో నిలబడాల్సి వస్తోంది,Public Property,Medium,Municipal Administration
+ప్రభుత్వ పాఠశాల ప్రహరీ గోడ కూలిపోయింది భద్రత లేదు,Public Property,High,Municipal Administration
+బస్టాప్ వద్ద ఉన్న బెంచీలు విరిచివేశారు,Public Property,Low,Municipal Administration
+बस स्टॉप का शेड टूट गया है बारिश और धूप में परेशानी होती है,Public Property,Medium,Municipal Administration
+पार्क की चहारदीवारी गिर गई है असामाजिक तत्व अंदर आ रहे हैं,Public Property,Medium,Municipal Administration
+सार्वजनिक शौचालय का दरवाजा और नल टूटा हुआ है,Public Property,High,Municipal Administration
+பேருந்து நிறுத்த நிழற்குடை உடைந்து விழுந்துள்ளது,Public Property,Medium,Municipal Administration
+பொது சொத்து சேதப்படுத்தப்பட்டுள்ளது அரசு பள்ளி சுவர் இடிந்தது,Public Property,High,Municipal Administration
+bus stop shelter broken shade padipoindi,Public Property,Medium,Municipal Administration
+public property damage wall collapse ho gaya hai,Public Property,Medium,Municipal Administration
